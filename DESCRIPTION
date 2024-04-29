@@ -15,3 +15,4 @@ LazyData: true
 URL: https://github.com/j-y26/dataToolkit
 BugReports: https://github.com/j-y26/dataToolkit/issues
 biocViews: BiomedicalInformatics
+RoxygenNote: 7.2.3
