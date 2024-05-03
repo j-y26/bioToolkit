@@ -6,7 +6,7 @@
 #'              the log2 fold change and the -log10 p-value.
 #'
 #' @param data A data frame containing the gene expression data
-#' 
+#'
 #' @param de_method The method used for differential expression analysis.
 #'                  Must be one of "edgeR" or "DESeq2". Default is "edgeR".
 #'                  Use this argument to automatically set the column names
@@ -22,52 +22,52 @@
 #'          overrides the value obtained from de_method.
 #'
 #' @param label The column name of the gene names
-#' 
+#'
 #' @param selected_labels A vector of gene names to be highlighted in the plot
-#' 
+#'
 #' @param p_cutoff The p-value cutoff for significance
-#' 
+#'
 #' @param fc_cutoff The log2 fold change cutoff for significance
-#' 
+#'
 #' @param up_color The color for up-regulated genes
-#' 
+#'
 #' @param down_color The color for down-regulated genes
-#' 
+#'
 #' @param non_de_color The color for non-differentially expressed genes
-#' 
+#'
 #' @param up_label The label for up-regulated genes
-#' 
+#'
 #' @param down_label The label for down-regulated genes
-#' 
+#'
 #' @param non_de_label The label for non-differentially expressed genes
-#' 
-#' @param number_label A logical value indicating whether to display the number 
+#'
+#' @param number_label A logical value indicating whether to display the number
 #'                     of up and down-regulated genes
-#' 
+#'
 #' @param num_label_size The size of the number labels
-#' 
+#'
 #' @param x_lim The limits for the x-axis
-#' 
+#'
 #' @param y_lim The limits for the y-axis
-#' 
+#'
 #' @param x_lab The label for the x-axis
-#' 
+#'
 #' @param y_lab The label for the y-axis
-#' 
+#'
 #' @param axis_lab_size The size of the axis labels
-#' 
+#'
 #' @param lab_size The size of the gene labels
-#' 
+#'
 #' @param bold_text A logical value indicating whether to bold the text
-#' 
+#'
 #' @param legend_lab_size The size of the legend labels
-#' 
+#'
 #' @param legend_lab_position The position of the legend labels
-#' 
+#'
 #' @param legend_icon_size The size of the legend icons
-#' 
+#'
 #' @param draw_connectors A logical value indicating whether to draw connectors
-#' 
+#'
 #' @param max_overlaps The maximum number of overlaps for the gene labels
 #'
 #' @param ... Additional arguments to be passed to the plot function
@@ -80,37 +80,38 @@
 #' @export
 #'
 plot_volcano <- function(
-  data,
-  de_method = "edgeR",
-  x = NULL,
-  y = NULL,
-  label = rownames(data),
-  selected_labels = NULL,
-  p_cutoff = 0.05,
-  fc_cutoff = 0,
-  up_color = "firebrick4",
-  down_color = "midnightblue",
-  non_de_color = "grey",
-  up_label = "Up-regulated",
-  down_label = "Down-regulated",
-  non_de_label = "Non-DE",
-  number_label = TRUE,
-  num_label_size = 4.5,
-  x_lim = c(min(data[[x]], na.rm = TRUE) - 0.5,
-            max(data[[x]], na.rm = TRUE) + 0.5),
-  y_lim = c(0, max(-log10(data[[y]]), na.rm = TRUE) + 1),
-  x_lab = bquote(~log[2] ~ "fold change"),
-  y_lab = bquote(~-log[10] ~ adj.P),
-  axis_lab_size = 12,
-  lab_size = 4,
-  bold_text = TRUE,
-  legend_lab_size = 12,
-  legend_lab_position = "top",
-  legend_icon_size = 5,
-  draw_connectors = TRUE,
-  max_overlaps = 10,
-  ...
-  ) {
+    data,
+    de_method = "edgeR",
+    x = NULL,
+    y = NULL,
+    label = rownames(data),
+    selected_labels = NULL,
+    p_cutoff = 0.05,
+    fc_cutoff = 0,
+    up_color = "firebrick4",
+    down_color = "midnightblue",
+    non_de_color = "grey",
+    up_label = "Up-regulated",
+    down_label = "Down-regulated",
+    non_de_label = "Non-DE",
+    number_label = TRUE,
+    num_label_size = 4.5,
+    x_lim = c(
+      min(data[[x]], na.rm = TRUE) - 0.5,
+      max(data[[x]], na.rm = TRUE) + 0.5
+    ),
+    y_lim = c(0, max(-log10(data[[y]]), na.rm = TRUE) + 1),
+    x_lab = bquote(~ log[2] ~ "fold change"),
+    y_lab = bquote(~ -log[10] ~ adj.P),
+    axis_lab_size = 12,
+    lab_size = 4,
+    bold_text = TRUE,
+    legend_lab_size = 12,
+    legend_lab_position = "top",
+    legend_icon_size = 5,
+    draw_connectors = TRUE,
+    max_overlaps = 10,
+    ...) {
   # Check if the DE method is valid, case-insensitive
   de_method <- tolower(de_method)
   if (de_method == "edger" && is.null(x) && is.null(y)) {
