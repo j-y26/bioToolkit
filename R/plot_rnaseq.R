@@ -113,10 +113,10 @@ plot_volcano <- function(
   ) {
   # Check if the DE method is valid, case-insensitive
   de_method <- tolower(de_method)
-  if (de_method == "edger") {
+  if (de_method == "edger" && is.null(x) && is.null(y)) {
     x <- FC_COL_EDGER
     y <- PVAL_COL_EDGER
-  } else if (de_method == "deseq2") {
+  } else if (de_method == "deseq2" && is.null(x) && is.null(y)) {
     x <- FC_COL_DESEQ2
     y <- PVAL_COL_DESEQ2
   } else {
