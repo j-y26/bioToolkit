@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# dataToolkit
+# bioToolkit
 
 <!-- badges: start -->
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
@@ -23,9 +23,9 @@ An R package hosting a mix of useful functions for data analysis.
 
 ## Installation
 
-You can install the development version of dataToolkit from [GitHub](https://github.com/) with:
+You can install the development version of bioToolkit from [GitHub](https://github.com/) with:
 
 ``` {r eval = FALSE}
 require("devtools")
-devtools::install_github("j-y26/dataToolkit")
+devtools::install_github("j-y26/bioToolkit")
 ```

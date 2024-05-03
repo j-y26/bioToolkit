@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# dataToolkit
+# bioToolkit
 
 <!-- badges: start -->
 
@@ -13,10 +13,10 @@ An R package hosting a mix of useful functions for data analysis.
 
 ## Installation
 
-You can install the development version of dataToolkit from
+You can install the development version of bioToolkit from
 [GitHub](https://github.com/) with:
 
 ``` r
 require("devtools")
-devtools::install_github("j-y26/dataToolkit")
+devtools::install_github("j-y26/bioToolkit")
 ```

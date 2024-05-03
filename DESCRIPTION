@@ -1,4 +1,4 @@
-Package: dataToolkit
+Package: bioToolkit
 Type: Package
 Title: An R package hosting useful functions for data analysis
 Version: 0.1.0
@@ -12,8 +12,8 @@ License: MIT + file LICENSE
 File: LICENSE
 Encoding: UTF-8
 LazyData: true
-URL: https://github.com/j-y26/dataToolkit
-BugReports: https://github.com/j-y26/dataToolkit/issues
+URL: https://github.com/j-y26/bioToolkit
+BugReports: https://github.com/j-y26/bioToolkit/issues
 biocViews: BiomedicalInformatics
 RoxygenNote: 7.2.3
 Imports: 
