@@ -6,10 +6,20 @@
 #'              the log2 fold change and the -log10 p-value.
 #'
 #' @param data A data frame containing the gene expression data
+#' 
+#' @param de_method The method used for differential expression analysis.
+#'                  Must be one of "edgeR" or "DESeq2". Default is "edgeR".
+#'                  Use this argument to automatically set the column names
+#'                  for log2 fold change and adjusted P-value. If provided value
+#'                  is not "edgeR" or "DESeq2", the user must provide both the
+#'                  column names for log2 fold change and P-value using the
+#'                  \code{x} and \code{y} arguments, respectively.
 #'
-#' @param x The column name of the log2 fold change
+#' @param x The column name of the log2 fold change. If not \code{NULL},
+#'          overrides the value obtained from de_method.
 #'
-#' @param y The column name of the P-value for use
+#' @param y The column name of the P-value for use. If not \code{NULL},
+#'          overrides the value obtained from de_method.
 #'
 #' @param label The column name of the gene names
 #' 
@@ -71,8 +81,9 @@
 #'
 plt_volcano <- function(
   data,
-  x = "logFC",
-  y = "FDR",
+  de_method = "edgeR",
+  x = NULL,
+  y = NULL,
   label = rownames(data),
   selected_labels = NULL,
   p_cutoff = 0.05,
@@ -100,6 +111,19 @@ plt_volcano <- function(
   max_overlaps = 10,
   ...
   ) {
+  # Check if the DE method is valid, case-insensitive
+  de_method <- tolower(de_method)
+  if (de_method == "edger") {
+    x <- FC_COL_EDGER
+    y <- PVAL_COL_EDGER
+  } else if (de_method == "deseq2") {
+    x <- FC_COL_DESEQ2
+    y <- PVAL_COL_DESEQ2
+  } else {
+    if (is.null(x) || is.null(y)) {
+      stop("Please provide the column names for log2 fold change and P-value.")
+    }
+  }
 
   # Define key-value pairs for color coding
   key_val <- ifelse(
@@ -130,7 +154,7 @@ plt_volcano <- function(
   }
 
   # Create the volcano plot
-  vPlot <- EnhancedVolcano::EnhancedVolcano(
+  v_plot <- EnhancedVolcano::EnhancedVolcano(
     data,
     lab = label,
     selectLab = selected_labels,
@@ -157,9 +181,10 @@ plt_volcano <- function(
     ...
   )
 
-  # Add the number of up and down-regulated genes at the bottom right and left corners, respectively
+  # Add the number of up and down-regulated genes at the bottom right and
+  # left corners, respectively
   if (number_label) {
-    vPlot <- vPlot + annotate(
+    v_plot <- v_plot + annotate(
       "text",
       x = x_lim[2],
       y = y_lim[1],
@@ -180,7 +205,7 @@ plt_volcano <- function(
 
   # Bold the rest of the text if bold_text is TRUE
   if (bold_text) {
-    vPlot <- vPlot + theme(
+    v_plot <- v_plot + theme(
       axis.text = element_text(face = "bold"),
       axis.title.x = element_text(face = "bold"),
       legend.text = element_text(face = "bold"),
@@ -188,6 +213,5 @@ plt_volcano <- function(
     )
   }
 
-  return(vPlot)
+  return(v_plot)
 }
-
