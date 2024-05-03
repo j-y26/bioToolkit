@@ -23,7 +23,7 @@ Use this argument to automatically set the column names
 for log2 fold change and adjusted P-value. If provided value
 is not "edgeR" or "DESeq2", the user must provide both the
 column names for log2 fold change and P-value using the
-\code{log2fc_col} and \code{pvalue_col} arguments, 
+\code{log2fc_col} and \code{pvalue_col} arguments,
 respectively.}
 
 \item{pvalue_col}{The name of the column in \code{de_results} that contains
@@ -45,7 +45,7 @@ This function calculates ranks of genes based on the
              differential expression analysis results for RNA-seq data.
              The pi-value is calculated using the following formula:
              \deqn{pi = -log10(p) * sign(log2fc)}
-             where \eqn{p} is the (adjusted) p-value and \eqn{log2fc} is the 
+             where \eqn{p} is the (adjusted) p-value and \eqn{log2fc} is the
              log2 fold change. The rank is then calculated based on the
              pi-value.
 }

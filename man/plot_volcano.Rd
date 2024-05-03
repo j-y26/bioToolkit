@@ -73,7 +73,7 @@ overrides the value obtained from de_method.}
 
 \item{non_de_label}{The label for non-differentially expressed genes}
 
-\item{number_label}{A logical value indicating whether to display the number 
+\item{number_label}{A logical value indicating whether to display the number
 of up and down-regulated genes}
 
 \item{num_label_size}{The size of the number labels}
@@ -110,4 +110,11 @@ A volcano plot
 \description{
 Generate a volcano plot for gene expression analysis based on
              the log2 fold change and the -log10 p-value.
+}
+\details{
+This function inherently uses the EnhancedVolcano package to
+         generate a volcano plot for gene expression analysis. Some
+         aesthetic are modified from the default plot to make it more
+         suitable for RNA-seq data analysis. Use the \code{...} to provide
+         additional arguments to EnhanceVolcano::EnhancedVolcano.
 }

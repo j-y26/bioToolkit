@@ -4,6 +4,12 @@
 #'
 #' @description Generate a volcano plot for gene expression analysis based on
 #'              the log2 fold change and the -log10 p-value.
+#' 
+#' @details This function inherently uses the EnhancedVolcano package to
+#'          generate a volcano plot for gene expression analysis. Some
+#'          aesthetic are modified from the default plot to make it more
+#'          suitable for RNA-seq data analysis. Use the \code{...} to provide
+#'          additional arguments to EnhanceVolcano::EnhancedVolcano.
 #'
 #' @param data A data frame containing the gene expression data
 #'
