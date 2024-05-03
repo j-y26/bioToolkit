@@ -1,0 +1,15 @@
+citHeader("To cite bioToolkit in publications use:")
+
+citEntry(entry = "Unpublished",
+  title        = "bioToolkit: An R package hosting a mix of useful functions
+                  for bioinformatics data analysis",
+  author       = "Jielin Yang",
+  note         = "Unpublished",
+  year         = "2024",
+  url          = "https://github.com/j-y26/bioToolkit",
+
+  textVersion  =
+  paste("Yang, J. (2024) bioToolkit: An R package hosting a mix of useful
+        functions for bioinformatics data analysis. Unpublished.
+        URL https://github.com/j-y26/bioToolkit.")
+)
