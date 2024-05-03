@@ -79,7 +79,7 @@
 #'
 #' @export
 #'
-plt_volcano <- function(
+plot_volcano <- function(
   data,
   de_method = "edgeR",
   x = NULL,
