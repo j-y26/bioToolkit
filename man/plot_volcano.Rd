@@ -20,6 +20,7 @@ plot_volcano(
   down_label = "Down-regulated",
   non_de_label = "Non-DE",
   number_label = TRUE,
+  num_label_vjust = 0,
   num_label_size = 4.5,
   x_lim = c(min(data[[x]], na.rm = TRUE) - 0.5, max(data[[x]], na.rm = TRUE) + 0.5),
   y_lim = c(0, max(-log10(data[[y]]), na.rm = TRUE) + 1),
@@ -75,6 +76,8 @@ overrides the value obtained from de_method.}
 
 \item{number_label}{A logical value indicating whether to display the number
 of up and down-regulated genes}
+
+\item{num_label_vjust}{The vertical justification for the number labels}
 
 \item{num_label_size}{The size of the number labels}
 

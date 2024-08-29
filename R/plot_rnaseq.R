@@ -49,6 +49,8 @@
 #'
 #' @param number_label A logical value indicating whether to display the number
 #'                     of up and down-regulated genes
+#' 
+#' @param num_label_vjust The vertical justification for the number labels
 #'
 #' @param num_label_size The size of the number labels
 #'
@@ -101,6 +103,7 @@ plot_volcano <- function(
     down_label = "Down-regulated",
     non_de_label = "Non-DE",
     number_label = TRUE,
+    num_label_vjust = 0,
     num_label_size = 4.5,
     x_lim = c(
       min(data[[x]], na.rm = TRUE) - 0.5,
@@ -197,7 +200,7 @@ plot_volcano <- function(
       y = y_lim[1],
       label = num_up,
       hjust = 1,
-      vjust = 0,
+      vjust = num_label_vjust,
       size = num_label_size
     ) + annotate(
       "text",
@@ -205,7 +208,7 @@ plot_volcano <- function(
       y = y_lim[1],
       label = num_down,
       hjust = 0,
-      vjust = 0,
+      vjust = num_label_vjust,
       size = num_label_size
     )
   }
