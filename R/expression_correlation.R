@@ -360,7 +360,7 @@ calc_expr_corr <- function(
     mutate(sig = ifelse(FDR < alpha & coef > 0, "Positively correlated",
                         ifelse(FDR < alpha & coef < 0, "Negatively correlated", "Not correlated")))
 
-  write.csv(model_results, file.path(base_dir, paste0(query_var, "_correlation_results.csv"), row.names = FALSE))
+  write.csv(model_results, file.path(base_dir, paste0(query_var, "_correlation_results.csv")), row.names = FALSE)
 
   # Plot a volcano plot
   p_volcano <- plot_volcano(
