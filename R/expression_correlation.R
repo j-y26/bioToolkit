@@ -85,7 +85,9 @@
 #'                   directories in the \code{base_dir} directory.
 #'
 #' @param base_dir A character string specifying the base directory to save the
-#'                 model plots. The default value is current working directory.
+#'                 model results and plots. The default value is the current
+#'                 working directory. The model results will be saved as a CSV
+#'                 file named \code{query_var_correlation_results.csv}.
 #'
 #' @param corr_method A character string specifying the method to calculate the
 #'                    correlation. The available methods include "pearson",
@@ -358,12 +360,15 @@ calc_expr_corr <- function(
     mutate(sig = ifelse(FDR < alpha & coef > 0, "Positively correlated",
                         ifelse(FDR < alpha & coef < 0, "Negatively correlated", "Not correlated")))
 
+  write.csv(model_results, file.path(base_dir, paste0(query_var, "_correlation_results.csv"), row.names = FALSE))
+
   # Plot a volcano plot
   p_volcano <- plot_volcano(
     data = model_results,
     x = "corr",
     y = "FDR",
     label = model_results$gene,
+    x_lab = paste0(corr_method, " correlation"),
     up_label = "Pos. corr.",
     down_label = "Neg. corr.",
     non_de_label = "Not corr."
@@ -383,6 +388,8 @@ calc_expr_corr <- function(
   if (plot_model) {
     pos_plots <- list()
     neg_plots <- list()
+
+    cat("Plotting linear models for each gene.\n")
 
     for (gene in model_results$gene) {
       if (model_results$sig[model_results$gene == gene] == "Not correlated") {
@@ -452,6 +459,8 @@ calc_expr_corr <- function(
 
     results$pos_plots <- pos_plots
     results$neg_plots <- neg_plots
+
+    cat("Linear models plotted.\n")
   }
 
   return(results)

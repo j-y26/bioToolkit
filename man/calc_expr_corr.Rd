@@ -91,7 +91,9 @@ ggplot2 functions. The plot will be saved in the
 directories in the \code{base_dir} directory.}
 
 \item{base_dir}{A character string specifying the base directory to save the
-model plots. The default value is current working directory.}
+model results and plots. The default value is the current
+working directory. The model results will be saved as a CSV
+file named \code{query_var_correlation_results.csv}.}
 
 \item{corr_method}{A character string specifying the method to calculate the
 correlation. The available methods include "pearson",
