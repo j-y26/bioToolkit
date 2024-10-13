@@ -67,3 +67,109 @@ rank_de_genes <- function(
 
   return(de_results)
 }
+
+
+#' @title Filter genes based on differential expression analysis results
+#' @description This function filters genes based on the results of differential
+#'              expression analysis for RNA-seq data. The user can specify the
+#'              minimum log2 fold change and maximum adjusted p-value to filter
+#'              the genes.
+#' 
+#' @param de_results A data frame containing the results of differential
+#'                   expression analysis. The data frame should have at least
+#'                   a column for log2 fold change and a column for (adjusted)
+#'                   p-value.
+#' 
+#' @param log2fc_min The minimum log2 fold change to filter genes. Default is
+#'                   0, which means no filtering based on log2 fold change.
+#' 
+#' @param pvalue_max The maximum adjusted p-value to filter genes. Default is
+#'                   0.05.
+#' 
+#' @param de_method The method used for differential expression analysis.
+#'                  Must be one of "edgeR" or "DESeq2". Default is "edgeR".
+#'                  Use this argument to automatically set the column names
+#'                  for log2 fold change and adjusted P-value. If provided value
+#'                  is not "edgeR" or "DESeq2", the user must provide both the
+#'                  column names for log2 fold change and P-value using the
+#'                  \code{log2fc_col} and \code{pvalue_col} arguments,
+#'                  respectively.
+#' 
+#' @param pvalue_col The name of the column in \code{de_results} that contains
+#'                   the p-values. If not NULL, overrides the default column
+#'                   name based on \code{de_method}.
+#'                  
+#' @param log2fc_col The name of the column in \code{de_results} that contains
+#'                   the log2 fold changes.
+#' 
+#' @export
+#' 
+#' @return A list of two data frames:
+#'        \itemize{
+#'          \item{up_reg}{Data frame containing up-regulated genes}
+#'          \item{down_reg}{Data frame containing down-regulated genes}
+#'        }
+#' 
+filter_de_genes <- function(
+    de_results,
+    log2fc_min = 0,
+    pvalue_max = 0.05,
+    de_method = "edgeR",
+    pvalue_col = NULL,
+    log2fc_col = NULL) {
+  # Set column names based on the method used, case-insensitive
+  de_method <- tolower(de_method)
+  if (de_method == "edger" && is.null(pvalue_col) && is.null(log2fc_col)) {
+    pvalue_col <- PVAL_COL_EDGER
+    log2fc_col <- FC_COL_EDGER
+  } else if (de_method == "deseq2" && is.null(pvalue_col) && is.null(log2fc_col)) {
+    pvalue_col <- PVAL_COL_DESEQ2
+    log2fc_col <- FC_COL_DESEQ2
+  } else if (is.null(pvalue_col) || is.null(log2fc_col)) {
+    stop("Please provide both the column names for log2 fold change and p-value.")
+  }
+
+  # Filter genes based on log2 fold change and p-value
+  up_reg <- de_results[de_results[[log2fc_col]] > log2fc_min &
+                          de_results[[pvalue_col]] < pvalue_max, ]
+  down_reg <- de_results[de_results[[log2fc_col]] < -log2fc_min &
+                            de_results[[pvalue_col]] < pvalue_max, ]
+
+  return(list(up_reg = up_reg, down_reg = down_reg))
+}
+
+
+#' @title Filter out genes with low expression based on minimum group size
+#' 
+#' @description This function filters out genes with low expression based on
+#'              the minimum group size. The user can specify the minimum number
+#'              of samples in which the gene should be expressed. Essentially,
+#'              a gene is kept only if it has at least 1 count per million
+#'              (CPM) in at least \code{min_group_size} samples.
+#' 
+#' @param raw_counts A data frame containing the raw counts of genes. The data
+#'                   frame should have samples as columns and genes as rows.
+#'                   All values should be non-negative integers.
+#' 
+#' @param min_group_size The minimum number of samples in which the gene should
+#'                       be expressed. Default is 4.
+#' 
+#' @importFrom edgeR cpm DGEList
+#' 
+#' @export
+#' 
+#' @return A data frame containing the filtered raw counts
+#' 
+filter_low_expression_genes <- function(raw_counts, min_group_size = 4) {
+  # Convert raw counts to DGEList object
+  dge <- DGEList(counts = raw_counts)
+
+  # Calculate counts per million (CPM)
+  cpm_values <- cpm(dge)
+
+  # Filter genes based on minimum group size
+  keep_genes <- rowSums(cpm_values > 1) >= min_group_size
+  filtered_counts <- raw_counts[keep_genes, ]
+
+  return(filtered_counts)
+}

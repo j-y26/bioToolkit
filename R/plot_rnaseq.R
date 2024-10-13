@@ -223,5 +223,10 @@ plot_volcano <- function(
     )
   }
 
+  # Final theme adjustments
+  v_plot <- v_plot +
+    theme_classic() +
+    theme(legend.position = "top", legend.title = element_blank())
+  
   return(v_plot)
 }
