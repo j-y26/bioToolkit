@@ -417,49 +417,75 @@ calc_expr_corr <- function(
       r_squared <- signif(summary(model)$r.squared, 4)
       corr <- signif(model_results$corr[model_results$gene == gene], 4)
 
-      # Switch the axes if required
       if (switch_axes) {
-        gene_temp <- gene
-        gene <- query_var
-        query_var <- gene_temp
+        # Plot the gene expression against the query gene
+        if (!is.null(plot_group_var)) {
+          sample_groups <- metadata[rownames(model$model), plot_group_var]
+          p_gene_query <- ggplot(model$model,
+                                aes(x = gene, y = query, color = sample_groups)) +
+            geom_point() +
+            stat_smooth(method = "lm", col = "firebrick4") +
+            labs(
+              x = gene,
+              y = query_var,
+              color = element_blank()
+            ) +
+            theme_classic() +
+            annotate("text", x = max_gene, y = max_query, label = bquote("FDR =" ~ .(FDR) ~ "\n" ~
+                              "Slope =" ~ .(slope) ~ "\n" ~
+                              "R"^2 ~ " =" ~ .(r_squared) ~ "\n" ~
+                              "Corr =" ~ .(corr)), hjust = 1, vjust = 1)
+        } else {
+          sample_groups <- NULL
+          p_gene_query <- ggplot(model$model,
+                                aes(x = gene, y = query)) +
+            geom_point() +
+            stat_smooth(method = "lm", col = "firebrick4") +
+            labs(
+              x = gene,
+              y = query_var
+            ) +
+            theme_classic() +
+            annotate("text", x = max_gene, y = max_query, label = bquote("FDR =" ~ .(FDR) ~ "\n" ~
+                              "Slope =" ~ .(slope) ~ "\n" ~
+                              "R"^2 ~ " =" ~ .(r_squared) ~ "\n" ~
+                              "Corr =" ~ .(corr)), hjust = 1, vjust = 1)
+        }
 
-        max_gene_temp <- max_gene
-        max_gene <- max_query
-        max_query <- max_gene_temp
-      }
-
-      # Plot the gene expression against the query gene
-      if (!is.null(plot_group_var)) {
-        sample_groups <- metadata[rownames(model$model), plot_group_var]
-        p_gene_query <- ggplot(model$model,
-                               aes(x = query, y = gene, color = sample_groups)) +
-          geom_point() +
-          stat_smooth(method = "lm", col = "firebrick4") +
-          labs(
-            x = query_var,
-            y = gene,
-            color = element_blank()
-          ) +
-          theme_classic() +
-          annotate("text", x = max_query, y = max_gene, label = bquote("FDR =" ~ .(FDR) ~ "\n" ~
-                            "Slope =" ~ .(slope) ~ "\n" ~
-                            "R"^2 ~ " =" ~ .(r_squared) ~ "\n" ~
-                            "Corr =" ~ .(corr)), hjust = 1, vjust = 1)
       } else {
-        sample_groups <- NULL
-        p_gene_query <- ggplot(model$model,
-                               aes(x = query, y = gene)) +
-          geom_point() +
-          stat_smooth(method = "lm", col = "firebrick4") +
-          labs(
-            x = query_var,
-            y = gene
-          ) +
-          theme_classic() +
-          annotate("text", x = max_query, y = max_gene, label = bquote("FDR =" ~ .(FDR) ~ "\n" ~
-                            "Slope =" ~ .(slope) ~ "\n" ~
-                            "R"^2 ~ " =" ~ .(r_squared) ~ "\n" ~
-                            "Corr =" ~ .(corr)), hjust = 1, vjust = 1)
+        # Plot the gene expression against the query gene
+        if (!is.null(plot_group_var)) {
+          sample_groups <- metadata[rownames(model$model), plot_group_var]
+          p_gene_query <- ggplot(model$model,
+                                aes(x = query, y = gene, color = sample_groups)) +
+            geom_point() +
+            stat_smooth(method = "lm", col = "firebrick4") +
+            labs(
+              x = query_var,
+              y = gene,
+              color = element_blank()
+            ) +
+            theme_classic() +
+            annotate("text", x = max_query, y = max_gene, label = bquote("FDR =" ~ .(FDR) ~ "\n" ~
+                              "Slope =" ~ .(slope) ~ "\n" ~
+                              "R"^2 ~ " =" ~ .(r_squared) ~ "\n" ~
+                              "Corr =" ~ .(corr)), hjust = 1, vjust = 1)
+        } else {
+          sample_groups <- NULL
+          p_gene_query <- ggplot(model$model,
+                                aes(x = query, y = gene)) +
+            geom_point() +
+            stat_smooth(method = "lm", col = "firebrick4") +
+            labs(
+              x = query_var,
+              y = gene
+            ) +
+            theme_classic() +
+            annotate("text", x = max_query, y = max_gene, label = bquote("FDR =" ~ .(FDR) ~ "\n" ~
+                              "Slope =" ~ .(slope) ~ "\n" ~
+                              "R"^2 ~ " =" ~ .(r_squared) ~ "\n" ~
+                              "Corr =" ~ .(corr)), hjust = 1, vjust = 1)
+        }
       }
 
       # Save the plot
