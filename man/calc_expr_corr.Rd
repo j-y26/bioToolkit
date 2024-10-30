@@ -18,6 +18,7 @@ calc_expr_corr(
   file_type = "png",
   dpi = 300,
   plot_group_var = NULL,
+  switch_axes = FALSE,
   alpha = 0.05,
   verbose = TRUE
 )
@@ -117,6 +118,11 @@ greater than 0.}
 
 \item{plot_group_var}{A character string specifying the variable in the
 metadata data frame to group the samples in the plot.}
+
+\item{switch_axes}{A logical value indicating whether to switch the axes of
+the plot. The default value is \code{FALSE}. If
+\code{TRUE}, the query gene will be plotted on the y-axis
+and the gene expression on the x-axis.}
 
 \item{alpha}{The significance level for the adjusted p-values. The default
 value is 0.05.}

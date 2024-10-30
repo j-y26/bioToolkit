@@ -111,6 +111,11 @@
 #'
 #' @param plot_group_var A character string specifying the variable in the
 #'                       metadata data frame to group the samples in the plot.
+#' 
+#' @param switch_axes A logical value indicating whether to switch the axes of
+#'                    the plot. The default value is \code{FALSE}. If
+#'                    \code{TRUE}, the query gene will be plotted on the y-axis
+#'                    and the gene expression on the x-axis.
 #'
 #' @param alpha The significance level for the adjusted p-values. The default
 #'              value is 0.05.
@@ -156,6 +161,7 @@ calc_expr_corr <- function(
   file_type = "png",
   dpi = 300,
   plot_group_var = NULL,
+  switch_axes = FALSE,
   alpha = 0.05,
   verbose = TRUE
 ) {
@@ -410,6 +416,17 @@ calc_expr_corr <- function(
       slope <- signif(coef(model)["query"], 4)
       r_squared <- signif(summary(model)$r.squared, 4)
       corr <- signif(model_results$corr[model_results$gene == gene], 4)
+
+      # Switch the axes if required
+      if (switch_axes) {
+        gene_temp <- gene
+        gene <- query_var
+        query_var <- gene_temp
+
+        max_gene_temp <- max_gene
+        max_gene <- max_query
+        max_query <- max_gene_temp
+      }
 
       # Plot the gene expression against the query gene
       if (!is.null(plot_group_var)) {
