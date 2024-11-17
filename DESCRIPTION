@@ -21,4 +21,5 @@ Imports:
     EnhancedVolcano,
     ggplot2,
     edgeR,
-    tibble
+    tibble,
+    scales
