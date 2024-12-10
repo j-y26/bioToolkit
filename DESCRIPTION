@@ -24,4 +24,5 @@ Imports:
     tibble,
     scales,
     SCpubr,
-    tidyr
+    tidyr,
+    grDevices
