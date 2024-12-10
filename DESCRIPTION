@@ -22,4 +22,6 @@ Imports:
     ggplot2,
     edgeR,
     tibble,
-    scales
+    scales,
+    SCpubr,
+    tidyr
