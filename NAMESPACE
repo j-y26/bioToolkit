@@ -3,6 +3,7 @@
 export(add_dimension_arrows)
 export(calc_expr_corr)
 export(do_DimPlot_arrows)
+export(do_FeaturePlot_arrow)
 export(filter_de_genes)
 export(filter_low_expression_genes)
 export(get_meta_pivot)

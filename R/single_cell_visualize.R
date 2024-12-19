@@ -266,3 +266,124 @@ do_DimPlot_arrows <- function(
 
   return(plot)
 }
+
+
+
+#' @title do_FeaturePlot with arrows on the bottom left corner
+#' 
+#' @description This function is a further implementation of the do_FeaturePlot
+#'             function from the SCpubr package. It generates a ggplot object
+#'            with the dimension arrows added to the bottom left corner of
+#'            the plot. The function is useful for visualizing single cell
+#'           data with dimension reduction methods such as UMAP, t-SNE, PCA,
+#'          and spatial coordinates.
+#' 
+#' @param object A Seurat object
+#' 
+#' @param features A vector of feature names to plot
+#' 
+#' @param assay The assay to use for plotting, default is the active assay
+#' 
+#' @param reduction The reduction method used to generate the plot, default is
+#'                 "umap".
+#' 
+#' @param slot The slot to use for the reduction, default is "data"
+#' 
+#' @param order Whether to order the cells based on feature expression. Default
+#'              is TRUE
+#' 
+#' @param dims A vector of dimension names, overwrites the default dimension
+#'             names assumed from reduction method. (Overwrite the dims argument
+#'             in the SCpubr::do_FeaturePlot function)
+#' 
+#' @param pt.size The size of the points, default is 0.5
+#' 
+#' @param legend.position The position of the legend, default is 'right'
+#' 
+#' @param arrow_length The size of the arrow, default is 0.15 (15% of the plot)
+#' 
+#' @param arrow_x_adjust_ratio The x-axis adjustment ratio for the arrow,
+#' 
+#' @param arrow_y_adjust_ratio The y-axis adjustment ratio for the arrow,
+#' 
+#' @param x_coord_adjust Horizontal adjustment of the arrow origin, default is 0
+#' 
+#' @param y_coord_adjust Vertical adjustment of the arrow origin, default is 0
+#' 
+#' @param arrow_size The size of the arrow head, default is 0.2 cm
+#' 
+#' @param arrow_width The width of the arrow, default is 0.9
+#' 
+#' @param arrow_text_color The color of the arrow and label, default is "black"
+#' 
+#' @param arrow_type The type of the arrow, default is "closed"
+#' 
+#' @param text_font_size The font size of the text, default is 4
+#' 
+#' @param relative_text_dst The relative distance of the text from the arrow,
+#' 
+#' @param ... Additional arguments to pass to the SCpubr::do_FeaturePlot function
+#' 
+#' @return a ggplot object with the dimension arrows added
+#' 
+#' @import SCpubr
+#' 
+#' @export
+#' 
+do_FeaturePlot_arrow <- function(
+  object,
+  features,
+  assay = NULL,
+  reduction = "umap",
+  slot = "data",
+  order = TRUE,
+  dims = NULL,
+  pt.size = 0.5,
+  legend.position = "right",
+  arrow_length = 0.1,
+  arrow_x_adjust_ratio = 1,
+  arrow_y_adjust_ratio = 1,
+  x_coord_adjust = 0,
+  y_coord_adjust = 0,
+  arrow_size = 0.2,
+  arrow_width = 0.9,
+  arrow_text_color = "black",
+  arrow_type = "closed",
+  text_font_size = 4,
+  relative_text_dst = 0.15,
+  ...
+) {
+  # Generate the plot
+  plot <- SCpubr::do_FeaturePlot(
+    object,
+    features = features,
+    assay = assay,
+    reduction = reduction,
+    slot = slot,
+    order = order,
+    dims = dims,
+    pt.size = pt.size,
+    legend.position = legend.position,
+    ...
+  )
+
+  # Add dimension arrows
+  plot <- add_dimension_arrows(
+    plot,
+    reduction = reduction,
+    dims = dims,
+    arrow_length = arrow_length,
+    arrow_x_adjust_ratio = arrow_x_adjust_ratio,
+    arrow_y_adjust_ratio = arrow_y_adjust_ratio,
+    x_coord_adjust = x_coord_adjust,
+    y_coord_adjust = y_coord_adjust,
+    arrow_size = arrow_size,
+    arrow_width = arrow_width,
+    arrow_text_color = arrow_text_color,
+    arrow_type = arrow_type,
+    text_font_size = text_font_size,
+    relative_text_dst = relative_text_dst
+  )
+
+  return(plot)
+}
