@@ -330,7 +330,7 @@ do_DimPlot_arrows <- function(
 #' 
 #' @export
 #' 
-do_FeaturePlot_arrow <- function(
+do_FeaturePlot_arrows <- function(
   object,
   features,
   assay = NULL,
