@@ -300,6 +300,14 @@ do_DimPlot_arrows <- function(
 #' 
 #' @param legend.position The position of the legend, default is 'right'
 #' 
+#' @param legend.framewidth The width of the legend frame, default is 0.3
+#' 
+#' @param legend.tickwidth The width of the legend ticks, default is 0.3
+#' 
+#' @param legend.length The length of the legend, default is 10
+#' 
+#' @param legend.width The width of the legend, default is 0.6
+#' 
 #' @param arrow_length The size of the arrow, default is 0.15 (15% of the plot)
 #' 
 #' @param arrow_x_adjust_ratio The x-axis adjustment ratio for the arrow,
@@ -311,6 +319,8 @@ do_DimPlot_arrows <- function(
 #' @param y_coord_adjust Vertical adjustment of the arrow origin, default is 0
 #' 
 #' @param arrow_size The size of the arrow head, default is 0.2 cm
+#' 
+#' @param sequential.palette The color palette to use for the feature plot
 #' 
 #' @param arrow_width The width of the arrow, default is 0.9
 #' 
@@ -339,7 +349,12 @@ do_FeaturePlot_arrows <- function(
   order = TRUE,
   dims = NULL,
   pt.size = 0.5,
+  sequential.palette = "Purples",
   legend.position = "right",
+  legend.framewidth = 0.3,
+  legend.tickwidth = 0.3,
+  legend.length = 10,
+  legend.width = 0.6,
   arrow_length = 0.1,
   arrow_x_adjust_ratio = 1,
   arrow_y_adjust_ratio = 1,

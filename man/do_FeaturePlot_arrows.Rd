@@ -13,7 +13,12 @@ do_FeaturePlot_arrows(
   order = TRUE,
   dims = NULL,
   pt.size = 0.5,
+  sequential.palette = "Purples",
   legend.position = "right",
+  legend.framewidth = 0.3,
+  legend.tickwidth = 0.3,
+  legend.length = 10,
+  legend.width = 0.6,
   arrow_length = 0.1,
   arrow_x_adjust_ratio = 1,
   arrow_y_adjust_ratio = 1,
@@ -49,7 +54,17 @@ in the SCpubr::do_FeaturePlot function)}
 
 \item{pt.size}{The size of the points, default is 0.5}
 
+\item{sequential.palette}{The color palette to use for the feature plot}
+
 \item{legend.position}{The position of the legend, default is 'right'}
+
+\item{legend.framewidth}{The width of the legend frame, default is 0.3}
+
+\item{legend.tickwidth}{The width of the legend ticks, default is 0.3}
+
+\item{legend.length}{The length of the legend, default is 10}
+
+\item{legend.width}{The width of the legend, default is 0.6}
 
 \item{arrow_length}{The size of the arrow, default is 0.15 (15% of the plot)}
 
