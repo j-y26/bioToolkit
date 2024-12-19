@@ -379,6 +379,11 @@ do_FeaturePlot_arrows <- function(
     dims = dims,
     pt.size = pt.size,
     legend.position = legend.position,
+    legend.framewidth = legend.framewidth,
+    legend.tickwidth = legend.tickwidth,
+    legend.length = legend.length,
+    legend.width = legend.width,
+    sequential.palette = sequential.palette,
     ...
   )
 
