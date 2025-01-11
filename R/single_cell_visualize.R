@@ -407,3 +407,191 @@ do_FeaturePlot_arrows <- function(
 
   return(plot)
 }
+
+
+#' @title Dot Plot for comparisons with logFC and p-values
+#' 
+#' @description This function generates a dot plot for visualizing comparisons
+#'              between multiple pairs of groups. The dot plot shows the log
+#'              fold change (logFC) and p-values for each comparison for each
+#'              feature. The dot plot is useful for visualizing differential
+#'              expression analysis results. If a gene in a given comparison has
+#'              a significant p-value, the dot is colored based on the logFC
+#'              value. The size of the dot is proportional to the -log10 of the
+#'              p-value. If not significant, the dot is colored in grey.
+#' 
+#' @param de_results A data frame with the differential expression results, must
+#'                   contain the columns for "feature", "avg_logFC", "p_val_adj",
+#'                   and "comparison"
+#' 
+#' @param features A vector of feature names to plot
+#' 
+#' @param feature_var The name of the feature variable in the de_results data
+#'                    frame, default is "gene"
+#' 
+#' @param logFC_var The name of the logFC variable in the de_results data frame,
+#'                  default is "avg_logFC"
+#' 
+#' @param p_val_var The name of the p-value variable in the de_results data frame,
+#'                  default is "p_val_adj"
+#' 
+#' @param comparison_var The name of the comparison variable in the de_results
+#'                       data frame, default is "comparison"
+#' 
+#' @param logFC_cutoff The logFC cutoff for filtering the features, default is 0
+#' 
+#' @param p_val_cutoff The p-value cutoff for filtering the features, default is
+#'                     0.05
+#' 
+#' @param palette The color palette to use for the dot plot for representing the
+#'                logFC values, default is "NULL". If NULL, down_color, mid_color,
+#'                and up_color will be used. If not NULL, the palette will be used
+#'                to represent the logFC values and the down_color, mid_color, and
+#'                up_color will be ignored
+#' 
+#' @param down_color The color for down-regulated features, default is "darkgreen"
+#' 
+#' @param mid_color The color for 0 logFC features, default is "white"
+#' 
+#' @param up_color The color for up-regulated features, default is "darkslateblue"
+#' 
+#' @param nsig_color The color for non-significant features, default is "grey70"
+#' 
+#' @param sig_only Whether to plot only significant features, default is FALSE,
+#'                 which plots all features provided. If TRUE, the plot will
+#'                 only show features-comparisons with p-values < p_val_cutoff
+#'                 and logFC > logFC_cutoff
+#' 
+#' @param invert Whether to invert the plot, default is FALSE. By default, the
+#'               x axis is the features and the y axis is the comparisons. If
+#'               TRUE, the x axis is the comparisons and the y axis is the
+#'               features
+#' 
+#' @return a ggplot object with the dot plot
+#' 
+#' @import ggplot2 dplyr
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom scales gradient_n_pal
+#' 
+#' @export
+#' 
+de_dot_plot <- function(
+  de_results,
+  features,
+  feature_var = "gene",
+  logFC_var = "avg_log2FC",
+  p_val_var = "p_val_adj",
+  comparison_var = "comparison",
+  logFC_cutoff = 0,
+  p_val_cutoff = 0.05,
+  palette = NULL,
+  down_color = "darkgreen",
+  mid_color = "white",
+  up_color = "darkslateblue",
+  nsig_color = "grey70",
+  sig_only = FALSE,
+  invert = FALSE
+) {
+  # Check if the de_results is a data frame
+  if (!is.data.frame(de_results)) {
+    stop("The de_results must be a data frame")
+  }
+
+  # Check if the feature_var is in the de_results
+  if (!feature_var %in% colnames(de_results)) {
+    stop(paste0("The feature_var ", feature_var, " must be a column in the de_results data frame"))
+  }
+
+  # Check if the logFC_var is in the de_results
+  if (!logFC_var %in% colnames(de_results)) {
+    stop(paste0("The logFC_var ", logFC_var, " must be a column in the de_results data frame"))
+  }
+
+  # Check if the p_val_var is in the de_results
+  if (!p_val_var %in% colnames(de_results)) {
+    stop(paste0("The p_val_var ", p_val_var, " must be a column in the de_results data frame"))
+  }
+
+  # Check if the comparison_var is in the de_results
+  if (!comparison_var %in% colnames(de_results)) {
+    stop(paste0("The comparison_var ", comparison_var, " must be a column in the de_results data frame"))
+  }
+
+  # Check if the logFC_cutoff is numeric
+  if (!is.numeric(logFC_cutoff)) {
+    stop("The logFC_cutoff must be a numeric value")
+  }
+
+  # Check if the p_val_cutoff is numeric
+  if (!is.numeric(p_val_cutoff)) {
+    stop("The p_val_cutoff must be a numeric value")
+  }
+
+  # Find and note any requested features that are not in the de_results
+  # Filter the de_results to only include the requested features
+  missing_features <- setdiff(features, unique(de_results[[feature_var]]))
+  if (length(missing_features) > 0) {
+    warning(paste0("The following features are not in the de_results: ", paste(missing_features, collapse = ", ")))
+  }
+  de_results <- de_results %>% filter(tolower(!!sym(feature_var)) %in% tolower(features))
+
+  if (nrow(de_results) == 0) {
+    stop("No matching features found in the provided data frame.")
+  }
+
+  # Add a signif column
+  de_results$signif <- de_results[[p_val_var]] < p_val_cutoff & abs(de_results[[logFC_var]]) > logFC_cutoff
+
+  # Filter the features based on the logFC and p-value cutoffs
+  if (sig_only) {
+    de_results <- de_results %>% filter(signif)
+  }
+
+  # Alter if any features are removed
+  removed_features <- setdiff(features, unique(de_results[[feature_var]]))
+  if (length(removed_features) > 0) {
+    warning(paste0("The following features were removed due to  non-significance: ", paste(removed_features, collapse = ", ")))
+  }
+
+  # Compute the dot size
+  de_results$dot_size <- -log10(de_results[[p_val_var]])
+
+  # Create the plot
+  if (!invert) {
+    dot_plot <- ggplot(de_results, aes(y = !!sym(comparison_var), x = !!sym(feature_var))) +
+      geom_point(aes(size = dot_size, color = ifelse(signif, !!sym(logFC_var), NA)))
+  } else {
+    dot_plot <- ggplot(de_results, aes(y = !!sym(feature_var), x = !!sym(comparison_var))) +
+      geom_point(aes(size = dot_size, color = ifelse(signif, !!sym(logFC_var), NA)))
+  }
+
+  # Check the colors for the dots
+  if (!is.null(palette)) {
+    # Obtain the low, mid, and high colors from the palette
+    palette_colors <- RColorBrewer::brewer.pal(9, palette)
+    pal_func <- scales::gradient_n_pal(palette_colors)
+    down_color <- pal_func(0)
+    mid_color <- pal_func(0.5)
+    up_color <- pal_func(1)
+  }
+
+  # Add the color scale and point size
+  dot_plot <- dot_plot  +
+    scale_color_gradient2(
+      low = down_color,
+      mid = mid_color,
+      high = up_color,
+      midpoint = 0,
+      na.value = nsig_color,
+      name = "log2(Fold Change)"
+    ) +
+    scale_size_continuous(name = "-log10(p-value)") +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank()
+    )
+
+  return(dot_plot)
+}
