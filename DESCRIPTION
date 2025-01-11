@@ -25,4 +25,6 @@ Imports:
     scales,
     SCpubr,
     tidyr,
-    grDevices
+    grDevices,
+    RColorBrewer,
+    scales
