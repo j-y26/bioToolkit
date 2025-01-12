@@ -270,76 +270,76 @@ do_DimPlot_arrows <- function(
 
 
 #' @title do_FeaturePlot with arrows on the bottom left corner
-#' 
+#'
 #' @description This function is a further implementation of the do_FeaturePlot
 #'             function from the SCpubr package. It generates a ggplot object
 #'            with the dimension arrows added to the bottom left corner of
 #'            the plot. The function is useful for visualizing single cell
 #'           data with dimension reduction methods such as UMAP, t-SNE, PCA,
 #'          and spatial coordinates.
-#' 
+#'
 #' @param object A Seurat object
-#' 
+#'
 #' @param features A vector of feature names to plot
-#' 
+#'
 #' @param assay The assay to use for plotting, default is the active assay
-#' 
+#'
 #' @param reduction The reduction method used to generate the plot, default is
 #'                 "umap".
-#' 
+#'
 #' @param slot The slot to use for the reduction, default is "data"
-#' 
+#'
 #' @param order Whether to order the cells based on feature expression. Default
 #'              is TRUE
-#' 
+#'
 #' @param dims A vector of dimension names, overwrites the default dimension
 #'             names assumed from reduction method. (Overwrite the dims argument
 #'             in the SCpubr::do_FeaturePlot function)
-#' 
+#'
 #' @param pt.size The size of the points, default is 0.5
-#' 
+#'
 #' @param legend.position The position of the legend, default is 'right'
-#' 
+#'
 #' @param legend.framewidth The width of the legend frame, default is 0.3
-#' 
+#'
 #' @param legend.tickwidth The width of the legend ticks, default is 0.3
-#' 
+#'
 #' @param legend.length The length of the legend, default is 10
-#' 
+#'
 #' @param legend.width The width of the legend, default is 0.6
-#' 
+#'
 #' @param arrow_length The size of the arrow, default is 0.15 (15% of the plot)
-#' 
+#'
 #' @param arrow_x_adjust_ratio The x-axis adjustment ratio for the arrow,
-#' 
+#'
 #' @param arrow_y_adjust_ratio The y-axis adjustment ratio for the arrow,
-#' 
+#'
 #' @param x_coord_adjust Horizontal adjustment of the arrow origin, default is 0
-#' 
+#'
 #' @param y_coord_adjust Vertical adjustment of the arrow origin, default is 0
-#' 
+#'
 #' @param arrow_size The size of the arrow head, default is 0.2 cm
-#' 
+#'
 #' @param sequential.palette The color palette to use for the feature plot
-#' 
+#'
 #' @param arrow_width The width of the arrow, default is 0.9
-#' 
+#'
 #' @param arrow_text_color The color of the arrow and label, default is "black"
-#' 
+#'
 #' @param arrow_type The type of the arrow, default is "closed"
-#' 
+#'
 #' @param text_font_size The font size of the text, default is 4
-#' 
+#'
 #' @param relative_text_dst The relative distance of the text from the arrow,
-#' 
+#'
 #' @param ... Additional arguments to pass to the SCpubr::do_FeaturePlot function
-#' 
+#'
 #' @return a ggplot object with the dimension arrows added
-#' 
+#'
 #' @import SCpubr
-#' 
+#'
 #' @export
-#' 
+#'
 do_FeaturePlot_arrows <- function(
   object,
   features,
@@ -410,7 +410,7 @@ do_FeaturePlot_arrows <- function(
 
 
 #' @title Dot Plot for comparisons with logFC and p-values
-#' 
+#'
 #' @description This function generates a dot plot for visualizing comparisons
 #'              between multiple pairs of groups. The dot plot shows the log
 #'              fold change (logFC) and p-values for each comparison for each
@@ -419,62 +419,107 @@ do_FeaturePlot_arrows <- function(
 #'              a significant p-value, the dot is colored based on the logFC
 #'              value. The size of the dot is proportional to the -log10 of the
 #'              p-value. If not significant, the dot is colored in grey.
-#' 
+#'
 #' @param de_results A data frame with the differential expression results, must
 #'                   contain the columns for "feature", "avg_logFC", "p_val_adj",
 #'                   and "comparison"
-#' 
+#'
 #' @param features A vector of feature names to plot
-#' 
+#'
 #' @param feature_var The name of the feature variable in the de_results data
 #'                    frame, default is "gene"
-#' 
+#'
 #' @param logFC_var The name of the logFC variable in the de_results data frame,
 #'                  default is "avg_logFC"
-#' 
+#'
 #' @param p_val_var The name of the p-value variable in the de_results data frame,
 #'                  default is "p_val_adj"
-#' 
+#'
 #' @param comparison_var The name of the comparison variable in the de_results
 #'                       data frame, default is "comparison"
-#' 
+#'
 #' @param logFC_cutoff The logFC cutoff for filtering the features, default is 0
-#' 
+#'
 #' @param p_val_cutoff The p-value cutoff for filtering the features, default is
 #'                     0.05
-#' 
+#'
 #' @param palette The color palette to use for the dot plot for representing the
 #'                logFC values, default is "NULL". If NULL, down_color, mid_color,
 #'                and up_color will be used. If not NULL, the palette will be used
 #'                to represent the logFC values and the down_color, mid_color, and
 #'                up_color will be ignored
-#' 
+#'
 #' @param down_color The color for down-regulated features, default is "darkgreen"
-#' 
+#'
 #' @param mid_color The color for 0 logFC features, default is "white"
-#' 
+#'
 #' @param up_color The color for up-regulated features, default is "darkslateblue"
-#' 
+#'
 #' @param nsig_color The color for non-significant features, default is "grey70"
-#' 
+#'
+#' @param col_limits_logFC The limits for the logFC color scale, default is
+#'                         using the min and max logFC values in the data.
+#'                         This argument is useful for when extreme logFC values
+#'                         are present in the data, which could result in
+#'                         most dots share very vague colors. The limits can
+#'                         be set to a smaller range to enhance the color
+#'                         contrast. The limits should be a vector of two
+#'                         numeric values, e.g., c(-2, 2)
+#'
 #' @param sig_only Whether to plot only significant features, default is FALSE,
 #'                 which plots all features provided. If TRUE, the plot will
 #'                 only show features-comparisons with p-values < p_val_cutoff
 #'                 and logFC > logFC_cutoff
-#' 
+#'
 #' @param invert Whether to invert the plot, default is FALSE. By default, the
 #'               x axis is the features and the y axis is the comparisons. If
 #'               TRUE, the x axis is the comparisons and the y axis is the
 #'               features
+#'
+#' @param x_text_angle The angle of the x-axis text, default is 45
+#'
+#' @param group_by_features The column name in the de_results data frame to
+#'                          to specify the grouping of the features, default is
+#'                          NULL. Having only unique values in the
+#'                          group_by_features is NOT allowed. To handle the
+#'                          order in which the groups are plotted, set the
+#'                          group_by_features to a factor with the desired order
+#'                          using \code{factor(group_by_features, levels = c("levels"))}
+#'
+#' @param group_by_comparisons The column name in the de_results data frame to
+#'                             to specify the grouping of the comparisons,
+#'                             default is NULL. Having only unique values in the
+#'                             group_by_comparisons is NOT allowed. To handle the
+#'                             order in which the groups are plotted, set the
+#'                             group_by_comparisons to a factor with the desired
+#'                             order using \code{factor(group_by_comparisons, levels = c("levels"))}
+#'
+#' @param panel_spacing The spacing between the panels, default is 0.2
 #' 
+#' @param legend_position The position of the legend, default is 'right'
+#' 
+#' @param legend_key_size The size of the legend key, default is 0.8
+#' 
+#' @param legend_title The title of the legend, default is "Avg log2(FC)"
+#' 
+#' @param legend_title_size The size of the legend title, default is 8
+#' 
+#' @param legend_text_size The size of the legend text, default is 7
+#' 
+#' @param x_group_label_position The position of the x-axis group label, default is "bottom"
+#' 
+#' @param y_group_label_position The position of the y-axis group label, default is "left"
+#'
 #' @return a ggplot object with the dot plot
-#' 
+#'
 #' @import ggplot2 dplyr
+#'
 #' @importFrom RColorBrewer brewer.pal
+#'
 #' @importFrom scales gradient_n_pal
-#' 
+#'
 #' @export
-#' 
+#'
 de_dot_plot <- function(
   de_results,
   features,
@@ -489,8 +534,21 @@ de_dot_plot <- function(
   mid_color = "white",
   up_color = "darkslateblue",
   nsig_color = "grey70",
+  col_limits_logFC = c(min(de_results[[logFC_var]]), max(de_results[[logFC_var]])),
   sig_only = FALSE,
-  invert = FALSE
+  invert = FALSE,
+  x_text_angle = 45,
+  group_by_features = NULL,
+  group_by_comparisons = NULL,
+  panel_spacing = 0.2,
+  legend_position = "right",
+  legend_key_size = 0.8,
+  legend_title = "Avg log2(FC)",
+  legend_title_size = 8,
+  legend_text_size = 7,
+  x_group_label_position = "bottom",
+  y_group_label_position = "left"
+
 ) {
   # Check if the de_results is a data frame
   if (!is.data.frame(de_results)) {
@@ -527,6 +585,30 @@ de_dot_plot <- function(
     stop("The p_val_cutoff must be a numeric value")
   }
 
+  #=============================================================================
+  # Currently does not support having BOTH group_by_features and group_by_comparisons
+  #=============================================================================
+  if (!is.null(group_by_features) && !is.null(group_by_comparisons)) {
+    stop("Currently does not support having BOTH group_by_features and group_by_comparisons")
+  }
+
+  # Validate grouping columns
+  if (!is.null(group_by_features) && !group_by_features %in% colnames(de_results)) {
+    stop(paste0("The group_by_features ", group_by_features, " must be a column in the de_results data frame"))
+
+    if (length(unique(de_results[[group_by_features]]) == 1)) {
+      stop(paste0("The group_by_features ", group_by_features, " must have more than one unique value"))
+    }
+  }
+
+  if (!is.null(group_by_comparisons) && !group_by_comparisons %in% colnames(de_results)) {
+    stop(paste0("The group_by_comparisons ", group_by_comparisons, " must be a column in the de_results data frame"))
+
+    if (length(unique(de_results[[group_by_comparisons]]) == 1)) {
+      stop(paste0("The group_by_comparisons ", group_by_comparisons, " must have more than one unique value"))
+    }
+  }
+
   # Find and note any requested features that are not in the de_results
   # Filter the de_results to only include the requested features
   missing_features <- setdiff(features, unique(de_results[[feature_var]]))
@@ -556,13 +638,54 @@ de_dot_plot <- function(
   # Compute the dot size
   de_results$dot_size <- -log10(de_results[[p_val_var]])
 
-  # Create the plot
+# Create the base plot with invert option and ordered axes
   if (!invert) {
-    dot_plot <- ggplot(de_results, aes(y = !!sym(comparison_var), x = !!sym(feature_var))) +
-      geom_point(aes(size = dot_size, color = ifelse(signif, !!sym(logFC_var), NA)))
+    dot_plot <- ggplot(de_results,
+      aes(x = !!sym(feature_var),
+          y = !!sym(comparison_var))) +
+      geom_point(aes(
+        size = dot_size,
+        color = ifelse(signif, !!sym(logFC_var), NA)
+      ))
   } else {
-    dot_plot <- ggplot(de_results, aes(y = !!sym(feature_var), x = !!sym(comparison_var))) +
-      geom_point(aes(size = dot_size, color = ifelse(signif, !!sym(logFC_var), NA)))
+    dot_plot <- ggplot(de_results,
+      aes(x = !!sym(comparison_var),
+          y = !!sym(feature_var))) +
+      geom_point(aes(
+        size = dot_size,
+        color = ifelse(signif, !!sym(logFC_var), NA)
+      ))
+  }
+
+  # Add faceting based on grouping variables
+  if (!is.null(group_by_features)) {
+    if (!invert) {
+      dot_plot <- dot_plot +
+        facet_grid(as.formula(paste(".", "~", group_by_features)),
+                    scales = "free_x",
+                    space = "free_x",
+                    switch = if (x_group_label_position == "top") NULL else "x")
+    } else {
+      dot_plot <- dot_plot +
+        facet_grid(as.formula(paste(group_by_features, "~ .")),
+                    scales = "free_y",
+                    space = "free_y",
+                    switch = if (y_group_label_position == "left") "y" else NULL)
+    }
+  } else if (!is.null(group_by_comparisons)) {
+    if (!invert) {
+      dot_plot <- dot_plot +
+        facet_grid(as.formula(paste(group_by_comparisons, "~ .")),
+                    scales = "free_y",
+                    space = "free_y",
+                    switch = if (y_group_label_position == "left") "y" else NULL)
+    } else {
+      dot_plot <- dot_plot +
+        facet_grid(as.formula(paste(".", "~", group_by_comparisons)),
+                    scales = "free_x",
+                    space = "free_x",
+                    switch = if (y_group_label_position == "left") "x" else NULL)
+    }
   }
 
   # Check the colors for the dots
@@ -583,14 +706,25 @@ de_dot_plot <- function(
       high = up_color,
       midpoint = 0,
       na.value = nsig_color,
-      name = "log2(Fold Change)"
+      limits = col_limits_logFC,
+      name = legend_title
     ) +
     scale_size_continuous(name = "-log10(p-value)") +
-    theme_minimal() +
+    theme_classic() +
     theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.text.x = element_text(angle = x_text_angle, hjust = 1),
+      strip.background = element_blank(),
+      strip.text = element_text(face = "bold", vjust = 1),
+      strip.placement = "outside",
+      panel.spacing = unit(panel_spacing, "lines"),
       axis.title.x = element_blank(),
-      axis.title.y = element_blank()
+      axis.title.y = element_blank(),
+      legend.key.size = unit(legend_key_size, "lines"),
+      legend.margin = margin(0, 0, 0, 0),
+      legend.position = legend_position,
+      legend.title = element_text(size = legend_title_size),
+      legend.text = element_text(size = legend_text_size),
+      legend.box.margin = margin(-10, 0, 0, 0),
     )
 
   return(dot_plot)

@@ -18,8 +18,20 @@ de_dot_plot(
   mid_color = "white",
   up_color = "darkslateblue",
   nsig_color = "grey70",
+  col_limits_logFC = c(min(de_results[[logFC_var]]), max(de_results[[logFC_var]])),
   sig_only = FALSE,
-  invert = FALSE
+  invert = FALSE,
+  x_text_angle = 45,
+  group_by_features = NULL,
+  group_by_comparisons = NULL,
+  panel_spacing = 0.2,
+  legend_position = "right",
+  legend_key_size = 0.8,
+  legend_title = "Avg log2(FC)",
+  legend_title_size = 8,
+  legend_text_size = 7,
+  x_group_label_position = "bottom",
+  y_group_label_position = "left"
 )
 }
 \arguments{
@@ -60,6 +72,15 @@ up_color will be ignored}
 
 \item{nsig_color}{The color for non-significant features, default is "grey70"}
 
+\item{col_limits_logFC}{The limits for the logFC color scale, default is
+using the min and max logFC values in the data.
+This argument is useful for when extreme logFC values
+are present in the data, which could result in
+most dots share very vague colors. The limits can
+be set to a smaller range to enhance the color
+contrast. The limits should be a vector of two
+numeric values, e.g., c(-2, 2)}
+
 \item{sig_only}{Whether to plot only significant features, default is FALSE,
 which plots all features provided. If TRUE, the plot will
 only show features-comparisons with p-values < p_val_cutoff
@@ -69,6 +90,40 @@ and logFC > logFC_cutoff}
 x axis is the features and the y axis is the comparisons. If
 TRUE, the x axis is the comparisons and the y axis is the
 features}
+
+\item{x_text_angle}{The angle of the x-axis text, default is 45}
+
+\item{group_by_features}{The column name in the de_results data frame to
+to specify the grouping of the features, default is
+NULL. Having only unique values in the
+group_by_features is NOT allowed. To handle the
+order in which the groups are plotted, set the
+group_by_features to a factor with the desired order
+using \code{factor(group_by_features, levels = c("levels"))}}
+
+\item{group_by_comparisons}{The column name in the de_results data frame to
+to specify the grouping of the comparisons,
+default is NULL. Having only unique values in the
+group_by_comparisons is NOT allowed. To handle the
+order in which the groups are plotted, set the
+group_by_comparisons to a factor with the desired
+order using \code{factor(group_by_comparisons, levels = c("levels"))}}
+
+\item{panel_spacing}{The spacing between the panels, default is 0.2}
+
+\item{legend_position}{The position of the legend, default is 'right'}
+
+\item{legend_key_size}{The size of the legend key, default is 0.8}
+
+\item{legend_title}{The title of the legend, default is "Avg log2(FC)"}
+
+\item{legend_title_size}{The size of the legend title, default is 8}
+
+\item{legend_text_size}{The size of the legend text, default is 7}
+
+\item{x_group_label_position}{The position of the x-axis group label, default is "bottom"}
+
+\item{y_group_label_position}{The position of the y-axis group label, default is "left"}
 }
 \value{
 a ggplot object with the dot plot
