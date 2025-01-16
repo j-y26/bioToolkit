@@ -729,3 +729,159 @@ de_dot_plot <- function(
 
   return(dot_plot)
 }
+
+
+#' @title Annotation Sankey Plot
+#' 
+#' @description This function generates a Sankey plot for visualizing the
+#'              transitions and overlap between different annotations. The
+#'              Sankey plot is useful for visualizing the flow of cells
+#'              between different levels of annotations.
+#' 
+#' @param object A Seurat object or a data frame (\code{suerat_obj@meta.data}) 
+#'               with the annotations to visualize
+#' 
+#' @param annotations A vector of annotation names to visualize. The order will
+#'                    dictate the flow in the Sankey plot
+#' 
+#' @param title The title of the Sankey plot, default is 'Annotation Sankey Plot'
+#' 
+#' @param nodes A vector of unique node/group names to use in the Sankey
+#'              plot. If NULL, all unique groups in the annotations will be used
+#' 
+#' @param colors A named vector of colors to use for the annotations. The names
+#'               should match the annotation group names and should have exactly
+#'               the same length as the unique groups in the annotations
+#' 
+#' @param thickness The thickness of the Sankey plot, default is 15
+#' 
+#' @param pad The padding between the nodes, default is 15
+#' 
+#' @param font_size The font size of the text, default is 10
+#' 
+#' @importFrom plotly plot_ly layout
+#' @import dplyr
+#' 
+#' @export
+#' 
+#' @return a plotly object with the Sankey plot
+#' 
+annotation_sankey_plot <- function(
+  object,
+  annotations,
+  title = "Annotation Sankey Plot",
+  nodes = NULL,
+  colors = NULL,
+  thickness = 15,
+  pad = 15,
+  font_size = 10
+) {
+  # Check if the object is a Seurat object or a data frame
+  if (is(object, "Seurat")) {
+    object <- object@meta.data
+  } else if (is.data.frame(object)) {
+    object <- object
+  } else {
+    stop("The object must be a Seurat object or a data frame")
+  }
+
+  # Check annotation columns
+  if (length(annotations) < 2) {
+    stop("The annotations must contain at least two columns")
+  }
+
+  # Check if the annotations are in the object
+  if (!all(annotations %in% colnames(object))) {
+    stop("The annotations must be columns in the object")
+  }
+
+  # Filter to keep only the annotations
+  object <- object[, c(annotations)]
+
+  # Filter nodes
+  if (is.null(nodes)) {
+    nodes <- unique(unlist(object))
+  } else {
+    object <- object %>% filter_all(any_vars(. %in% nodes))
+  }
+
+  # Assign colors to the nodes
+  if (is.null(colors)) {
+    colors <- scales::hue_pal()(length(nodes))
+  } else {
+    if (length(colors) != length(nodes)) {
+      stop("The colors must have the same length as the nodes")
+    } else if (!all(names(colors) %in% nodes)) {
+      stop("The colors must have the same names as the nodes")
+    } else {
+      # arrange the colors based on the nodes
+      colors <- colors[nodes]
+    }
+  }
+
+  # Generate list that represents the links
+  links <- list()
+  for (i in 1:(length(annotations) - 1)) {
+    # Get the unique groups in the current and next annotation
+    groups_current <- unique(object[[annotations[i]]])
+    groups_next <- unique(object[[annotations[i + 1]]])
+
+    # Generate the links
+    for (group_current in groups_current) {
+      for (group_next in groups_next) {
+        link <- list(
+          source = group_current,
+          target = group_next,
+          value = sum((object[[annotations[i]]] == group_current) & (object[[annotations[i + 1]]] == group_next))
+        )
+        if (!link$value == 0) {
+          links$source <- c(links$source, link$source)
+          links$target <- c(links$target, link$target)
+          links$value <- c(links$value, link$value)
+        }
+      }
+    }
+  }
+
+  # Generate the sankey plot
+  plt <- plotly::plot_ly(
+    type = "sankey",
+    domain = list(
+      x =  c(0,1),
+      y =  c(0,1)
+    ),
+    orientation = "h",
+    valueformat = ".0f",
+    valuesuffix = "TWh",
+    node = list(
+      label = nodes,
+      color = colors,
+      pad = pad,
+      thickness = thickness,
+      line = list(
+        color = "black",
+        width = 0.5
+      )
+    ),
+
+    link = links
+  )
+
+  # Add layout
+  plt <- plt %>% plotly::layout(
+    title = title,
+    font = list(
+      size = font_size
+    ),
+    xaxis = list(
+      showgrid = FALSE,
+      zeroline = FALSE
+    ),
+    yaxis = list(
+      showgrid = FALSE,
+      zeroline = FALSE
+    )
+  )
+
+  return(plt)
+}

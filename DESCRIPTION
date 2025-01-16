@@ -26,4 +26,5 @@ Imports:
     SCpubr,
     tidyr,
     grDevices,
-    RColorBrewer
+    RColorBrewer,
+    plotly
