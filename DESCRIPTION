@@ -15,7 +15,7 @@ LazyData: true
 URL: https://github.com/j-y26/bioToolkit
 BugReports: https://github.com/j-y26/bioToolkit/issues
 biocViews: BiomedicalInformatics
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports: 
     dplyr,
     EnhancedVolcano,

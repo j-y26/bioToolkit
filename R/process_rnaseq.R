@@ -70,6 +70,7 @@ rank_de_genes <- function(
 
 
 #' @title Filter genes based on differential expression analysis results
+#' 
 #' @description This function filters genes based on the results of differential
 #'              expression analysis for RNA-seq data. The user can specify the
 #'              minimum log2 fold change and maximum adjusted p-value to filter
@@ -172,4 +173,82 @@ filter_low_expression_genes <- function(raw_counts, min_group_size = 4) {
   filtered_counts <- raw_counts[keep_genes, ]
 
   return(filtered_counts)
+}
+
+
+#' @title Summarize group expression values for each gene
+#' 
+#' @description This function summarizes the expression values of genes for each
+#'              group. The user can specify the method to summarize the values
+#'              for each group. The default method is to calculate the mean of
+#'              the expression values.
+#' 
+#' @param counts A data frame containing the expression values of genes. The
+#'               data frame should have samples as columns and genes as rows.
+#'               All values should be numeric.
+#' 
+#' @param group_info A data frame containing the group information of samples.
+#'                  The data frame should have samples as rows and groups as
+#'                  columns. One column should contain the information to group
+#'                  the samples.
+#' 
+#' @param group_by The name of the column in \code{group_info} that contains the
+#'                 information to group the samples. Row names must be the same
+#'                 as the column names in \code{counts}.
+#' 
+#' @param method The method to summarize the expression values for each group.
+#'               Must be one of "mean", "median", "min", "max", or "sum".
+#'               Default is "mean".
+#' 
+#' @export
+#' 
+#' @return A data frame containing the summarized expression values for each
+#'         gene across samples in each group.
+#' 
+summarize_group_expression <- function(counts,
+                                       group_info,
+                                       group_by,
+                                       method = "mean") {
+
+  # Check if method is valid
+  valid_methods <- c("mean", "median", "min", "max", "sum")
+  if (!method %in% valid_methods) {
+    stop("Invalid method. Please choose one of: mean, median, min, max, sum.")
+  }
+
+  # Check sample names match
+  if (!all(colnames(counts) %in% rownames(group_info))) {
+    stop("Some sample names in counts are missing from group_info.")
+  }
+
+  # Get unique groups and samples in each group
+  groups <- unique(group_info[[group_by]])
+  grouped_samples <- split(rownames(group_info), group_info[[group_by]])
+
+  # Initialize a data frame to store the summarized expression values
+  summarized_values <- data.frame(matrix(NA, nrow = nrow(counts), ncol = length(groups)))
+  colnames(summarized_values) <- groups
+  rownames(summarized_values) <- rownames(counts)
+
+  # Summarize expression values for each group
+  for (group in groups) {
+    samples <- intersect(grouped_samples[[group]], colnames(counts))  # Ensure valid samples
+    if (length(samples) == 0) next  # Skip if no valid samples
+
+    group_counts <- counts[, samples, drop = FALSE]  # Prevent vector conversion
+
+    if (method == "mean") {
+      summarized_values[, group] <- rowMeans(group_counts, na.rm = TRUE)
+    } else if (method == "median") {
+      summarized_values[, group] <- apply(group_counts, 1, median, na.rm = TRUE)
+    } else if (method == "min") {
+      summarized_values[, group] <- apply(group_counts, 1, min, na.rm = TRUE)
+    } else if (method == "max") {
+      summarized_values[, group] <- apply(group_counts, 1, max, na.rm = TRUE)
+    } else if (method == "sum") {
+      summarized_values[, group] <- rowSums(group_counts, na.rm = TRUE)
+    }
+  }
+
+  return(summarized_values)
 }
