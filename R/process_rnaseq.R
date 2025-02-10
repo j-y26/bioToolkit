@@ -200,6 +200,16 @@ filter_low_expression_genes <- function(raw_counts, min_group_size = 4) {
 #'               Must be one of "mean", "median", "min", "max", or "sum".
 #'               Default is "mean".
 #' 
+#' @param pre_scale A logical value indicating whether to pre-scale the counts
+#'                  before summarizing. Default is FALSE. Scaling will be done
+#'                  using the \code{scale} function. Scaling is done across
+#'                  samples for each gene.
+#' 
+#' @param post_scale A logical value indicating whether to post-scale the
+#'                   summarized values. Default is FALSE. Scaling will be done
+#'                   using the \code{scale} function. Scaling is done across
+#'                   groups for each gene.
+#' 
 #' @export
 #' 
 #' @return A data frame containing the summarized expression values for each
@@ -208,7 +218,9 @@ filter_low_expression_genes <- function(raw_counts, min_group_size = 4) {
 summarize_group_expression <- function(counts,
                                        group_info,
                                        group_by,
-                                       method = "mean") {
+                                       method = "mean",
+                                       pre_scale = FALSE,
+                                       post_scale = FALSE) {
 
   # Check if method is valid
   valid_methods <- c("mean", "median", "min", "max", "sum")
@@ -219,6 +231,11 @@ summarize_group_expression <- function(counts,
   # Check sample names match
   if (!all(colnames(counts) %in% rownames(group_info))) {
     stop("Some sample names in counts are missing from group_info.")
+  }
+
+  # Check if counts is numeric data frame
+  if (!is.data.frame(counts) || !all(sapply(counts, is.numeric))) {
+    stop("counts must be a numeric data frame.")
   }
 
   # Get unique groups and samples in each group
@@ -237,6 +254,15 @@ summarize_group_expression <- function(counts,
 
     group_counts <- counts[, samples, drop = FALSE]  # Prevent vector conversion
 
+    # Pre-scale counts if required
+    if (pre_scale) {
+      group_counts <- group_counts %>%
+        t() %>%
+        scale() %>%
+        t() %>%
+        as.data.frame()
+    }
+
     if (method == "mean") {
       summarized_values[, group] <- rowMeans(group_counts, na.rm = TRUE)
     } else if (method == "median") {
@@ -248,6 +274,15 @@ summarize_group_expression <- function(counts,
     } else if (method == "sum") {
       summarized_values[, group] <- rowSums(group_counts, na.rm = TRUE)
     }
+  }
+
+  # Post-scale summarized values if required
+  if (post_scale) {
+    summarized_values <- summarized_values %>%
+      t() %>%
+      scale() %>%
+      t() %>%
+      as.data.frame()
   }
 
   return(summarized_values)

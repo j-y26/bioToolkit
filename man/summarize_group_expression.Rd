@@ -4,7 +4,14 @@
 \alias{summarize_group_expression}
 \title{Summarize group expression values for each gene}
 \usage{
-summarize_group_expression(counts, group_info, group_by, method = "mean")
+summarize_group_expression(
+  counts,
+  group_info,
+  group_by,
+  method = "mean",
+  pre_scale = FALSE,
+  post_scale = FALSE
+)
 }
 \arguments{
 \item{counts}{A data frame containing the expression values of genes. The
@@ -23,6 +30,16 @@ as the column names in \code{counts}.}
 \item{method}{The method to summarize the expression values for each group.
 Must be one of "mean", "median", "min", "max", or "sum".
 Default is "mean".}
+
+\item{pre_scale}{A logical value indicating whether to pre-scale the counts
+before summarizing. Default is FALSE. Scaling will be done
+using the \code{scale} function. Scaling is done across
+samples for each gene.}
+
+\item{post_scale}{A logical value indicating whether to post-scale the
+summarized values. Default is FALSE. Scaling will be done
+using the \code{scale} function. Scaling is done across
+groups for each gene.}
 }
 \value{
 A data frame containing the summarized expression values for each
