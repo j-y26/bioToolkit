@@ -287,3 +287,70 @@ summarize_group_expression <- function(counts,
 
   return(summarized_values)
 }
+
+#' @title Extract PCA loadings from PCA object
+#' 
+#' @description This function extracts the PCA loadings from a PCA object
+#'              generated using the \code{prcomp} function.
+#' 
+#' @param pca_obj A PCA object generated using the \code{prcomp} function.
+#' 
+#' @param pcs A vector of integers specifying the principal components to
+#'            extract the loadings. Default is to extract PC 1-3.
+#' 
+#' @param top_n The number of top genes to extract for each principal component.
+#'              Default is 20.
+#' 
+#' @export
+#' 
+#' @return A list, where each element is a PC, and each element is a named vector
+#'         containing the top genes and their loadings.
+#' 
+extract_pc_loadings <- function(pca_obj,
+                                pcs = 1:3,
+                                top_n = 20) {
+  # Check if pca_obj is a prcomp object
+  if (!inherits(pca_obj, "prcomp")) {
+    stop("pca_obj must be a prcomp object.")
+  }
+
+  # Check if pcs is a vector of positive integers
+  if (!is.numeric(pcs) || any(pcs %% 1 != 0) || any(pcs <= 0)) {
+    stop("pcs must be a vector of positive integers.")
+  }
+  
+  # Check if top_n is a positive integer
+  if (!is.numeric(top_n) || top_n %% 1 != 0 || top_n <= 0) {
+    stop("top_n must be a positive integer.")
+  }
+
+  # Check if pcs are within the range of principal components
+  # If not, keep only valid components
+  allowed_pcs <- 1:ncol(pca_obj$x)
+  invalid_pcs <- setdiff(pcs, allowed_pcs)
+  if (length(invalid_pcs) > 0) {
+    warning(paste("Principal components", invalid_pcs, "are invalid."))
+    warning("Keeping only valid principal components.")
+    pcs <- intersect(pcs, allowed_pcs)
+  }
+
+  # Extract loadings for each principal component
+  loadings <- as.data.frame(pca_obj$rotation)
+
+  if (top_n > nrow(loadings)) {
+    warning("top_n is greater than the number of genes. Returning all genes.")
+    top_n <- nrow(loadings)
+  }
+
+  # Get top genes for each principal component
+  top_genes <- list()
+  for (pc in pcs) {
+    pc_loadings <- loadings[, pc]
+    names(pc_loadings) <- rownames(loadings)
+
+    # Sort loadings by absolute value
+    top_genes[[paste0("PC_", pc)]] <- pc_loadings[order(abs(pc_loadings), decreasing = TRUE)][1:top_n]
+  }
+
+  return(top_genes)
+}

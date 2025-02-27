@@ -4,7 +4,7 @@
 #'
 #' @description Generate a volcano plot for gene expression analysis based on
 #'              the log2 fold change and the -log10 p-value.
-#' 
+#'
 #' @details This function inherently uses the EnhancedVolcano package to
 #'          generate a volcano plot for gene expression analysis. Some
 #'          aesthetic are modified from the default plot to make it more
@@ -49,7 +49,7 @@
 #'
 #' @param number_label A logical value indicating whether to display the number
 #'                     of up and down-regulated genes
-#' 
+#'
 #' @param num_label_vjust The vertical justification for the number labels
 #'
 #' @param num_label_size The size of the number labels
@@ -227,6 +227,74 @@ plot_volcano <- function(
   v_plot <- v_plot +
     theme_classic() +
     theme(legend.position = "top", legend.title = element_blank())
-  
+
   return(v_plot)
+}
+
+#' @title Plotting top PCA loadings
+#'
+#' @description This function extracts the PCA loadings from a PCA object
+#'              generated using the \code{prcomp} function and plots the top
+#'              genes for each principal component.
+#'
+#' @param pca_obj A PCA object generated using the \code{prcomp} function.
+#'
+#' @param pcs A vector of integers specifying the principal components to
+#'            extract the loadings. Default is to extract PC 1-3.
+#'
+#' @param top_n The number of top genes to extract for each principal component.
+#'              Default is 20.
+#' 
+#' @param low_color The color for low loadings
+#' 
+#' @param mid_color The color for mid loadings
+#' 
+#' @param high_color The color for high loadings
+#'
+#' @export
+#'
+#' @return A list, where each element is a PC, and each element is a named vector
+#'         containing the top genes and their loadings.
+#'
+#' @importFrom ggplot2 ggplot geom_bar coord_flip facet_wrap scale_fill_gradient2
+#' @importFrom dplyr arrange group_by ungroup
+#'
+plot_top_pca_loadings <- function(pca_obj,
+                                  pcs = 1:3,
+                                  top_n = 20,
+                                  low_color = "darkgreen",
+                                  mid_color = "white",
+                                  high_color = "darkslateblue") {
+  top_loadings <- extract_pc_loadings(pca_obj, pcs, top_n)
+
+  # Convert list to data frame
+  plot_data <- do.call(rbind, lapply(names(top_loadings), function(pc) {
+    data.frame(Gene = names(top_loadings[[pc]]),
+               Loading = unname(top_loadings[[pc]]),
+               PC = pc)
+  }))
+
+  # Arrange from most positive to most negative
+  plot_data <- plot_data %>%
+    group_by(PC) %>%
+    arrange(desc(Loading), .by_group = TRUE) %>%
+    ungroup()
+
+  # Plot
+  p <- ggplot(plot_data, aes(x = reorder(Gene, Loading), y = Loading, fill = Loading)) +
+    geom_bar(stat = "identity") +
+    coord_flip() +
+    facet_wrap(~ PC, scales = "free_y") +
+    scale_fill_gradient2(low = low_color, mid = mid_color, high = high_color, midpoint = 0) +
+    theme_minimal() +
+    labs(title = "Top Contributing Genes to Principal Components",
+         x = "Gene",
+         y = "Loading",
+         fill = "Direction") +
+    theme(legend.position = "bottom",
+          axis.text.y = element_text(size = 10),
+          axis.text.x = element_text(size = 10),
+          strip.text = element_text(size = 12, face = "bold"))
+
+  return(p)
 }
