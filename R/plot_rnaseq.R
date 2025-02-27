@@ -244,11 +244,11 @@ plot_volcano <- function(
 #'
 #' @param top_n The number of top genes to extract for each principal component.
 #'              Default is 20.
-#' 
+#'
 #' @param low_color The color for low loadings
-#' 
+#'
 #' @param mid_color The color for mid loadings
-#' 
+#'
 #' @param high_color The color for high loadings
 #'
 #' @export
@@ -276,6 +276,7 @@ plot_top_pca_loadings <- function(pca_obj,
 
   # Arrange from most positive to most negative
   plot_data <- plot_data %>%
+    mutate(PC = gsub("_", "-", PC)) %>%
     group_by(PC) %>%
     arrange(desc(Loading), .by_group = TRUE) %>%
     ungroup()
