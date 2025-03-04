@@ -2,7 +2,7 @@ Package: bioToolkit
 Type: Package
 Title: An R package hosting useful functions for data analysis
 Version: 0.1.2
-Author: persion("Jielin", "Yang",
+Author: person("Jielin", "Yang",
                 email = "jielin.yang@sickkids.ca",
                 role = c("aut", "cre"),
                 comment = c(ORCID = "0000-0003-4207-828X"))
@@ -27,4 +27,7 @@ Imports:
     tidyr,
     grDevices,
     RColorBrewer,
-    plotly
+    plotly,
+    stats,
+    Matrix,
+    Seurat
