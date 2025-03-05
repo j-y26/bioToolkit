@@ -7,7 +7,7 @@
 calc_module_scores(
   data,
   modules,
-  normalized = TRUE,
+  expr_normalized = TRUE,
   pool = NULL,
   nbin = 24,
   ctrl = 100,
@@ -19,11 +19,11 @@ calc_module_scores(
 and samples in columns. Rownames should be genes and column
 names should be samples. Must be a numeric matrix.}
 
-\item{modules}{A list of gene modules. Each element of the list should
-be a character vector of gene names. The names of the list
-should be the module names.}
+\item{modules}{A list of gene modules or a path to a GMT file or a \code{GeneSetCollection} object.
+Each element of the list should be a character vector of gene names.
+The names of the list should be the module names.}
 
-\item{normalized}{A logical value indicating whether the data is
+\item{expr_normalized}{A logical value indicating whether the data is
 normalized. If \code{TRUE}, the function will assume
 that the data is already normalized by CPM or TPM or FPKM.}
 

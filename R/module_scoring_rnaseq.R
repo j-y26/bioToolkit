@@ -1,5 +1,79 @@
 # Perform Gene Module Scoring on RNA-seq data
 
+
+# Helper function for log normalization of expression data for calc_module_scores
+# and calc_module_scores_ssgsea functions
+log_normalize <- function(data, normalized = TRUE) {
+  if (!normalized) {
+    # Assume using raw counts
+    dge <- edgeR::DGEList(counts = data)
+    dge <- edgeR::calcNormFactors(dge)
+    data <- edgeR::cpm(dge, log = TRUE)
+    cat("Raw data is normalized and log2-transformed\n")
+  } else {
+    # Assume using normalized data, log-transform it
+    data <- log2(data + 1)
+    cat("Normalized data is log2-transformed\n")
+  }
+  return(data)
+}
+
+
+#' @title Manipulating geneset formats
+#'
+#' @description This function is used to manipulate gene set formats
+#'              such as GMT files and GeneSetCollection objects.
+#'
+#' @param gsc A GeneSetCollection object or a list of gene sets or a path to a GMT file.
+#'
+#' @param to A character string indicating the format to convert to. Available
+#'           options are "GeneSetCollection", "list", and "gmt".
+#'
+#' @return A GeneSetCollection object, a list of gene sets, or a GMT file.
+#'
+#' @export
+#'
+#' @importFrom GSEABase GeneSet GeneSetCollection getGmt toGmt
+#'
+format_gene_sets <- function(gsc,
+                             to = c("GeneSetCollection", "list", "gmt")) {
+  to <- match.arg(to)
+
+  # Convert input to GeneSetCollection, if not already
+  if (is.character(gsc)) {
+    if (!file.exists(gsc)) {
+      stop("The path to the GMT file does not exist")
+    }
+    gsc <- GSEABase::getGmt(gsc)
+  } else if (is(gsc, "GeneSetCollection")) {
+    # Do nothing
+
+  } else if (is.list(gsc)) {
+    gene_set_list <- lapply(names(gsc), function(set_name) {
+      genes <- gsc[[set_name]]
+      GSEABase::GeneSet(genes, setName = set_name)
+    })
+    gsc <- GSEABase::GeneSetCollection(gene_set_list)
+  } else {
+    stop("gsc must be a GeneSetCollection object, a list of gene sets, or a path to a GMT file")
+  }
+
+  # Convert to desired format
+  if (to == "GeneSetCollection") {
+    return(gsc)
+  } else if (to == "list") {
+    gene_set_list <- lapply(names(gsc), function(set_name) {
+      gene_set <- gsc[[set_name]]
+      GSEABase::geneIds(gene_set)
+    })
+    names(gene_set_list) <- names(gsc)
+    return(gene_set_list)
+  } else if (to == "gmt") {
+    return(GSEABase::toGmt(gsc))
+  }
+}
+
+
 #' @title Calculate gene module score
 #'
 #' @description Calculate gene module score for each sample using
@@ -12,11 +86,11 @@
 #'             and samples in columns. Rownames should be genes and column
 #'             names should be samples. Must be a numeric matrix.
 #'
-#' @param modules A list of gene modules. Each element of the list should
-#'                be a character vector of gene names. The names of the list
-#'                should be the module names.
+#' @param modules A list of gene modules or a path to a GMT file or a \code{GeneSetCollection} object.
+#'                Each element of the list should be a character vector of gene names.
+#'                The names of the list should be the module names.
 #'
-#' @param normalized A logical value indicating whether the data is
+#' @param expr_normalized A logical value indicating whether the data is
 #'                   normalized. If \code{TRUE}, the function will assume
 #'                   that the data is already normalized by CPM or TPM or FPKM.
 #'
@@ -43,7 +117,7 @@
 #'
 calc_module_scores <- function(data,
                                modules,
-                               normalized = TRUE,
+                               expr_normalized = TRUE,
                                pool = NULL,
                                nbin = 24,
                                ctrl = 100,
@@ -64,13 +138,8 @@ calc_module_scores <- function(data,
   }
 
   # Check if normalized is a logical
-  if (!is.logical(normalized)) {
-    stop("normalized must be a logical value")
-  }
-
-  # Check if modules is a list
-  if (!is.list(modules)) {
-    stop("modules must be a list")
+  if (!is.logical(expr_normalized)) {
+    stop("expr_normalized must be a logical value")
   }
 
   # Check if pool is a character vector
@@ -93,6 +162,9 @@ calc_module_scores <- function(data,
     stop("seed must be a numeric value")
   }
 
+  # Read modules
+  modules <- format_gene_sets(modules, to = "list")
+
   # Set seed
   set.seed(seed)
 
@@ -106,17 +178,7 @@ calc_module_scores <- function(data,
   pool <- pool %||% genes
 
   # Get gene expression
-  if (!normalized) {
-    # Assume using raw counts
-    dge <- edgeR::DGEList(counts = data)
-    dge <- edgeR::calcNormFactors(dge)
-    data <- edgeR::cpm(dge, log = TRUE)
-    cat("Raw data is normalized and log2-transformed\n")
-  } else {
-    # Assume using normalized data, log-transform it
-    data <- log2(data + 1)
-    cat("Normalized data is log2-transformed\n")
-  }
+  data <- log_normalize(data, expr_normalized)
 
   # Validate each module
   for (i in seq_along(modules)) {
@@ -211,3 +273,79 @@ calc_module_scores <- function(data,
 
 
 #' @title Calculate Gene module enrichment using ssGSEA
+#'
+#' @description Calculate gene module enrichment scores using single-sample
+#'              gene set enrichment analysis (ssGSEA) method. This function
+#'              utilizes the GSVA package to calculate enrichment scores for
+#'              gene modules in each sample.
+#'
+#' @param data A matrix or \code{ExpressionSet} of gene expression data with genes in rows
+#'             and samples in columns. Rownames should be genes and column
+#'             names should be samples. Must be a numeric matrix or an \code{ExpressionSet}.
+#'
+#' @param modules A list of gene modules or a path to a GMT file or a \code{GeneSetCollection} object.
+#'                Each element of the list should be a character vector of gene names.
+#'                The names of the list should be the module names.
+#'
+#' @param expr_normalized A logical value indicating whether the data is
+#'                   normalized. If \code{TRUE}, the function will assume
+#'                   that the data is already normalized by CPM or TPM or FPKM.
+#'
+#' @param minSize Minimum size of gene set to be considered for ssGSEA. Default is 1.
+#'
+#' @param maxSize Maximum size of gene set to be considered for ssGSEA. Default is Inf.
+#'
+#' @param alpha The exponent defining the weight of the tail in the random walk
+#'              performed by the ssGSEA. See \code{GSVA::ssgseaParam} for more details.
+#'
+#' @param normalize A logical value indicating whether to normalize the enrichment scores.
+#'
+#' @return A data frame with rows as samples and columns as module scores.
+#'
+#' @export
+#'
+#' @importFrom GSVA ssgseaParam gsva
+#'
+calc_module_scores_ssgsea <- function(data,
+                                      modules,
+                                      expr_normalized = TRUE,
+                                      minSize = 1,
+                                      maxSize = Inf,
+                                      alpha = 0.75,
+                                      normalize = TRUE) {
+  # Check if data is a matrix or ExpressionSet
+  if (!is.matrix(data) && !is(data, "ExpressionSet")) {
+    stop("data must be a matrix or ExpressionSet")
+  } else if (is.matrix(data)) {
+    if (!is.numeric(data)) {
+      stop("data must be a numeric matrix")
+    } else {
+      # Convert matrix to ExpressionSet
+      data <- log_normalize(data, expr_normalized)
+      data <- Biobase::ExpressionSet(assayData = data)
+    }
+  }
+
+  # Check if normalized is a logical
+  if (!is.logical(expr_normalized)) {
+    stop("expr_normalized must be a logical value")
+  }
+
+  # Read modules
+  modules <- format_gene_sets(modules, to = "GeneSetCollection")
+
+  # Define gsva parameters for ssgsea
+  gsva_params <- GSVA::ssgseaParam(
+    exprData = data,
+    geneSets = modules,
+    minSize = minSize,
+    maxSize = maxSize,
+    alpha = alpha,
+    normalize = normalize
+  )
+
+  # Perform ssGSEA
+  module_scores <- GSVA::gsva(gsva_params, verbose = TRUE)
+
+  return(as.data.frame(module_scores))
+}

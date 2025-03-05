@@ -30,4 +30,6 @@ Imports:
     plotly,
     stats,
     Matrix,
-    Seurat
+    Seurat,
+    GSEABase,
+    
