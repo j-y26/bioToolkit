@@ -214,7 +214,7 @@ filter_low_expression_genes <- function(raw_counts, min_group_size = 4) {
 #' 
 #' @return A data frame containing the summarized expression values for each
 #'         gene across samples in each group.
-#' 
+#'
 summarize_group_expression <- function(counts,
                                        group_info,
                                        group_by,
@@ -326,7 +326,7 @@ extract_pc_loadings <- function(pca_obj,
 
   # Check if pcs are within the range of principal components
   # If not, keep only valid components
-  allowed_pcs <- 1:ncol(pca_obj$x)
+  allowed_pcs <- seq_len(ncol(pca_obj$x))
   invalid_pcs <- setdiff(pcs, allowed_pcs)
   if (length(invalid_pcs) > 0) {
     warning(paste("Principal components", invalid_pcs, "are invalid."))

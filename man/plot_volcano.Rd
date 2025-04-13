@@ -9,8 +9,9 @@ plot_volcano(
   de_method = "edgeR",
   x = NULL,
   y = NULL,
-  label = rownames(data),
-  selected_labels = NULL,
+  label = "row.names",
+  selected_labels = rownames(data),
+  draw_connectors = TRUE,
   p_cutoff = 0.05,
   fc_cutoff = 0,
   up_color = "firebrick4",
@@ -22,17 +23,17 @@ plot_volcano(
   number_label = TRUE,
   num_label_vjust = 0,
   num_label_size = 4.5,
-  x_lim = c(min(data[[x]], na.rm = TRUE) - 0.5, max(data[[x]], na.rm = TRUE) + 0.5),
-  y_lim = c(0, max(-log10(data[[y]]), na.rm = TRUE) + 1),
+  alpha = 0.5,
+  pt_size = 2,
+  x_lim = NULL,
+  y_lim = NULL,
   x_lab = bquote(~log[2] ~ "fold change"),
   y_lab = bquote(~-log[10] ~ adj.P),
   axis_lab_size = 12,
-  lab_size = 4,
-  bold_text = TRUE,
+  lab_size = 3.5,
   legend_lab_size = 12,
   legend_lab_position = "top",
-  legend_icon_size = 5,
-  draw_connectors = TRUE,
+  legend_icon_size = 4,
   max_overlaps = 10,
   ...
 )
@@ -58,6 +59,8 @@ overrides the value obtained from de_method.}
 
 \item{selected_labels}{A vector of gene names to be highlighted in the plot}
 
+\item{draw_connectors}{A logical value indicating whether to draw connectors}
+
 \item{p_cutoff}{The p-value cutoff for significance}
 
 \item{fc_cutoff}{The log2 fold change cutoff for significance}
@@ -81,6 +84,10 @@ of up and down-regulated genes}
 
 \item{num_label_size}{The size of the number labels}
 
+\item{alpha}{The transparency level of the points in the plot}
+
+\item{pt_size}{The size of the points in the plot}
+
 \item{x_lim}{The limits for the x-axis}
 
 \item{y_lim}{The limits for the y-axis}
@@ -93,19 +100,13 @@ of up and down-regulated genes}
 
 \item{lab_size}{The size of the gene labels}
 
-\item{bold_text}{A logical value indicating whether to bold the text}
-
 \item{legend_lab_size}{The size of the legend labels}
 
 \item{legend_lab_position}{The position of the legend labels}
 
 \item{legend_icon_size}{The size of the legend icons}
 
-\item{draw_connectors}{A logical value indicating whether to draw connectors}
-
 \item{max_overlaps}{The maximum number of overlaps for the gene labels}
-
-\item{...}{Additional arguments to be passed to the plot function}
 }
 \value{
 A volcano plot
@@ -115,9 +116,5 @@ Generate a volcano plot for gene expression analysis based on
              the log2 fold change and the -log10 p-value.
 }
 \details{
-This function inherently uses the EnhancedVolcano package to
-         generate a volcano plot for gene expression analysis. Some
-         aesthetic are modified from the default plot to make it more
-         suitable for RNA-seq data analysis. Use the \code{...} to provide
-         additional arguments to EnhanceVolcano::EnhancedVolcano.
+This function generates a volcano plot for gene expression analysis.
 }

@@ -5,11 +5,7 @@
 #' @description Generate a volcano plot for gene expression analysis based on
 #'              the log2 fold change and the -log10 p-value.
 #'
-#' @details This function inherently uses the EnhancedVolcano package to
-#'          generate a volcano plot for gene expression analysis. Some
-#'          aesthetic are modified from the default plot to make it more
-#'          suitable for RNA-seq data analysis. Use the \code{...} to provide
-#'          additional arguments to EnhanceVolcano::EnhancedVolcano.
+#' @details This function generates a volcano plot for gene expression analysis.
 #'
 #' @param data A data frame containing the gene expression data
 #'
@@ -30,6 +26,8 @@
 #' @param label The column name of the gene names
 #'
 #' @param selected_labels A vector of gene names to be highlighted in the plot
+#'
+#' @param draw_connectors A logical value indicating whether to draw connectors
 #'
 #' @param p_cutoff The p-value cutoff for significance
 #'
@@ -54,6 +52,10 @@
 #'
 #' @param num_label_size The size of the number labels
 #'
+#' @param alpha The transparency level of the points in the plot
+#'
+#' @param pt_size The size of the points in the plot
+#'
 #' @param x_lim The limits for the x-axis
 #'
 #' @param y_lim The limits for the y-axis
@@ -66,22 +68,17 @@
 #'
 #' @param lab_size The size of the gene labels
 #'
-#' @param bold_text A logical value indicating whether to bold the text
-#'
 #' @param legend_lab_size The size of the legend labels
 #'
 #' @param legend_lab_position The position of the legend labels
 #'
 #' @param legend_icon_size The size of the legend icons
 #'
-#' @param draw_connectors A logical value indicating whether to draw connectors
-#'
 #' @param max_overlaps The maximum number of overlaps for the gene labels
 #'
-#' @param ... Additional arguments to be passed to the plot function
+#' @import ggplot2 dplyr rlang
 #'
-#' @importFrom EnhancedVolcano EnhancedVolcano
-#' @import ggplot2 dplyr
+#' @importFrom ggrepel geom_text_repel
 #'
 #' @return A volcano plot
 #'
@@ -92,8 +89,9 @@ plot_volcano <- function(
     de_method = "edgeR",
     x = NULL,
     y = NULL,
-    label = rownames(data),
-    selected_labels = NULL,
+    label = "row.names",
+    selected_labels = rownames(data),
+    draw_connectors = TRUE,
     p_cutoff = 0.05,
     fc_cutoff = 0,
     up_color = "firebrick4",
@@ -105,20 +103,17 @@ plot_volcano <- function(
     number_label = TRUE,
     num_label_vjust = 0,
     num_label_size = 4.5,
-    x_lim = c(
-      min(data[[x]], na.rm = TRUE) - 0.5,
-      max(data[[x]], na.rm = TRUE) + 0.5
-    ),
-    y_lim = c(0, max(-log10(data[[y]]), na.rm = TRUE) + 1),
+    alpha = 0.5,
+    pt_size = 2,
+    x_lim = NULL,
+    y_lim = NULL,
     x_lab = bquote(~ log[2] ~ "fold change"),
     y_lab = bquote(~ -log[10] ~ adj.P),
     axis_lab_size = 12,
-    lab_size = 4,
-    bold_text = TRUE,
+    lab_size = 3.5,
     legend_lab_size = 12,
     legend_lab_position = "top",
-    legend_icon_size = 5,
-    draw_connectors = TRUE,
+    legend_icon_size = 4,
     max_overlaps = 10,
     ...) {
   # Check if the DE method is valid, case-insensitive
@@ -135,61 +130,115 @@ plot_volcano <- function(
     }
   }
 
-  # Define key-value pairs for color coding
-  key_val <- ifelse(
-    data[[y]] < p_cutoff & data[[x]] > fc_cutoff, up_color,
-    ifelse(
-      data[[y]] < p_cutoff & data[[x]] < -fc_cutoff, down_color,
-      non_de_color
-    )
-  )
-  key_val[is.na(key_val)] <- non_de_color
-  names(key_val)[key_val == up_color] <- up_label
-  names(key_val)[key_val == down_color] <- down_label
-  names(key_val)[key_val == non_de_color] <- non_de_label
+  # Add additional information for plotting
+  if (label == "row.names") {
+    data <- data %>% mutate(label = rownames(data))
+  } else {
+    if (!label %in% colnames(data)) {
+      stop("The label column does not exist in the data frame.")
+    } else {
+      data <- data %>% mutate(label = .data[[label]])
+    }
+  }
+
+  data <- data %>%
+    mutate(
+      log_p = -log10(.data[[y]]),
+      logfc = .data[[x]],
+      group = case_when(
+        .data[[y]] < p_cutoff & .data[[x]] > fc_cutoff ~ up_label,
+        .data[[y]] < p_cutoff & .data[[x]] < -fc_cutoff ~ down_label,
+        TRUE ~ non_de_label
+      ),
+      color = case_when(
+        group == up_label ~ up_color,
+        group == down_label ~ down_color,
+        TRUE ~ non_de_color
+      )
+    ) %>%
+      mutate(group = factor(group, levels = c(up_label, down_label, non_de_label)))
 
   # Calculate the number of up and down-regulated genes
   num_up <- sum(data[[y]] < p_cutoff & data[[x]] > fc_cutoff) %>% as.character()
   num_down <- sum(data[[y]] < p_cutoff & data[[x]] < -fc_cutoff) %>% as.character()
 
-  # Parse whether bold texts are used
-  if (bold_text) {
-    lab_face <- "bold"
-    x_lab <- bquote(bold(.(x_lab)))
-    y_lab <- bquote(bold(.(y_lab)))
-    num_up <- bquote(bold(.(num_up)))
-    num_down <- bquote(bold(.(num_down)))
-  } else {
-    lab_face <- "plain"
+  # Define the limits for the x and y axes
+  if (is.null(x_lim)) {
+    x_lim <- c(min(data[[x]], na.rm = TRUE) - 0.5, max(data[[x]], na.rm = TRUE) + 0.5)
+  }
+  if (is.null(y_lim)) {
+    y_lim <- c(0, max(data$log_p, na.rm = TRUE) + 1)
   }
 
   # Create the volcano plot
-  v_plot <- EnhancedVolcano::EnhancedVolcano(
-    data,
-    lab = label,
-    selectLab = selected_labels,
-    labSize = lab_size,
-    x = x,
-    y = y,
-    title = "",
-    subtitle = "",
-    caption = "",
-    pCutoff = p_cutoff,
-    FCcutoff = fc_cutoff,
-    colCustom = key_val,
-    xlim = x_lim,
-    ylim = y_lim,
-    xlab = x_lab,
-    ylab = y_lab,
-    axisLabSize = axis_lab_size,
-    legendLabSize = legend_lab_size,
-    legendPosition = legend_lab_position,
-    legendIconSize = legend_icon_size,
-    labFace = lab_face,
-    drawConnectors = draw_connectors,
-    max.overlaps = max_overlaps,
-    ...
-  )
+  v_plot <- ggplot(data, aes(x = logfc, y = log_p)) +
+    geom_point(aes(color = group), size = pt_size, alpha = alpha, stroke = NA) +
+    scale_color_manual(values = c(up_color, down_color, non_de_color)) +
+    labs(x = x_lab, y = y_lab) +
+    xlim(x_lim) + ylim(y_lim) +
+    geom_hline(yintercept = -log10(p_cutoff), linetype = "dashed", color = "black", linewidth = 0.3) +
+    geom_vline(xintercept = c(-fc_cutoff, fc_cutoff), linetype = "dashed", color = "black", linewidth = 0.3) +
+    theme_classic(base_size = axis_lab_size) +
+    theme(
+      legend.position = legend_lab_position,
+      legend.title = element_blank(),
+      legend.text = element_text(size = legend_lab_size),
+    )
+
+  # Prepare the labels for the selected genes
+  if (!is.null(selected_labels)) {
+    # Here we use having to label more than half or 100 genes, whichever is bigger
+    # to avoid overplotting
+
+    # If less than half or 100 genes, use the selected labels
+    if (length(selected_labels) < max(100, nrow(data) / 2)) {
+      label_data <- data %>%
+        filter(label %in% selected_labels) %>%
+        select(label, logfc, log_p)
+    } else {
+      # Otherwise, choose the top genes based on log_p and logfc
+      # Use a score that is the product of log_p and logfc
+      # Rank and choose the top 10 genes in each direction
+      label_data <- data %>%
+        filter(group %in% c(up_label, down_label)) %>%
+        mutate(score = log_p * abs(logfc)) %>%
+        arrange(desc(score)) %>%
+        group_by(group) %>%
+        slice_head(n = 10) %>%
+        ungroup() %>%
+        select(label, logfc, log_p)
+    }
+  } else {
+    label_data <- NULL
+  }
+
+  # Add the labels to the plot
+  if (!is.null(label_data)) {
+    if (draw_connectors) {
+      v_plot <- v_plot + ggrepel::geom_text_repel(
+        data = label_data,
+        aes(x = logfc, y = log_p, label = label),
+        size = lab_size,
+        max.overlaps = max_overlaps,
+        segment.color = "black",
+        segment.size = 0.5,
+        segment.alpha = 0.5,
+        nudge_x = 0.2,
+        nudge_y = 0.2,
+        fontface = "bold",
+      )
+    } else {
+      v_plot <- v_plot + geom_text(
+        data = label_data,
+        aes(x = logfc, y = log_p, label = label),
+        size = lab_size,
+        nudge_x = 0.2,
+        nudge_y = 0.2,
+        fontface = "bold"
+      )
+    }
+  }
+
 
   # Add the number of up and down-regulated genes at the bottom right and
   # left corners, respectively
@@ -201,7 +250,8 @@ plot_volcano <- function(
       label = num_up,
       hjust = 1,
       vjust = num_label_vjust,
-      size = num_label_size
+      size = num_label_size,
+      fontface = "bold"
     ) + annotate(
       "text",
       x = x_lim[1],
@@ -209,27 +259,18 @@ plot_volcano <- function(
       label = num_down,
       hjust = 0,
       vjust = num_label_vjust,
-      size = num_label_size
+      size = num_label_size,
+      fontface = "bold"
     )
   }
 
-  # Bold the rest of the text if bold_text is TRUE
-  if (bold_text) {
-    v_plot <- v_plot + theme(
-      axis.text = element_text(face = "bold"),
-      axis.title.x = element_text(face = "bold"),
-      legend.text = element_text(face = "bold"),
-      text = element_text(face = "bold")
-    )
-  }
-
-  # Final theme adjustments
+  # Increase the size of the legend icons
   v_plot <- v_plot +
-    theme_classic() +
-    theme(legend.position = "top", legend.title = element_blank())
+      guides(color = guide_legend(override.aes = list(size = legend_icon_size)))
 
   return(v_plot)
 }
+
 
 #' @title Plotting top PCA loadings
 #'

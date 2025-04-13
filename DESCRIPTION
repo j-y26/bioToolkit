@@ -18,7 +18,6 @@ biocViews: BiomedicalInformatics
 RoxygenNote: 7.3.2
 Imports: 
     dplyr,
-    EnhancedVolcano,
     ggplot2,
     edgeR,
     tibble,
@@ -32,4 +31,5 @@ Imports:
     Matrix,
     Seurat,
     GSEABase,
+    rlang
     
