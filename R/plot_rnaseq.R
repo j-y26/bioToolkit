@@ -170,10 +170,17 @@ plot_volcano <- function(
     y_lim <- c(0, max(data$log_p, na.rm = TRUE) + 1)
   }
 
+  # Color assignment
+    named_colors <- c(
+    !!up_label := up_color,
+    !!down_label := down_color,
+    !!non_de_label := non_de_color
+  )
+
   # Create the volcano plot
   v_plot <- ggplot(data, aes(x = logfc, y = log_p)) +
     geom_point(aes(color = group), size = pt_size, alpha = alpha, stroke = NA) +
-    scale_color_manual(values = c(up_color, down_color, non_de_color)) +
+    scale_color_manual(values = named_colors, drop = TRUE) +
     labs(x = x_lab, y = y_lab) +
     xlim(x_lim) + ylim(y_lim) +
     geom_hline(yintercept = -log10(p_cutoff), linetype = "dashed", color = "black", linewidth = 0.3) +
