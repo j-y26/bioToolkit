@@ -171,10 +171,9 @@ plot_volcano <- function(
   }
 
   # Color assignment
-    named_colors <- c(
-    !!up_label := up_color,
-    !!down_label := down_color,
-    !!non_de_label := non_de_color
+  named_colors <- setNames(
+    c(up_color, down_color, non_de_color),
+    c(up_label, down_label, non_de_label)
   )
 
   # Create the volcano plot
