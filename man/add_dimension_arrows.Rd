@@ -30,7 +30,7 @@ add_dimension_arrows(
 \item{dims}{A vector of dimension names, overwrites the default dimension
 names assumed from reduction method}
 
-\item{arrow_length}{The size of the arrow, default is 0.15 (15% of the plot)}
+\item{arrow_length}{The size of the arrow, default is 0.15 (15 percent of the plot)}
 
 \item{arrow_x_adjust_ratio}{The x-axis adjustment ratio for the arrow,
 increase (> 1) and decrease (< 1) the x-axis.

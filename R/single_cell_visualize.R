@@ -15,7 +15,7 @@
 #' @param dims A vector of dimension names, overwrites the default dimension
 #'             names assumed from reduction method
 #'
-#' @param arrow_length The size of the arrow, default is 0.15 (15% of the plot)
+#' @param arrow_length The size of the arrow, default is 0.15 (15 percent of the plot)
 #'
 #' @param arrow_x_adjust_ratio The x-axis adjustment ratio for the arrow,
 #'                             increase (> 1) and decrease (< 1) the x-axis.
@@ -173,7 +173,7 @@ add_dimension_arrows <- function(plot,
 #'
 #' @param legend.position The position of the legend, default is 'right'
 #'
-#' @param arrow_length The size of the arrow, default is 0.15 (15% of the plot)
+#' @param arrow_length The size of the arrow, default is 0.15 (15 percent of the plot)
 #'
 #' @param arrow_x_adjust_ratio The x-axis adjustment ratio for the arrow,
 #'                             increase (> 1) and decrease (< 1) the x-axis.
@@ -308,7 +308,7 @@ do_DimPlot_arrows <- function(
 #'
 #' @param legend.width The width of the legend, default is 0.6
 #'
-#' @param arrow_length The size of the arrow, default is 0.15 (15% of the plot)
+#' @param arrow_length The size of the arrow, default is 0.15 (15 percent of the plot)
 #'
 #' @param arrow_x_adjust_ratio The x-axis adjustment ratio for the arrow,
 #'

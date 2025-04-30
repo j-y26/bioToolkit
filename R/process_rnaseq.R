@@ -69,6 +69,73 @@ rank_de_genes <- function(
 }
 
 
+#' @title Generate rank file for GSEA
+#' 
+#' @description This function generates a rank file for Gene Set Enrichment
+#'              Analysis (GSEA) based on the differential expression analysis
+#'              results. The rank file contains the gene names and their ranks,
+#'              which is the pi-value. Higher pi-values indicate higher
+#'              rank.
+#' 
+#' @param de_results A data frame containing the results of differential
+#'                   expression analysis. The data frame should have at least
+#'                   a column for log2 fold change and a column for (adjusted)
+#'                   p-value.
+#' 
+#' @param save_file The name of the file to save the rank file. Default is NULL.
+#'                  If NULL, the rank file will not be saved to disk.
+#'
+#' @param de_method The method used for differential expression analysis.
+#'                  Must be one of "edgeR" or "DESeq2". Default is "edgeR".
+#'                  Use this argument to automatically set the column names
+#'                  for log2 fold change and adjusted P-value. If provided value
+#'                  is not "edgeR" or "DESeq2", the user must provide both the
+#'                  column names for log2 fold change and P-value using the
+#'                  \code{log2fc_col} and \code{pvalue_col} arguments,
+#'                  respectively.
+#'
+#' @param pvalue_col The name of the column in \code{de_results} that contains
+#'                   the p-values. If not NULL, overrides the default column
+#'                   name based on \code{de_method}.
+#'
+#' @param log2fc_col The name of the column in \code{de_results} that contains
+#'                   the log2 fold changes.
+#'
+#' @export
+#'
+#' @return A data frame with the addition of the following columns:
+#'         \itemize{
+#'          \item{piValue}{The pi-value of the gene}
+#'          \item{rank}{The rank of the gene based on the pi-value}
+#'         } And if \code{save_file} is not NULL, a rank file will be saved to disk.
+#' 
+#' @importFrom utils write.table
+#' @import dplyr
+#' @importFrom tibble rownames_to_column
+#' 
+generate_de_rank_file <- function(
+    de_results,
+    save_file = NULL,
+    de_method = "edgeR",
+    pvalue_col = NULL,
+    log2fc_col = NULL) {
+  # Rank the genes based on differential expression results
+  ranked_results <- rank_de_genes(de_results, de_method, pvalue_col, log2fc_col)
+
+  # Select relevant columns for GSEA
+  gsea_rank_file <- ranked_results %>%
+    tibble::rownames_to_column(var = "GeneName") %>%
+    mutate(rank = piValue) %>%
+    select(GeneName, rank)
+
+  # Save the rank file to disk if save_file is provided
+  if (!is.null(save_file)) {
+    write.table(gsea_rank_file, file = save_file, sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+  }
+  return(gsea_rank_file)
+}
+
+
 #' @title Filter genes based on differential expression analysis results
 #' 
 #' @description This function filters genes based on the results of differential

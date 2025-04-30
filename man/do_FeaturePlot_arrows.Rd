@@ -66,7 +66,7 @@ in the SCpubr::do_FeaturePlot function)}
 
 \item{legend.width}{The width of the legend, default is 0.6}
 
-\item{arrow_length}{The size of the arrow, default is 0.15 (15% of the plot)}
+\item{arrow_length}{The size of the arrow, default is 0.15 (15 percent of the plot)}
 
 \item{arrow_x_adjust_ratio}{The x-axis adjustment ratio for the arrow,}
 
