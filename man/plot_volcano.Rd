@@ -42,10 +42,10 @@ plot_volcano(
 \item{data}{A data frame containing the gene expression data}
 
 \item{de_method}{The method used for differential expression analysis.
-Must be one of "edgeR" or "DESeq2". Default is "edgeR".
+Must be one of "edgeR", "DESeq2", or "limma". Default is "edgeR".
 Use this argument to automatically set the column names
 for log2 fold change and adjusted P-value. If provided value
-is not "edgeR" or "DESeq2", the user must provide both the
+is not "edgeR", "DESeq2", or "limma", the user must provide both the
 column names for log2 fold change and P-value using the
 \code{x} and \code{y} arguments, respectively.}
 
