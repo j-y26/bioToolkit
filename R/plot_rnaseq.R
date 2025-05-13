@@ -149,6 +149,7 @@ plot_volcano <- function(
 
   data <- data %>%
     mutate(
+      !!y := ifelse(.data[[y]] == 0, 1e-300, .data[[y]]),
       log_p = -log10(.data[[y]]),
       logfc = .data[[x]],
       group = case_when(
@@ -189,13 +190,18 @@ plot_volcano <- function(
     labs(x = x_lab, y = y_lab) +
     xlim(x_lim) + ylim(y_lim) +
     geom_hline(yintercept = -log10(p_cutoff), linetype = "dashed", color = "black", linewidth = 0.3) +
-    geom_vline(xintercept = c(-fc_cutoff, fc_cutoff), linetype = "dashed", color = "black", linewidth = 0.3) +
     theme_classic(base_size = axis_lab_size) +
     theme(
       legend.position = legend_lab_position,
       legend.title = element_blank(),
       legend.text = element_text(size = legend_lab_size),
     )
+
+  if (fc_cutoff > 0) {
+      v_plot <- v_plot +
+          geom_vline(xintercept = c(-fc_cutoff, fc_cutoff),
+                     linetype = "dashed", color = "black", linewidth = 0.3)
+  }
 
   # Prepare the labels for the selected genes
   if (!is.null(selected_labels)) {
