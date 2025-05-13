@@ -10,10 +10,10 @@
 #' @param data A data frame containing the gene expression data
 #'
 #' @param de_method The method used for differential expression analysis.
-#'                  Must be one of "edgeR", "DESeq2", or "limma". Default is "edgeR".
+#'                  Must be one of "edgeR", "DESeq2", "limma", or "seurat". Default is "edgeR".
 #'                  Use this argument to automatically set the column names
 #'                  for log2 fold change and adjusted P-value. If provided value
-#'                  is not "edgeR", "DESeq2", or "limma", the user must provide both the
+#'                  is not "edgeR", "DESeq2", "limma", or "seurat", the user must provide both the
 #'                  column names for log2 fold change and P-value using the
 #'                  \code{x} and \code{y} arguments, respectively.
 #'
@@ -127,6 +127,9 @@ plot_volcano <- function(
   } else if (de_method == "limma" && is.null(x) && is.null(y)) {
     x <- FC_COL_LIMMA
     y <- PVAL_COL_LIMMA
+  } else if (de_method == "seurat" && is.null(x) && is.null(y)) {
+    x <- FC_COL_SEURAT
+    y <- PVAL_COL_SEURAT
   } else {
     if (is.null(x) || is.null(y)) {
       stop("Please provide the column names for log2 fold change and P-value.")
