@@ -1,30 +1,30 @@
 # Utilities that are useful for single cell analysis
 
 #' @title Generate a pivot table from cell metadata
-#' 
+#'
 #' @description This function generates a pivot table from cell metadata and
 #'              returns a data frame with the two cell metadata as rows and
 #'              columns, with the values being either the count of cells or
 #'              the percentage of cells (by rows or columns or total).
-#' 
+#'
 #' @param row_metadata A vector of cell metadata to be used as rows, often a
 #'                     metadata that represents cell clusters or cell types
-#' 
+#'
 #' @param col_metadata A vector of cell metadata to be used as columns, must be
 #'                     the same length as row_metadata
-#' 
+#'
 #' @param type The type of pivot table to generate, either "percent" or "count"
-#' 
+#'
 #' @param margin The margin to calculate the percentage, either "row", "column"
 #'               or "total", used only when type = "percent"
-#' 
+#'
 #' @return a data frame with the pivot table
-#' 
+#'
 #' @import dplyr
 #' @importFrom tidyr pivot_wider
-#' 
+#'
 #' @export
-#' 
+#'
 get_meta_pivot <- function(
   row_metadata,
   col_metadata,
@@ -39,7 +39,7 @@ get_meta_pivot <- function(
   # Obtain settings
   type <- match.arg(type)
   margin <- match.arg(margin)
-  
+
   # Create a count table
   count_table <- as.data.frame(table(row_metadata, col_metadata))
 
@@ -78,4 +78,74 @@ get_meta_pivot <- function(
       )
     return(pct_table)
   }
+}
+
+
+#' @title Tranforming a dimensionality reduction embedding, flipping and/or rotating
+#'
+#' @description This function transforms a dimensionality reduction embedding by
+#'              flipping and/or rotating the embedding. This is useful for
+#'              visualizing the embedding in a consistent way, for example, when
+#'              comparing two embeddings or when the embedding is not in the
+#'              desired orientation. This function will only work for 2D
+#'              embeddings. It will  modify/overwrite the original embedding
+#'              matrix. However, the biological meaning of the embedding is
+#'              not changed. Only for visualization purposes.
+#' 
+#' @param obj A Seurat object
+#' 
+#' @param reduction The name of the dimensionality reduction to be transformed
+#'                 (e.g. "pca", "umap", "tsne")
+#' 
+#' @param flip_horizontal A boolean indicating whether to flip the embedding
+#'                        horizontally (default = FALSE)
+#' 
+#' @param flip_vertical A boolean indicating whether to flip the embedding
+#'                       vertically (default = FALSE)
+#' 
+#' @param rotate A numeric value indicating the angle (in degrees) to rotate
+#'               the embedding (default = 0)
+#' 
+#' @export
+#' @import Seurat
+#' 
+transform_embedding <- function(
+  obj,
+  reduction = "umap",
+  flip_horizontal = FALSE,
+  flip_vertical = FALSE,
+  rotate = 0
+) {
+  # Check if the reduction exists
+  if (!reduction %in% names(obj@reductions)) {
+    stop(paste("The reduction", reduction, "does not exist in the object"))
+  }
+
+  # Extract the embedding matrix
+  embedding <- Embeddings(obj, reduction = reduction)
+  if (is.null(embedding)) {
+    stop(paste("The embedding", reduction, "does not exist in the object"))
+  }
+
+  # Flip the embedding
+  if (flip_horizontal) {
+    embedding[, 1] <- -embedding[, 1]
+  }
+
+  if (flip_vertical) {
+    embedding[, 2] <- -embedding[, 2]
+  }
+
+  # Rotate the embedding
+  if (rotate != 0) {
+    theta <- rotate * (pi / 180)
+    rotation_matrix <- matrix(c(cos(theta), -sin(theta), sin(theta), cos(theta)), nrow = 2)
+    embedding[, 1:2] <- embedding[, 1:2] %*% rotation_matrix
+  }
+
+  # Update the embedding matrix in the object
+  obj[[reduction]]@cell.embeddings <- embedding
+
+  # Return the object
+  return(obj)
 }
