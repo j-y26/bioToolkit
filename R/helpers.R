@@ -81,3 +81,34 @@ mix_colors <- function(colors, weights = rep(1, length(colors))) {
 
   return(mixed_color)
 }
+
+
+#' @title Sort the Colors by Hue
+#' 
+#' @description This function takes an input character vector of colors and
+#'              sorts them by hue.
+#' 
+#' @param colors A character vector of colors (hexadecimal)
+#' 
+#' @return A character vector of colors sorted by hue
+#' 
+#' @import colorspace
+#' 
+#' @export
+#' 
+sort_colors_by_hue <- function(colors) {
+  # Check if the input is a character vector
+  if (!is.character(colors)) {
+    stop("Input must be a character vector of colors")
+  }
+  
+  # Convert colors to polarLUV (HCL) color space
+  colors_hcl <- colorspace::hex2RGB(colors)
+  colors_hcl <- as(colors_hcl, "polarLUV")
+  colors_hcl <- colorspace::coords(colors_hcl)
+
+  # Sort colors by hue
+  sorted_indices <- order(colors_hcl[, "H"], na.last = NA)
+  sorted_colors <- colors[sorted_indices]
+  return(sorted_colors)
+}

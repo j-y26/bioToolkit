@@ -26,6 +26,7 @@ Imports:
     tidyr,
     grDevices,
     RColorBrewer,
+    colorspace,
     plotly,
     stats,
     Matrix,
