@@ -468,8 +468,8 @@ format_sc_plots <- function(plots,
   # Combine the plots into a patchwork object
   if (inherits(plots, "patchwork")) {
     combined_plot <- wrap_plots(plotlist = plot_list,
-                                ncol = ifelse(is.null(ncol), plots$patches$layout$ncol, ncol),
-                                nrow = ifelse(is.null(nrow), plots$patches$layout$nrow, nrow),
+                                ncol = if (is.null(ncol)) NULL else ncol,
+                                nrow = if (is.null(nrow)) NULL else nrow,
                                 byrow = byrow,
                                 width = plots$patches$layout$width,
                                 height = plots$patches$layout$height,
