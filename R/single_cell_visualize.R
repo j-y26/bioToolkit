@@ -532,11 +532,11 @@ format_sc_plots <- function(plots,
 #'                to represent the logFC values and the down_color, mid_color, and
 #'                up_color will be ignored
 #'
-#' @param down_color The color for down-regulated features, default is "darkgreen"
+#' @param down_color The color for down-regulated features
 #'
-#' @param mid_color The color for 0 logFC features, default is "white"
+#' @param mid_color The color for 0 logFC features
 #'
-#' @param up_color The color for up-regulated features, default is "darkslateblue"
+#' @param up_color The color for up-regulated features
 #'
 #' @param nsig_color The color for non-significant features, default is "grey70"
 #'
@@ -592,6 +592,8 @@ format_sc_plots <- function(plots,
 #' @param x_group_label_position The position of the x-axis group label, default is "bottom"
 #'
 #' @param y_group_label_position The position of the y-axis group label, default is "left"
+#' 
+#' @param dot_border The border size of the dots, default is 0.3
 #'
 #' @return a ggplot object with the dot plot
 #'
@@ -613,10 +615,10 @@ de_dot_plot <- function(
   logFC_cutoff = 0,
   p_val_cutoff = 0.05,
   palette = NULL,
-  down_color = "darkgreen",
-  mid_color = "white",
-  up_color = "darkslateblue",
-  nsig_color = "grey70",
+  down_color = "#00441B",
+  mid_color = "#F0F0F0",
+  up_color = "#2A004F",
+  nsig_color = "grey30",
   col_limits_logFC = c(min(de_results[[logFC_var]]), max(de_results[[logFC_var]])),
   sig_only = FALSE,
   invert = FALSE,
@@ -629,8 +631,9 @@ de_dot_plot <- function(
   legend_title = "Avg log2(FC)",
   legend_title_size = 8,
   legend_text_size = 7,
-  x_group_label_position = "bottom",
-  y_group_label_position = "left"
+  x_group_label_position = "top",
+  y_group_label_position = "left",
+  dot_border = 0.3
 
 ) {
   # Check if the de_results is a data frame
@@ -728,16 +731,24 @@ de_dot_plot <- function(
           y = !!sym(comparison_var))) +
       geom_point(aes(
         size = dot_size,
-        color = ifelse(signif, !!sym(logFC_var), NA)
-      ))
+        fill = !!sym(logFC_var)
+      ),
+        shape = 21,
+        stroke = dot_border,
+        color = "black"
+      )
   } else {
     dot_plot <- ggplot(de_results,
       aes(x = !!sym(comparison_var),
           y = !!sym(feature_var))) +
       geom_point(aes(
         size = dot_size,
-        color = ifelse(signif, !!sym(logFC_var), NA)
-      ))
+        fill = !!sym(logFC_var)
+      ),
+        shape = 21,
+        stroke = dot_border,
+        color = "black"
+      )
   }
 
   # Add faceting based on grouping variables
@@ -783,7 +794,7 @@ de_dot_plot <- function(
 
   # Add the color scale and point size
   dot_plot <- dot_plot  +
-    scale_color_gradient2(
+    scale_fill_gradient2(
       low = down_color,
       mid = mid_color,
       high = up_color,
