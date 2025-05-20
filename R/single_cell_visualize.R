@@ -15,57 +15,47 @@
 #' @param dims A vector of dimension names, overwrites the default dimension
 #'             names assumed from reduction method
 #'
-#' @param arrow_length The size of the arrow, default is 0.15 (15 percent of the plot)
+#' @param arrow_length The size of the arrow, default is 2 (cm)
 #'
-#' @param arrow_x_adjust_ratio The x-axis adjustment ratio for the arrow,
-#'                             increase (> 1) and decrease (< 1) the x-axis.
-#'                             Default is 1
+#' @param x_coord_adjust Horizontal adjustment of the arrow origin, default is 0.25 (cm)
 #'
-#' @param arrow_y_adjust_ratio The y-axis adjustment ratio for the arrow,
-#'                             increase (> 1) and decrease (< 1) the y-axis.
-#'                             Default is 1
+#' @param y_coord_adjust Vertical adjustment of the arrow origin, default is the same as x_coord_adjust
 #'
-#' @param x_coord_adjust Horizontal adjustment of the arrow origin, default is 0
+#' @param arrow_size The size of the arrow head, default is 0.25 cm
 #'
-#' @param y_coord_adjust Vertical adjustment of the arrow origin, default is 0
+#' @param arrow_width The width of the arrow, default is 0.2 cm
 #'
-#' @param arrow_size The size of the arrow head, default is 0.2 cm
+#' @param arrow_line_width The width of the arrow line, default is 3
 #'
-#' @param arrow_width The width of the arrow, default is 0.9
+#' @param arrow_color The color of the arrow and label, default is "black"
 #'
-#' @param arrow_text_color The color of the arrow and label, default is "black"
+#' @param text_font_size The font size of the text, default is 12
 #'
-#' @param arrow_type The type of the arrow, default is "closed"
-#'
-#' @param text_font_size The font size of the text, default is 4
-#'
-#' @param relative_text_dst The relative distance of the text from the arrow,
-#'                          default is 0.15
+#' @param text_dst The distance of the text from the arrow in cm, default is 0.3
 #'
 #'
 #' @return a ggplot object with the dimension arrows added
 #'
 #'
 #' @import ggplot2
+#' @import grid
 #'
 #' @export
 #'
 add_dimension_arrows <- function(plot,
                                  reduction = "umap",
                                  dims = NULL,
-                                 arrow_length = 0.1,
-                                 arrow_x_adjust_ratio = 1,
-                                 arrow_y_adjust_ratio = 1,
-                                 x_coord_adjust = 0,
-                                 y_coord_adjust = 0,
-                                 arrow_size = 0.2,
-                                 arrow_width = 0.9,
-                                 arrow_text_color = "black",
-                                 arrow_type = "closed",
-                                 text_font_size = 4,
-                                 relative_text_dst = 0.15) {
+                                 arrow_length = 2,
+                                 x_coord_adjust = 0.25,
+                                 y_coord_adjust = x_coord_adjust,
+                                 arrow_size = 0.25,
+                                 arrow_width = 0.2,
+                                 arrow_line_width = 3,
+                                 arrow_color = "black",
+                                 text_font_size = 12,
+                                 text_dst = 0.3) {
   # Check if the plot is a ggplot object
-  if (!is.ggplot(plot)) {
+  if (!is_ggplot(plot)) {
     stop("The plot must be a ggplot object")
   }
 
@@ -82,330 +72,423 @@ add_dimension_arrows <- function(plot,
     } else if (grepl("spatial", reduction)) {
       dims <- c("Spatial-1", "Spatial-2")
     } else {
-      stop("Invalid reduction method, allowed values must contain 'umap', 'tsne', 'pca', 'spatial'")
+      dims <- c(paste0(reduction, "-1"), paste0(reduction, "-2"))
     }
   }
 
-  # Extract plot data and compute arrow length
-  plot_data <- ggplot_build(plot)
-  x_range <- plot_data$layout$panel_scales_x[[1]]$range$range
-  y_range <- plot_data$layout$panel_scales_y[[1]]$range$range
+  # Arrow shaft grobs (without arrowheads)
+  arrow_x <- segmentsGrob(
+    x0 = unit(x_coord_adjust, "cm"), y0 = unit(y_coord_adjust, "cm"),
+    x1 = unit(x_coord_adjust + arrow_length - arrow_size, "cm"), y1 = unit(y_coord_adjust, "cm"),
+    gp = gpar(col = arrow_color, lwd = arrow_line_width)
+  )
 
-  # Compute the base arrow length
-  arrow_length <- arrow_size * min(diff(x_range), diff(y_range))
+  arrow_y <- segmentsGrob(
+    x0 = unit(x_coord_adjust, "cm"), y0 = unit(y_coord_adjust, "cm"),
+    x1 = unit(x_coord_adjust, "cm"), y1 = unit(y_coord_adjust + arrow_length - arrow_size, "cm"),
+    gp = gpar(col = arrow_color, lwd = arrow_line_width)
+  )
 
-  # Compute the arrow coordinates
-  arrow_x <- x_range[1] + x_coord_adjust
-  arrow_y <- y_range[1] + y_coord_adjust
+  # Arrowhead polygons (triangles) at end of arrows
+  arrowhead_x <- polygonGrob(
+    x = unit.c(
+      unit(x_coord_adjust + arrow_length - arrow_size, "cm"),
+      unit(x_coord_adjust + arrow_length, "cm"),
+      unit(x_coord_adjust + arrow_length - arrow_size, "cm")
+    ),
+    y = unit.c(
+      unit(y_coord_adjust + arrow_width / 2, "cm"),
+      unit(y_coord_adjust, "cm"),
+      unit(y_coord_adjust - arrow_width / 2, "cm")
+    ),
+    gp = gpar(fill = arrow_color, col = arrow_color)
+  )
 
-  # Add the arrows to the plot
+  arrowhead_y <- polygonGrob(
+    x = unit.c(
+      unit(x_coord_adjust - arrow_width / 2, "cm"),
+      unit(x_coord_adjust, "cm"),
+      unit(x_coord_adjust + arrow_width / 2, "cm")
+    ),
+    y = unit.c(
+      unit(y_coord_adjust + arrow_length - arrow_size, "cm"),
+      unit(y_coord_adjust + arrow_length, "cm"),
+      unit(y_coord_adjust + arrow_length - arrow_size, "cm")
+    ),
+    gp = gpar(fill = arrow_color, col = arrow_color)
+  )
+
+  # Labels for the arrows
+  label_x <- textGrob(
+    label = dims[1],
+    x = unit(x_coord_adjust + arrow_length / 2, "cm"),
+    y = unit(y_coord_adjust - text_dst, "cm"),
+    just = "center",
+    gp = gpar(col = arrow_color, fontsize = text_font_size, fontface = "bold")
+  )
+
+  label_y <- textGrob(
+    label = dims[2],
+    x = unit(x_coord_adjust - text_dst, "cm"),
+    y = unit(y_coord_adjust + arrow_length / 2, "cm"),
+    rot = 90,
+    just = "center",
+    gp = gpar(col = arrow_color, fontsize = text_font_size, fontface = "bold")
+  )
+
+  # Combine the grobs into a single grob
+  arrow_grob <- grobTree(arrow_x, arrow_y, arrowhead_x, arrowhead_y, label_x, label_y)
+
   plot <- plot +
-    geom_segment(
-      x = arrow_x,
-      y = arrow_y,
-      xend = arrow_x + arrow_length * arrow_x_adjust_ratio,
-      yend = arrow_y,
-      arrow = arrow(type = arrow_type, length = unit(arrow_size, "cm")),
-      lwd = arrow_width,
-      color = arrow_text_color
-    ) +
-    geom_segment(
-      x = arrow_x,
-      y = arrow_y,
-      xend = arrow_x,
-      yend = arrow_y + arrow_length * arrow_y_adjust_ratio,
-      arrow = arrow(type = arrow_type, length = unit(arrow_size, "cm")),
-      lwd = arrow_width,
-      color = arrow_text_color
-    ) +
-    geom_text(
-      x = arrow_x + (arrow_length * arrow_x_adjust_ratio) / 2,
-      y = arrow_y - arrow_length * relative_text_dst,
-      label = dims[1],
-      size = text_font_size,
-      color = arrow_text_color
-    ) +
-    geom_text(
-      x = arrow_x - arrow_length * relative_text_dst,
-      y = arrow_y + (arrow_length * arrow_y_adjust_ratio) / 2,
-      label = dims[2],
-      size = text_font_size,
-      color = arrow_text_color,
-      angle = 90
+    annotation_custom(arrow_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+    coord_cartesian(clip = "off") +
+    theme(
+      axis.title = element_blank(),
+      axis.ticks = element_blank(),
+      axis.text = element_blank(),
+      axis.line = element_blank()
     )
 
   return(plot)
 }
 
-
-
-#' @title do_DimPlot with arrows on the bottom left corner
+#' @title Helper to manipulate ggplots using Seurat's patchwork functions
 #'
-#' @description This function is a further implementation of the do_DimPlot
-#'              function from the SCpubr package. It generates a ggplot object
-#'              with the dimension arrows added to the bottom left corner of
-#'              the plot. The function is useful for visualizing single cell
-#'              data with dimension reduction methods such as UMAP, t-SNE, PCA,
-#'              and spatial coordinates.
+#' @description Only valid for individual ggplot objects
 #'
-#' @param object A Seurat object
+#' @param plot A single ggplot object
 #'
-#' @param reduction The reduction method used to generate the plot, default is
-#'                 "umap".
+#' @param remove_axes Whether to remove the axes, default is FALSE
 #'
-#' @param dims A vector of dimension names, overwrites the default dimension
-#'             names assumed from reduction method
+#' @param remove_legend Whether to remove the legend, default is FALSE
 #'
-#' @param group.by A vector of cell metadata to group the cells by, default is
-#'                 NULL
+#' @param remove_grid Whether to remove the grid, default is FALSE
 #'
-#' @param colors.use Named vector of colors to use for plotting, default is NULL.
+#' @param restore_legend Whether to restore the legend, default is FALSE
 #'
-#' @param pt.size The size of the points, default is 0.5
+#' @param legend_position The position of the legend, default is NULL (meaning no change)
 #'
-#' @param shuffle Whether to shuffle the dots. Default is FALSE to be consistent
-#'                with Seurat
+#' @param legend_title The title of the legend, default is NULL
 #'
-#' @param label Whether to label the groups, default is FALSE
+#' @param legend_title_size The size of the legend title, default is 12
 #'
-#' @param repel Whether to repel the labels, default is to be consistent with
-#'              the "label" argument
+#' @param legend_title_bold Whether to bold the legend title, default is FALSE
 #'
-#' @param legend.position The position of the legend, default is 'right'
-#'
-#' @param arrow_length The size of the arrow, default is 0.15 (15 percent of the plot)
-#'
-#' @param arrow_x_adjust_ratio The x-axis adjustment ratio for the arrow,
-#'                             increase (> 1) and decrease (< 1) the x-axis.
-#'                             Default is 1
-#'
-#' @param arrow_y_adjust_ratio The y-axis adjustment ratio for the arrow,
-#'                             increase (> 1) and decrease (< 1) the y-axis.
-#'                             Default is 1
-#'
-#' @param x_coord_adjust Horizontal adjustment of the arrow origin, default is 0
-#'
-#' @param y_coord_adjust Vertical adjustment of the arrow origin, default is 0
-#'
-#' @param arrow_size The size of the arrow head, default is 0.2 cm
-#'
-#' @param arrow_width The width of the arrow, default is 0.9
-#'
-#' @param arrow_text_color The color of the arrow and label, default is "black"
-#'
-#' @param arrow_type The type of the arrow, default is "closed"
-#'
-#' @param text_font_size The font size of the text, default is 4
-#'
-#' @param relative_text_dst The relative distance of the text from the arrow,
-#'                          default is 0.15
-#'
-#' @param ... Additional arguments to pass to the SCpubr::do_DimPlot function
-#'
-#' @return a ggplot object with the dimension arrows added
-#'
-#' @import SCpubr
+#' @import ggplot2
+#' @import Seurat
 #'
 #' @export
 #'
-do_DimPlot_arrows <- function(
-  object,
-  reduction = "umap",
-  dims = NULL,
-  group.by = NULL,
-  colors.use = NULL,
-  pt.size = 0.5,
-  shuffle = FALSE,
-  label = FALSE,
-  repel = label,
-  legend.position = "right",
-  arrow_length = 0.1,
-  arrow_x_adjust_ratio = 1,
-  arrow_y_adjust_ratio = 1,
-  x_coord_adjust = 0,
-  y_coord_adjust = 0,
-  arrow_size = 0.2,
-  arrow_width = 0.9,
-  arrow_text_color = "black",
-  arrow_type = "closed",
-  text_font_size = 4,
-  relative_text_dst = 0.15,
-  ...
-) {
-  # Generate the plot
-  plot <- SCpubr::do_DimPlot(
-    object,
-    reduction = reduction,
-    group.by = group.by,
-    colors.use = colors.use,
-    pt.size = pt.size,
-    shuffle = shuffle,
-    label = label,
-    repel = repel,
-    legend.position = legend.position,
-    ...
-  )
+#' @return a ggplot object with the axes, legend, and grid manipulated
+#'
+manipulate_sc_plot <- function(plot,
+                     remove_axes = FALSE,
+                     remove_legend = FALSE,
+                     remove_grid = FALSE,
+                     restore_legend = FALSE,
+                     legend_position = NULL,
+                     legend_title = NULL,
+                     legend_title_size = 12,
+                     legend_title_bold = FALSE) {
+  # Check if the plot is a ggplot object
+  if (!is_ggplot(plot)) {
+    stop("The plot must be a ggplot object")
+  }
 
-  # Add dimension arrows
-  plot <- add_dimension_arrows(
-    plot,
-    reduction = reduction,
-    dims = dims,
-    arrow_length = arrow_length,
-    arrow_x_adjust_ratio = arrow_x_adjust_ratio,
-    arrow_y_adjust_ratio = arrow_y_adjust_ratio,
-    x_coord_adjust = x_coord_adjust,
-    y_coord_adjust = y_coord_adjust,
-    arrow_size = arrow_size,
-    arrow_width = arrow_width,
-    arrow_text_color = arrow_text_color,
-    arrow_type = arrow_type,
-    text_font_size = text_font_size,
-    relative_text_dst = relative_text_dst
-  )
+  # Remove axes
+  if (remove_axes) {
+    plot <- plot + NoAxes()
+  }
+  # Remove legend
+  if (remove_legend) {
+    plot <- plot + NoLegend()
+  }
+  # Remove grid
+  if (remove_grid) {
+    plot <- plot + NoGrid()
+  }
+  # Restore legend
+  if (restore_legend) {
+    plot <- plot + RestoreLegend()
+  }
+  # Set legend position
+  if (!is.null(legend_position)) {
+    plot <- plot + theme(legend.position = legend_position)
+  }
+  # Set legend title
+  if (!is.null(legend_title)) {
+    plot <- plot + labs(color = legend_title)
+
+    if (legend_title_bold) {
+      plot <- plot + theme(legend.title = element_text(face = "bold", size = legend_title_size))
+    } else {
+      plot <- plot + theme(legend.title = element_text(size = legend_title_size))
+    }
+  }
 
   return(plot)
 }
 
 
-
-#' @title do_FeaturePlot with arrows on the bottom left corner
+#' @title Format Dimension Plots (from Seurat, scCustomize, SCpubr etc.)
 #'
-#' @description This function is a further implementation of the do_FeaturePlot
-#'             function from the SCpubr package. It generates a ggplot object
-#'            with the dimension arrows added to the bottom left corner of
-#'            the plot. The function is useful for visualizing single cell
-#'           data with dimension reduction methods such as UMAP, t-SNE, PCA,
-#'          and spatial coordinates.
+#' @description This function operates on a list of
+#'              ggplot objects or a patchwork object and formats them to have a
+#'              consistent theme. The function performs group operations to
+#'              format the plots. The default behavior is to remove the axes and
+#'              add an arrow to the bottom left corner of each individual plot.
 #'
-#' @param object A Seurat object
+#' @param plots A list of ggplot objects or a patchwork object
 #'
-#' @param features A vector of feature names to plot
+#' @param ncol Number of columns in the plot grid, default is NULL. Prioritized if
+#'             nrow is also set.
 #'
-#' @param assay The assay to use for plotting, default is the active assay
+#' @param nrow Number of rows in the plot grid, default is NULL
 #'
-#' @param reduction The reduction method used to generate the plot, default is
-#'                 "umap".
+#' @param byrow Whether to fill the plot grid by row, default is TRUE, consistent
+#'              with patchwork's default behavior. If FALSE, the plots will be
+#'              filled by column.
 #'
-#' @param slot The slot to use for the reduction, default is "data"
+#' @param add_arrow Whether to add an arrow to replace the axes, default is TRUE.
+#'                  This will override the remove_axes argument and remove the axes
+#'                  from all plots
 #'
-#' @param order Whether to order the cells based on feature expression. Default
-#'              is TRUE
+#' @param bottom_left_only Whether to add the arrow only to the plot at the bottom
+#'                         left of the entire grid, default is FALSE. Only valid
+#'                         if the arrangement of the plots are defined, either by
+#'                         setting ncol or nrow, or that patchwork already defines
+#'                         the layout. Only used when add_arrow is TRUE
 #'
-#' @param dims A vector of dimension names, overwrites the default dimension
-#'             names assumed from reduction method. (Overwrite the dims argument
-#'             in the SCpubr::do_FeaturePlot function)
+#' @param remove_axes Whether to remove the axes, default is TRUE
 #'
-#' @param pt.size The size of the points, default is 0.5
+#' @param remove_legend Whether to remove the legend, default is FALSE
 #'
-#' @param legend.position The position of the legend, default is 'right'
+#' @param remove_grid Whether to remove the grid, default is FALSE
 #'
-#' @param legend.framewidth The width of the legend frame, default is 0.3
+#' @param restore_legend Whether to restore the legend, default is FALSE
 #'
-#' @param legend.tickwidth The width of the legend ticks, default is 0.3
+#' @param reduction The reduction method used to generate the plots, default is
+#'                 "umap", allowed values are "umap", "tsne", "pca", "spatial".
+#'                 Used only if add_arrow is TRUE
 #'
-#' @param legend.length The length of the legend, default is 10
+#' @param dims A vector of dimension names, overwrites the default dimension.
+#'             Used only if add_arrow is TRUE
 #'
-#' @param legend.width The width of the legend, default is 0.6
+#' @param arrow_length The size of the arrow, default is 2 (cm)
+#'                     Used only if add_arrow is TRUE
 #'
-#' @param arrow_length The size of the arrow, default is 0.15 (15 percent of the plot)
+#' @param x_coord_adjust Horizontal adjustment of the arrow origin, default is 0.25 (cm)
+#'                       Used only if add_arrow is TRUE
 #'
-#' @param arrow_x_adjust_ratio The x-axis adjustment ratio for the arrow,
+#' @param y_coord_adjust Vertical adjustment of the arrow origin, default is the same as x_coord_adjust
+#'                       Used only if add_arrow is TRUE
 #'
-#' @param arrow_y_adjust_ratio The y-axis adjustment ratio for the arrow,
+#' @param arrow_size The size of the arrow head, default is 0.25 cm
+#'                   Used only if add_arrow is TRUE
 #'
-#' @param x_coord_adjust Horizontal adjustment of the arrow origin, default is 0
+#' @param arrow_width The width of the arrow, default is 0.2 cm
+#'                   Used only if add_arrow is TRUE
 #'
-#' @param y_coord_adjust Vertical adjustment of the arrow origin, default is 0
+#' @param arrow_line_width The width of the arrow line, default is 3
+#'                   Used only if add_arrow is TRUE
 #'
-#' @param arrow_size The size of the arrow head, default is 0.2 cm
+#' @param arrow_color The color of the arrow and label, default is "black"
+#'                    Used only if add_arrow is TRUE
 #'
-#' @param sequential.palette The color palette to use for the feature plot
+#' @param text_font_size The font size of the text, default is 12
+#'                       Used only if add_arrow is TRUE
 #'
-#' @param arrow_width The width of the arrow, default is 0.9
+#' @param text_dst The distance of the text from the arrow in cm, default is 0.3
+#'                 Used only if add_arrow is TRUE
 #'
-#' @param arrow_text_color The color of the arrow and label, default is "black"
-#'
-#' @param arrow_type The type of the arrow, default is "closed"
-#'
-#' @param text_font_size The font size of the text, default is 4
-#'
-#' @param relative_text_dst The relative distance of the text from the arrow,
-#'
-#' @param ... Additional arguments to pass to the SCpubr::do_FeaturePlot function
-#'
-#' @return a ggplot object with the dimension arrows added
-#'
-#' @import SCpubr
+#' @import ggplot2
+#' @import patchwork
+#' @import Seurat
 #'
 #' @export
 #'
-do_FeaturePlot_arrows <- function(
-  object,
-  features,
-  assay = NULL,
-  reduction = "umap",
-  slot = "data",
-  order = TRUE,
-  dims = NULL,
-  pt.size = 0.5,
-  sequential.palette = "Purples",
-  legend.position = "right",
-  legend.framewidth = 0.3,
-  legend.tickwidth = 0.3,
-  legend.length = 10,
-  legend.width = 0.6,
-  arrow_length = 0.1,
-  arrow_x_adjust_ratio = 1,
-  arrow_y_adjust_ratio = 1,
-  x_coord_adjust = 0,
-  y_coord_adjust = 0,
-  arrow_size = 0.2,
-  arrow_width = 0.9,
-  arrow_text_color = "black",
-  arrow_type = "closed",
-  text_font_size = 4,
-  relative_text_dst = 0.15,
-  ...
-) {
-  # Generate the plot
-  plot <- SCpubr::do_FeaturePlot(
-    object,
-    features = features,
-    assay = assay,
-    reduction = reduction,
-    slot = slot,
-    order = order,
-    dims = dims,
-    pt.size = pt.size,
-    legend.position = legend.position,
-    legend.framewidth = legend.framewidth,
-    legend.tickwidth = legend.tickwidth,
-    legend.length = legend.length,
-    legend.width = legend.width,
-    sequential.palette = sequential.palette,
-    ...
-  )
+#' @return a patchwork object with the formatted plots
+#'
+format_sc_plots <- function(plots,
+                              ncol = NULL,
+                              nrow = NULL,
+                              byrow = TRUE,
+                              add_arrow = TRUE,
+                              bottom_left_only = FALSE,
+                              remove_axes = TRUE,
+                              remove_legend = FALSE,
+                              remove_grid = FALSE,
+                              restore_legend = FALSE,
+                              legend_position = NULL,
+                              legend_title = NULL,
+                              legend_title_size = 12,
+                              legend_title_bold = FALSE,
+                              reduction = "umap",
+                              dims = NULL,
+                              arrow_length = 2,
+                              x_coord_adjust = 0.25,
+                              y_coord_adjust = x_coord_adjust,
+                              arrow_size = 0.25,
+                              arrow_width = 0.2,
+                              arrow_line_width = 3,
+                              arrow_color = "black",
+                              text_font_size = 12,
+                              text_dst = 0.3) {
+  # Check if the plots is a list of ggplot objects or a patchwork object
+  if (!is.list(plots) && !inherits(plots, "patchwork")) {
+    stop("The plots must be a list of ggplot objects or a patchwork object")
+  }
 
-  # Add dimension arrows
-  plot <- add_dimension_arrows(
-    plot,
-    reduction = reduction,
-    dims = dims,
-    arrow_length = arrow_length,
-    arrow_x_adjust_ratio = arrow_x_adjust_ratio,
-    arrow_y_adjust_ratio = arrow_y_adjust_ratio,
-    x_coord_adjust = x_coord_adjust,
-    y_coord_adjust = y_coord_adjust,
-    arrow_size = arrow_size,
-    arrow_width = arrow_width,
-    arrow_text_color = arrow_text_color,
-    arrow_type = arrow_type,
-    text_font_size = text_font_size,
-    relative_text_dst = relative_text_dst
-  )
+  # Check if the plots is a list of ggplot objects
+  if (is.list(plots)) {
+    for (i in seq_along(plots)) {
+      if (!is_ggplot(plots[[i]])) {
+        stop(paste0("The plot ", i, " must be a ggplot object"))
+      }
+    }
+  }
 
-  return(plot)
+  # Convert the patchwork object to a list of ggplot objects
+  if (inherits(plots, "patchwork")) {
+    plot_list <- as.list(plots)
+  } else {
+    plot_list <- plots
+  }
+
+  # Apply individual plot formatting
+  plot_list <- lapply(plot_list, function(plot) {
+    plot <- manipulate_sc_plot(
+      plot = plot,
+      remove_axes = remove_axes,
+      remove_legend = remove_legend,
+      remove_grid = remove_grid,
+      restore_legend = restore_legend,
+      legend_position = legend_position,
+      legend_title = legend_title,
+      legend_title_size = legend_title_size,
+      legend_title_bold = legend_title_bold
+    )
+    return(plot)
+  })
+
+  # Add arrows to the plots
+  if (add_arrow && !bottom_left_only) {
+    # To be done in all plots
+    plot_list <- lapply(plot_list, function(plot) {
+      plot <- add_dimension_arrows(
+        plot = plot,
+        reduction = reduction,
+        dims = dims,
+        arrow_length = arrow_length,
+        x_coord_adjust = x_coord_adjust,
+        y_coord_adjust = y_coord_adjust,
+        arrow_size = arrow_size,
+        arrow_width = arrow_width,
+        arrow_line_width = arrow_line_width,
+        arrow_color = arrow_color,
+        text_font_size = text_font_size,
+        text_dst = text_dst
+      )
+      return(plot)
+    })
+  } else if (add_arrow && bottom_left_only) {
+    # Need to identify which plot is at the bottom left corner
+    # Requires: ncol, nrow, byrow
+    n_plots <- length(plot_list)
+    # If ncol and nrow are not set, then check if the plot is a patchwork object
+    if (is.null(nrow) && is.null(ncol)) {
+      if (inherits(plots, "patchwork")) {
+        nrow <- plots$patches$layout$nrow
+        ncol <- plots$patches$layout$ncol
+      } else {
+        warning("nrow and ncol are not set, and no patchwork default layout is found. Using default ncol = 1 and nrow = length(plots)")
+      }
+    }
+
+    if (is.null(byrow)) {
+      if (inherits(plots, "patchwork") && !is.null(plots$patches$layout$byrow)) {
+        byrow <- plots$patches$layout$byrow
+      } else {
+        byrow <- TRUE
+      }
+    } else {
+      # Do nothing
+    }
+
+    # Check which plot is at the bottom left corner
+    if (!is.null(ncol)) {
+      # Prioritize ncol if set
+      nrow <- ceiling(n_plots / ncol)
+      if (inherits(plots, "patchwork")) {
+        plots$patches$layout$ncol <- ncol
+        plots$patches$layout$nrow <- nrow
+      }
+    } else if (!is.null(nrow)) {
+      # Use nrow when ncol is not set
+      ncol <- ceiling(n_plots / nrow)
+      if (inherits(plots, "patchwork")) {
+        plots$patches$layout$nrow <- nrow
+        plots$patches$layout$ncol <- ncol
+      }
+    } else {
+      stop("Either ncol or nrow must be set")
+    }
+
+    if (byrow) {
+      # Fill the plot grid by row
+      bottom_left_idx <- (nrow - 1) * ncol + 1
+    } else {
+      # Fill the plot grid by column
+      bottom_left_idx <- nrow
+    }
+    if (inherits(plots, "patchwork")) {
+      plots$patches$layout$byrow <- byrow
+    }
+
+    # Add the arrow to the bottom left plot
+    plot_list[[bottom_left_idx]] <- add_dimension_arrows(
+      plot = plot_list[[bottom_left_idx]],
+      reduction = reduction,
+      dims = dims,
+      arrow_length = arrow_length,
+      x_coord_adjust = x_coord_adjust,
+      y_coord_adjust = y_coord_adjust,
+      arrow_size = arrow_size,
+      arrow_width = arrow_width,
+      arrow_line_width = arrow_line_width,
+      arrow_color = arrow_color,
+      text_font_size = text_font_size,
+      text_dst = text_dst
+    )
+
+  } else {
+    # Do nothing
+  }
+
+  # Combine the plots into a patchwork object
+  if (inherits(plots, "patchwork")) {
+    combined_plot <- wrap_plots(plotlist = plot_list,
+                                ncol = ifelse(is.null(ncol), plots$patches$layout$ncol, ncol),
+                                nrow = ifelse(is.null(nrow), plots$patches$layout$nrow, nrow),
+                                byrow = byrow,
+                                width = plots$patches$layout$width,
+                                height = plots$patches$layout$height,
+                                guides = plots$patches$layout$guides,
+                                tag_level = plots$patches$layout$tag_level,
+                                design = plots$patches$layout$design,
+                                axes = plots$patches$layout$axes,
+                                axis_titles = plots$patches$layout$axis_titles)
+    combined_plot <- combined_plot + plots$patches$annotation
+
+  } else if (!is.null(ncol)) {
+    combined_plot <- patchwork::wrap_plots(plotlist = plot_list, ncol = ncol, byrow = byrow)
+  } else if (!is.null(nrow)) {
+    combined_plot <- patchwork::wrap_plots(plotlist = plot_list, nrow = nrow, byrow = byrow)
+  } else {
+    combined_plot <- patchwork::wrap_plots(plotlist = plot_list)
+  }
+
+  return(combined_plot)
 }
 
 
@@ -495,19 +578,19 @@ do_FeaturePlot_arrows <- function(
 #'                             order using \code{factor(group_by_comparisons, levels = c("levels"))}
 #'
 #' @param panel_spacing The spacing between the panels, default is 0.2
-#' 
+#'
 #' @param legend_position The position of the legend, default is 'right'
-#' 
+#'
 #' @param legend_key_size The size of the legend key, default is 0.8
-#' 
+#'
 #' @param legend_title The title of the legend, default is "Avg log2(FC)"
-#' 
+#'
 #' @param legend_title_size The size of the legend title, default is 8
-#' 
+#'
 #' @param legend_text_size The size of the legend text, default is 7
-#' 
+#'
 #' @param x_group_label_position The position of the x-axis group label, default is "bottom"
-#' 
+#'
 #' @param y_group_label_position The position of the y-axis group label, default is "left"
 #'
 #' @return a ggplot object with the dot plot
@@ -732,40 +815,40 @@ de_dot_plot <- function(
 
 
 #' @title Annotation Sankey Plot
-#' 
+#'
 #' @description This function generates a Sankey plot for visualizing the
 #'              transitions and overlap between different annotations. The
 #'              Sankey plot is useful for visualizing the flow of cells
 #'              between different levels of annotations.
-#' 
-#' @param object A Seurat object or a data frame (\code{suerat_obj@meta.data}) 
+#'
+#' @param object A Seurat object or a data frame (\code{suerat_obj@meta.data})
 #'               with the annotations to visualize
-#' 
+#'
 #' @param annotations A vector of annotation names to visualize. The order will
 #'                    dictate the flow in the Sankey plot
-#' 
+#'
 #' @param title The title of the Sankey plot, default is 'Annotation Sankey Plot'
-#' 
+#'
 #' @param nodes A vector of unique node/group names to use in the Sankey
 #'              plot. If NULL, all unique groups in the annotations will be used
-#' 
+#'
 #' @param colors A named vector of colors to use for the annotations. The names
 #'               should match the annotation group names and should have exactly
 #'               the same length as the unique groups in the annotations
-#' 
+#'
 #' @param thickness The thickness of the Sankey plot, default is 15
-#' 
+#'
 #' @param pad The padding between the nodes, default is 15
-#' 
+#'
 #' @param font_size The font size of the text, default is 10
-#' 
+#'
 #' @importFrom plotly plot_ly layout
 #' @import dplyr
-#' 
+#'
 #' @export
-#' 
+#'
 #' @return a plotly object with the Sankey plot
-#' 
+#'
 annotation_sankey_plot <- function(
   object,
   annotations,

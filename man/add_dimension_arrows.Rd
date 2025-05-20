@@ -8,17 +8,15 @@ add_dimension_arrows(
   plot,
   reduction = "umap",
   dims = NULL,
-  arrow_length = 0.1,
-  arrow_x_adjust_ratio = 1,
-  arrow_y_adjust_ratio = 1,
-  x_coord_adjust = 0,
-  y_coord_adjust = 0,
-  arrow_size = 0.2,
-  arrow_width = 0.9,
-  arrow_text_color = "black",
-  arrow_type = "closed",
-  text_font_size = 4,
-  relative_text_dst = 0.15
+  arrow_length = 2,
+  x_coord_adjust = 0.25,
+  y_coord_adjust = x_coord_adjust,
+  arrow_size = 0.25,
+  arrow_width = 0.2,
+  arrow_line_width = 3,
+  arrow_color = "black",
+  text_font_size = 12,
+  text_dst = 0.3
 )
 }
 \arguments{
@@ -30,32 +28,23 @@ add_dimension_arrows(
 \item{dims}{A vector of dimension names, overwrites the default dimension
 names assumed from reduction method}
 
-\item{arrow_length}{The size of the arrow, default is 0.15 (15 percent of the plot)}
+\item{arrow_length}{The size of the arrow, default is 2 (cm)}
 
-\item{arrow_x_adjust_ratio}{The x-axis adjustment ratio for the arrow,
-increase (> 1) and decrease (< 1) the x-axis.
-Default is 1}
+\item{x_coord_adjust}{Horizontal adjustment of the arrow origin, default is 0.25 (cm)}
 
-\item{arrow_y_adjust_ratio}{The y-axis adjustment ratio for the arrow,
-increase (> 1) and decrease (< 1) the y-axis.
-Default is 1}
+\item{y_coord_adjust}{Vertical adjustment of the arrow origin, default is the same as x_coord_adjust}
 
-\item{x_coord_adjust}{Horizontal adjustment of the arrow origin, default is 0}
+\item{arrow_size}{The size of the arrow head, default is 0.25 cm}
 
-\item{y_coord_adjust}{Vertical adjustment of the arrow origin, default is 0}
+\item{arrow_width}{The width of the arrow, default is 0.2 cm}
 
-\item{arrow_size}{The size of the arrow head, default is 0.2 cm}
+\item{arrow_line_width}{The width of the arrow line, default is 3}
 
-\item{arrow_width}{The width of the arrow, default is 0.9}
+\item{arrow_color}{The color of the arrow and label, default is "black"}
 
-\item{arrow_text_color}{The color of the arrow and label, default is "black"}
+\item{text_font_size}{The font size of the text, default is 12}
 
-\item{arrow_type}{The type of the arrow, default is "closed"}
-
-\item{text_font_size}{The font size of the text, default is 4}
-
-\item{relative_text_dst}{The relative distance of the text from the arrow,
-default is 0.15}
+\item{text_dst}{The distance of the text from the arrow in cm, default is 0.3}
 }
 \value{
 a ggplot object with the dimension arrows added

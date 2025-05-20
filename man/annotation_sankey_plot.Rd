@@ -16,7 +16,7 @@ annotation_sankey_plot(
 )
 }
 \arguments{
-\item{object}{A Seurat object or a data frame (\code{suerat_obj@meta.data}) 
+\item{object}{A Seurat object or a data frame (\code{suerat_obj@meta.data})
 with the annotations to visualize}
 
 \item{annotations}{A vector of annotation names to visualize. The order will
