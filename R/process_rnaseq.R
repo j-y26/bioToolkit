@@ -34,10 +34,8 @@
 #' @export
 #'
 #' @return A data frame with the addition of the following columns:
-#'         \itemize{
 #'          \item{piValue}{The pi-value of the gene}
 #'          \item{rank}{The rank of the gene based on the pi-value}
-#'         }
 #'
 rank_de_genes <- function(
     de_results,
@@ -104,10 +102,9 @@ rank_de_genes <- function(
 #' @export
 #'
 #' @return A data frame with the addition of the following columns:
-#'         \itemize{
 #'          \item{piValue}{The pi-value of the gene}
 #'          \item{rank}{The rank of the gene based on the pi-value}
-#'         } And if \code{save_file} is not NULL, a rank file will be saved to disk.
+#'         And if \code{save_file} is not NULL, a rank file will be saved to disk.
 #' 
 #' @importFrom utils write.table
 #' @import dplyr
@@ -173,10 +170,8 @@ generate_de_rank_file <- function(
 #' @export
 #' 
 #' @return A list of two data frames:
-#'        \itemize{
 #'          \item{up_reg}{Data frame containing up-regulated genes}
 #'          \item{down_reg}{Data frame containing down-regulated genes}
-#'        }
 #' 
 filter_de_genes <- function(
     de_results,

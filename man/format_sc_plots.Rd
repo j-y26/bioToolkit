@@ -62,6 +62,14 @@ the layout. Only used when add_arrow is TRUE}
 
 \item{restore_legend}{Whether to restore the legend, default is FALSE}
 
+\item{legend_position}{The position of the legend, default is NULL (meaning no change)}
+
+\item{legend_title}{The title of the legend, default is NULL}
+
+\item{legend_title_size}{The size of the legend title, default is 12}
+
+\item{legend_title_bold}{Whether to bold the legend title, default is FALSE}
+
 \item{reduction}{The reduction method used to generate the plots, default is
 "umap", allowed values are "umap", "tsne", "pca", "spatial".
 Used only if add_arrow is TRUE}

@@ -128,7 +128,6 @@
 #' @export
 #'
 #' @return A list of four elements:
-#'       \itemize{
 #'        \item{model_list}{A list of linear models for each gene, with the
 #'                          query gene as the independent variable and the gene
 #'                          expression as the dependent variable.}
@@ -146,7 +145,6 @@
 #'                          showing the linear model plot. The plots will be
 #'                          saved automatically. Only available if
 #'                          \code{plot_model} is \code{TRUE}.}
-#'      }
 #'
 calc_expr_corr <- function(
   gene_expr,

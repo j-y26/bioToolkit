@@ -9,3 +9,6 @@ PVAL_COL_LIMMA <- "adj.P.Val"
 FC_COL_LIMMA <- "logFC"
 PVAL_COL_SEURAT <- "p_val_adj"
 FC_COL_SEURAT <- "avg_log2FC"
+
+# Tabix indexing params
+MAX_TABIX_END <- 536870912L

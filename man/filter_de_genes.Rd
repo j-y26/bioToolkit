@@ -43,10 +43,8 @@ the log2 fold changes.}
 }
 \value{
 A list of two data frames:
-       \itemize{
          \item{up_reg}{Data frame containing up-regulated genes}
          \item{down_reg}{Data frame containing down-regulated genes}
-       }
 }
 \description{
 This function filters genes based on the results of differential

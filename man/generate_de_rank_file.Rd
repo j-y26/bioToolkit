@@ -39,10 +39,9 @@ the log2 fold changes.}
 }
 \value{
 A data frame with the addition of the following columns:
-        \itemize{
          \item{piValue}{The pi-value of the gene}
          \item{rank}{The rank of the gene based on the pi-value}
-        } And if \code{save_file} is not NULL, a rank file will be saved to disk.
+        And if \code{save_file} is not NULL, a rank file will be saved to disk.
 }
 \description{
 This function generates a rank file for Gene Set Enrichment

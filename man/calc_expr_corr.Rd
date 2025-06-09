@@ -132,7 +132,6 @@ messages. The default value is TRUE.}
 }
 \value{
 A list of four elements:
-      \itemize{
        \item{model_list}{A list of linear models for each gene, with the
                          query gene as the independent variable and the gene
                          expression as the dependent variable.}
@@ -150,7 +149,6 @@ A list of four elements:
                          showing the linear model plot. The plots will be
                          saved automatically. Only available if
                          \code{plot_model} is \code{TRUE}.}
-     }
 }
 \description{
 This function calculates the correlation between gene expression

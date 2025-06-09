@@ -305,6 +305,7 @@ calc_module_scores <- function(data,
 #' @export
 #'
 #' @importFrom GSVA ssgseaParam gsva
+#' @importFrom Biobase ExpressionSet
 #'
 calc_module_scores_ssgsea <- function(data,
                                       modules,

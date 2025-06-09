@@ -266,6 +266,14 @@ manipulate_sc_plot <- function(plot,
 #' @param remove_grid Whether to remove the grid, default is FALSE
 #'
 #' @param restore_legend Whether to restore the legend, default is FALSE
+#' 
+#' @param legend_position The position of the legend, default is NULL (meaning no change)
+#' 
+#' @param legend_title The title of the legend, default is NULL
+#' 
+#' @param legend_title_size The size of the legend title, default is 12
+#' 
+#' @param legend_title_bold Whether to bold the legend title, default is FALSE
 #'
 #' @param reduction The reduction method used to generate the plots, default is
 #'                 "umap", allowed values are "umap", "tsne", "pca", "spatial".
@@ -978,4 +986,105 @@ annotation_sankey_plot <- function(
   )
 
   return(plt)
+}
+
+
+#'@title Bar Plot for Grouped Data
+#' 
+#' @param df A data frame with columns: `split.by`, `group.by`, and `frequency`.
+#' 
+#' @param group.by Column name used for the fill (segments within bars).
+#' 
+#' @param split.by Column name used for the x-axis (categories to split the bars).
+#' 
+#' @param frequency Column name with the values for bar heights (usually counts 
+#'                  or proportions).
+#' 
+#' @param mode Either "stack" or "fill".
+#' 
+#' @param palette A valid palette name from "alphabet", "alphabet2", "glasbey", "polychrome", "stepped", and "parade".
+#'                Alternatively, a vector of colors can be provided with the same length as unique groups.
+#' 
+#' @param title Plot title.
+#' 
+#' @param show_totals Logical, whether to show totals on top of the bars.
+#'
+#' @return A ggplot2 object
+#' 
+#' @import ggplot2 dplyr
+#' @importFrom Seurat DiscretePalette
+#' 
+#' @export
+#' 
+grouped_bar_plot <- function(df, 
+                             group.by, 
+                             split.by, 
+                             frequency, 
+                             mode = c("stack", "fill"), 
+                             palette = "polychrome",
+                             title = NULL,
+                             show_totals = FALSE) {
+  # Check if the required columns are present
+  if (!all(c(group.by, split.by, frequency) %in% colnames(df))) {
+    stop("Data frame must contain the specified columns.")
+  }
+  
+  # Check if mode is valid
+  mode <- match.arg(mode)
+  if (!mode %in% c("stack", "fill")) {
+    stop("Mode must be either 'stack' or 'fill'.")
+  }
+
+  # Define the colors
+  if (length(palette) == 1 && palette %in% c("alphabet", "alphabet2", "glasbey", "polychrome", "stepped", "parade")) {
+    colors <- Seurat::DiscretePalette(
+      n = length(unique(df[[group.by]])),
+      palette = palette
+    )
+  } else if (length(palette) == length(unique(df[[group.by]]))) {
+    # Use custom colors
+    colors <- palette
+  } else {
+    stop("Palette must be one of 'alphabet', 'alphabet2', 'glasbey', 'polychrome', 'stepped', and 'parade' or a vector of colors with the same length as unique groups.")
+  }
+  
+  # Create the bar plot
+  plot <- ggplot(df, aes_string(x = split.by, y = frequency, fill = group.by)) +
+    geom_bar(stat = "identity", position = mode) +
+    scale_fill_manual(values = colors) +
+    theme_classic() +
+    labs(y = ifelse(mode == "fill", "Proportion", "Frequency"),
+         fill = group.by,
+         title = title) +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.title.y = element_text(face = "bold"),
+      axis.title.x = element_blank(),
+      legend.position = "right",
+      legend.title = element_text(face = "bold"),
+      legend.text = element_text(size = 10),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()
+    )
+
+  if (show_totals) {
+    # Calculate totals for each split.by category
+    total_df <- aggregate(df[[frequency]], by = list(df[[split.by]]), FUN = sum)
+    colnames(total_df) <- c(split.by, "total")
+
+    # Add totals to the plot
+    plot <- plot + 
+      geom_text(data = total_df, 
+        aes_string(x = split.by, 
+                   y = "total",
+                    label = "total"),
+        vjust = -0.5,
+        fontface = "bold",
+        inherit.aes = FALSE,
+        size = 3.5
+      )
+  }
+
+  # Return the plot
+  return(plot)
 }

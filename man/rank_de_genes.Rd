@@ -35,10 +35,8 @@ the log2 fold changes.}
 }
 \value{
 A data frame with the addition of the following columns:
-        \itemize{
          \item{piValue}{The pi-value of the gene}
          \item{rank}{The rank of the gene based on the pi-value}
-        }
 }
 \description{
 This function calculates ranks of genes based on the
