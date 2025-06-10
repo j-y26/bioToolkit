@@ -112,6 +112,13 @@ peak_category_plot <- function(peak_list,
 
   df_combined <- dplyr::bind_rows(df_list, .id = "peak_set")
 
+  # Enforce sample order
+  sample_order <- names(peak_list)
+  if (is.null(sample_order)) {
+    sample_order <- peak_names
+  }
+  df_combined$peak_set <- factor(df_combined$peak_set, levels = sample_order)
+
   # Plot the data
   p_stack <- grouped_bar_plot(
     df = df_combined,
