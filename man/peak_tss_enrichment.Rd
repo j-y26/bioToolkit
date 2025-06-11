@@ -10,6 +10,7 @@ peak_tss_enrichment(
   TxDb,
   upstream = 3000,
   downstream = 3000,
+  nbin = 800,
   plot_title = "Peak TSS Enrichment"
 )
 }
@@ -26,6 +27,8 @@ by a different peak calling method or sample.}
 \item{upstream}{A numeric value specifying the upstream region to consider for TSS enrichment.}
 
 \item{downstream}{A numeric value specifying the downstream region to consider for TSS enrichment.}
+
+\item{nbin}{An integer specifying the number of bins to use for the TSS enrichment plot.}
 
 \item{plot_title}{A character string for the title of the plot. Default is
 "Peak TSS Enrichment".}

@@ -1,7 +1,7 @@
 Package: bioToolkit
 Type: Package
 Title: An R package hosting useful functions for data analysis
-Version: 0.1.4
+Version: 0.1.5
 Author: person("Jielin", "Yang",
                 email = "jielin.yang@sickkids.ca",
                 role = c("aut", "cre"),

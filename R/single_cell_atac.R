@@ -20,7 +20,6 @@
 #' @return A list of csAnno objects, each containing the detailed annotation of
 #'         each peak set. See `ChIPseeker` package for more details.
 #'
-#' @import GenomicRanges
 #' @importFrom ChIPseeker annotatePeak
 #'
 #' @export
@@ -164,6 +163,8 @@ peak_category_plot <- function(peak_list,
 #' @param upstream A numeric value specifying the upstream region to consider for TSS enrichment.
 #'
 #' @param downstream A numeric value specifying the downstream region to consider for TSS enrichment.
+#' 
+#' @param nbin An integer specifying the number of bins to use for the TSS enrichment plot.
 #'
 #' @param plot_title A character string for the title of the plot. Default is
 #'                   "Peak TSS Enrichment".
@@ -181,6 +182,7 @@ peak_tss_enrichment <- function(peaks,
                                 TxDb,
                                 upstream = 3000,
                                 downstream = 3000,
+                                nbin = 800,
                                 plot_title = "Peak TSS Enrichment") {
   # Check if peaks is a named list
   if (!is.list(peaks)) {
@@ -217,6 +219,7 @@ peak_tss_enrichment <- function(peaks,
       TxDb = TxDb,
       upstream = upstream,
       downstream = downstream,
+      nbin = nbin,
       title = name,
       xlab = "Distance to TSS (bp)",
     )
