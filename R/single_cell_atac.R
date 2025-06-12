@@ -250,6 +250,8 @@ peak_tss_enrichment <- function(peaks,
 #' @param peak_names A character vector of names corresponding to the peaks in
 #'                   `peaks`. If not provided, names will be extracted from
 #'                   `peaks` names. Default is `NULL`.
+#' 
+#' @param max_length An integer specifying the maximum length of the peaks to consider.
 #'
 #' @param plot_title A character string for the title of the plot. Default is
 #                   "Peak Width Distribution".
@@ -265,6 +267,7 @@ peak_tss_enrichment <- function(peaks,
 #'
 peak_width_distribution <- function(peaks,
                                     peak_names = NULL,
+                                    max_length = 10000,
                                     plot_title = "Peak Width Distribution") {
   # Check if peaks is a named list
   if (!is.list(peaks)) {
@@ -304,6 +307,13 @@ peak_width_distribution <- function(peaks,
       width = GenomicRanges::width(peak),
       peak_set = name
     )
+
+    # Filter peaks by max_length
+    df <- df[df$width <= max_length, ]
+    if (nrow(df) == 0) {
+      warning(paste("No peaks found with width less than or equal to", max_length, "for peak set:", name))
+      return(NULL)
+    }
 
     # Histogram with density curve
     p <- ggplot(df, aes(x = width)) +

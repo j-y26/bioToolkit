@@ -7,6 +7,7 @@
 peak_width_distribution(
   peaks,
   peak_names = NULL,
+  max_length = 10000,
   plot_title = "Peak Width Distribution"
 )
 }
@@ -17,6 +18,8 @@ by a different peak calling method or sample.}
 \item{peak_names}{A character vector of names corresponding to the peaks in
 `peaks`. If not provided, names will be extracted from
 `peaks` names. Default is `NULL`.}
+
+\item{max_length}{An integer specifying the maximum length of the peaks to consider.}
 
 \item{plot_title}{A character string for the title of the plot. Default is}
 }
