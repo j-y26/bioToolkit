@@ -309,10 +309,13 @@ peak_width_distribution <- function(peaks,
     )
 
     # Filter peaks by max_length
-    df <- df[df$width <= max_length, ]
-    if (nrow(df) == 0) {
-      warning(paste("No peaks found with width less than or equal to", max_length, "for peak set:", name))
-      return(NULL)
+    if (!is.null(max_length)) {
+      df <- df[df$width <= max_length, ]
+      if (nrow(df) == 0) {
+        warning(paste("No peaks found with width less than or equal to", max_length, "for peak set:", name))
+        return(NULL)
+      }
+      max_width <- ceiling(max_length / 50) * 50
     }
 
     # Histogram with density curve
