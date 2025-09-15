@@ -22,7 +22,7 @@ grouped_bar_plot(
 
 \item{split.by}{Column name used for the x-axis (categories to split the bars).}
 
-\item{frequency}{Column name with the values for bar heights (usually counts 
+\item{frequency}{Column name with the values for bar heights (usually counts
 or proportions).}
 
 \item{mode}{Either "stack" or "fill".}

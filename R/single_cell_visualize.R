@@ -266,13 +266,13 @@ manipulate_sc_plot <- function(plot,
 #' @param remove_grid Whether to remove the grid, default is FALSE
 #'
 #' @param restore_legend Whether to restore the legend, default is FALSE
-#' 
+#'
 #' @param legend_position The position of the legend, default is NULL (meaning no change)
-#' 
+#'
 #' @param legend_title The title of the legend, default is NULL
-#' 
+#'
 #' @param legend_title_size The size of the legend title, default is 12
-#' 
+#'
 #' @param legend_title_bold Whether to bold the legend title, default is FALSE
 #'
 #' @param reduction The reduction method used to generate the plots, default is
@@ -600,7 +600,7 @@ format_sc_plots <- function(plots,
 #' @param x_group_label_position The position of the x-axis group label, default is "bottom"
 #'
 #' @param y_group_label_position The position of the y-axis group label, default is "left"
-#' 
+#'
 #' @param dot_border The border size of the dots, default is 0.3
 #'
 #' @return a ggplot object with the dot plot
@@ -990,37 +990,37 @@ annotation_sankey_plot <- function(
 
 
 #'@title Bar Plot for Grouped Data
-#' 
+#'
 #' @param df A data frame with columns: `split.by`, `group.by`, and `frequency`.
-#' 
+#'
 #' @param group.by Column name used for the fill (segments within bars).
-#' 
+#'
 #' @param split.by Column name used for the x-axis (categories to split the bars).
-#' 
-#' @param frequency Column name with the values for bar heights (usually counts 
+#'
+#' @param frequency Column name with the values for bar heights (usually counts
 #'                  or proportions).
-#' 
+#'
 #' @param mode Either "stack" or "fill".
-#' 
+#'
 #' @param palette A valid palette name from "alphabet", "alphabet2", "glasbey", "polychrome", "stepped", and "parade".
 #'                Alternatively, a vector of colors can be provided with the same length as unique groups.
-#' 
+#'
 #' @param title Plot title.
-#' 
+#'
 #' @param show_totals Logical, whether to show totals on top of the bars.
 #'
 #' @return A ggplot2 object
-#' 
+#'
 #' @import ggplot2 dplyr
 #' @importFrom Seurat DiscretePalette
-#' 
+#'
 #' @export
-#' 
-grouped_bar_plot <- function(df, 
-                             group.by, 
-                             split.by, 
-                             frequency, 
-                             mode = c("stack", "fill"), 
+#'
+grouped_bar_plot <- function(df,
+                             group.by,
+                             split.by,
+                             frequency,
+                             mode = c("stack", "fill"),
                              palette = "polychrome",
                              title = NULL,
                              show_totals = FALSE) {
@@ -1028,7 +1028,7 @@ grouped_bar_plot <- function(df,
   if (!all(c(group.by, split.by, frequency) %in% colnames(df))) {
     stop("Data frame must contain the specified columns.")
   }
-  
+
   # Check if mode is valid
   mode <- match.arg(mode)
   if (!mode %in% c("stack", "fill")) {
@@ -1047,7 +1047,7 @@ grouped_bar_plot <- function(df,
   } else {
     stop("Palette must be one of 'alphabet', 'alphabet2', 'glasbey', 'polychrome', 'stepped', and 'parade' or a vector of colors with the same length as unique groups.")
   }
-  
+
   # Create the bar plot
   plot <- ggplot(df, aes_string(x = split.by, y = frequency, fill = group.by)) +
     geom_bar(stat = "identity", position = mode) +
@@ -1073,9 +1073,9 @@ grouped_bar_plot <- function(df,
     colnames(total_df) <- c(split.by, "total")
 
     # Add totals to the plot
-    plot <- plot + 
-      geom_text(data = total_df, 
-        aes_string(x = split.by, 
+    plot <- plot +
+      geom_text(data = total_df,
+        aes_string(x = split.by,
                    y = "total",
                     label = "total"),
         vjust = -0.5,
@@ -1087,4 +1087,428 @@ grouped_bar_plot <- function(df,
 
   # Return the plot
   return(plot)
+}
+
+
+#' @title Calculate group proportions and counts across conditions
+#'
+#' @description Calculates the proportion or count of different groups across
+#' specified conditions from a Seurat object or metadata dataframe
+#'
+#' @param object A Seurat object or a data.frame containing the metadata
+#'               (e.g., cell type annotations). If a dataframe is provided,
+#'               it must be in long format with columns for each variable, e.g.,
+#'               seurat_obj@meta.data.
+#'
+#' @param group.by Character vector specifying the column name(s) containing the
+#'                 grouping variable(s) (e.g., cell types, clusters).
+#'
+#' @param split.by Character string specifying the column name containing the
+#'                 condition variable (e.g., treatment, genotype).
+#'
+#' @param cells.use Optional character vector specifying the cells to include in the
+#'                  analysis. If NULL (default), all cells are included. Can be
+#'                  `WhichCells(seurat_obj, idents = c("ident1", "ident2"))` or
+#'                  any other vector of cell names.
+#'
+#' @return A data.frame with columns:
+#'   \item{group}{The grouping variable values (factor)}
+#'   \item{condition}{The condition/split variable values (factor)}
+#'   \item{prop}{The calculated proportion}
+#'   \item{count}{The raw count for each group-condition combination (numeric)}
+#'   \item{total_count_condition}{The total count for that condition (numeric)}
+#'
+#' @import dplyr
+#'
+#' @export
+#'
+summarize_group_meta <- function(object, group.by, split.by, cells.use = NULL) {
+  # Check if the object is a Seurat object or a data frame
+  if (is(object, "Seurat")) {
+    object <- object@meta.data
+  } else if (is.data.frame(object) || inherits(object, "tbl_df")) {
+    object <- as.data.frame(object)
+  } else {
+    stop("The object must be a Seurat object or a data frame-like object")
+  }
+
+  # Check if the group.by and split.by columns are in the object
+  if (!all(c(group.by, split.by) %in% colnames(object))) {
+    stop("The group.by and split.by must be columns in the metadata")
+  }
+
+  # Select only the relevant columns
+  df <- object[, c(group.by, split.by)]
+
+  rm(object) # Free memory
+  gc()
+
+  # Subset to the specified cells if provided
+  if (!is.null(cells.use)) {
+    org.ncell <- nrow(df)
+    if (!all(cells.use %in% rownames(object))) {
+      no_id_cells <- setdiff(cells.use, rownames(object))
+      warning(paste0(length(no_id_cells), " cells in cells.use are not found in the object and will be ignored: ", paste(head(no_id_cells, 10), collapse = ", "), if (length(no_id_cells) > 10) "..." else ""))
+      df <- df[rownames(df) %in% cells.use, ]
+      message(paste0("Subsetting to ", nrow(df), " cells (", round(100 * nrow(df) / org.ncell, 2), "% of original)"))
+    } else {
+      df <- df[rownames(df) %in% cells.use, ]
+      message(paste0("Subsetting to ", nrow(df), " cells (", round(100 * nrow(df) / org.ncell, 2), "% of original)"))
+    }
+  }
+
+  # Rename columns for easier handling
+  colnames(df) <- c("group", "condition")
+
+  # Process NA values
+  if (any(is.na(df))) {
+    na_idx <- is.na(df$group) | is.na(df$condition)
+    warning(paste0(sum(na_idx), " cells with NA values in group.by or split.by will be ignored"))
+    df <- df[!na_idx, ]
+    message(paste0("Remaining ", nrow(df), " cells after removing NAs"))
+  }
+
+  # Ensure there are still cells left
+  if (nrow(df) == 0) {
+    stop("No cells remaining after filtering. Please check your inputs.")
+  }
+
+  # Calculate counts
+  summary_df <- table(df$group, df$condition) %>%
+    as.data.frame() %>%
+    rename(group = Var1, condition = Var2, count = Freq)
+
+  # Calculate total counts per condition
+  total_counts <- summary_df %>%
+    group_by(condition) %>%
+    summarise(total_count_condition = sum(count))
+
+  # Calculate proportions
+  summary_df <- summary_df %>%
+    left_join(total_counts, by = "condition") %>%
+    mutate(prop = count / total_count_condition)
+
+  # Re-arrange columns
+  summary_df <- summary_df %>%
+    select(group, condition, prop, count, total_count_condition)
+
+  return(summary_df)
+}
+
+
+#' @title Metadata Scatter Plot
+#'
+#' @description This function generates a scatter plot for visualizing the
+#'              relationship of a grouped metadata variable between two conditions.
+#'              Each point represents a group (e.g., cell type) and its position
+#'              is determined by the proportion or count of that group in each
+#'              of two specified conditions. This is useful for comparing how
+#'              the distribution of groups changes between conditions.
+#'
+#' @param object A Seurat object or a data.frame containing the metadata
+#'               (e.g., cell type annotations). If a dataframe is provided,
+#'               it must be in long format with columns for each variable, e.g.,
+#'               `seurat_obj@meta.data`.
+#'
+#' @param group.by Character vector specifying the column name(s) containing the
+#'                 grouping variable(s) (e.g., cell types, clusters).
+#'
+#' @param split.by Character string specifying the column name containing the
+#'                 condition variable (e.g., treatment, genotype).
+#'
+#' @param cells.use Optional character vector specifying the cells to include in the
+#'                  analysis. If NULL (default), all cells are included. Can be
+#'                  `WhichCells(seurat_obj, idents = c("ident1", "ident2"))` or
+#'                  any other vector of cell names.
+#'
+#' @param group.use Optional character vector specifying the groups to include
+#'                  in the plot. If NULL (default), all groups are included.
+#'                  When plotting proportions, setting this parameter does NOT
+#'                  affect the proportion calculations, which are always based
+#'                  on all groups present in the data. This will only filter the
+#'                  points shown in the plot.
+#'
+#' @param x_condition The name of the condition to plot on the x-axis. Must be
+#'                    one of the unique values in the split.by column. Optional
+#'                   (default NULL) if there are only two unique conditions.
+#'
+#' @param y_condition The name of the condition to plot on the y-axis. Must be
+#'                    one of the unique values in the split.by column. Optional
+#'                   (default NULL) if there are only two unique conditions.
+#'
+#' @param x_label The label for the x-axis. If NULL (default), the x_condition
+#'                 will be used as the label.
+#'
+#' @param y_label The label for the y-axis. If NULL (default), the y_condition
+#'                 will be used as the label.
+#'
+#' @param mode Either "prop" or "count" to determine whether to plot the
+#'             proportion or count of cells for each group in the specified
+#'             conditions.
+#'
+#' @param percentage Logical, whether to convert proportions to percentages
+#'                   (default FALSE).
+#'
+#' @param colors A named vector of colors to use for the groups. The names
+#'              should match the group names and should have exactly the same
+#'              length as the number of unique groups.
+#'
+#' @param point_size The size of the points in the scatter plot, default is 3.
+#'
+#' @param point_alpha The transparency of the points in the scatter plot,
+#'                   default is 0.8.
+#'
+#' @param point_border Whether to add a black border around the points,
+#'                     default is TRUE.
+#'
+#' @param point_border_stroke The thickness of the point border,
+#'                             default is 0.5.
+#'
+#' @param add_diagonal Logical, whether to add a diagonal reference line
+#'                  (default TRUE).
+#'
+#' @param label Logical, whether to add labels to the points (default TRUE).
+#'
+#' @param label_text_size The size of the point labels, default is 3.5.
+#'
+#' @param legend_position The position of the legend, default is 'none'.
+#'
+#' @param legend_title The title of the legend, default is the value of group.by.
+#'
+#' @param remove_zero Logical, whether to remove groups with zero counts in both
+#'                    conditions (default TRUE).
+#'
+#'
+#' @return A ggplot object representing the scatter plot.
+#'
+#' @import ggplot2 dplyr
+#' @importFrom ggrepel geom_text_repel
+#'
+#' @export
+#'
+plot_meta_scatter <- function(
+  object,
+  group.by,
+  split.by,
+  cells.use = NULL,
+  group.use = NULL,
+  x_condition = NULL,
+  y_condition = NULL,
+  x_label = NULL,
+  y_label = NULL,
+  mode = c("prop", "count"),
+  percentage = TRUE,
+  colors = NULL,
+  point_size = 4,
+  point_alpha = 0.8,
+  point_border = TRUE,
+  point_border_stroke = 1,
+  add_diagonal = TRUE,
+  diagonal_slope = 1,
+  diagonal_intercept = 0,
+  diagonal_color = "grey60",
+  diagonal_linetype = "11",
+  diagonal_size = 0.8,
+  label = TRUE,
+  label_text_size = 4,
+  legend_position = "none",
+  legend_title = group.by,
+  remove_zero = TRUE
+) {
+  # Get the calculated summary data
+  summary_df <- summarize_group_meta(object, group.by, split.by, cells.use)
+
+  # Pull metadata if a Seurat object was provided
+  if (is(object, "Seurat")) {
+    object <- object@meta.data
+  } else if (is.data.frame(object) || inherits(object, "tbl_df")) {
+    object <- as.data.frame(object)
+  } else {
+    stop("The object must be a Seurat object or a data frame-like object")
+  }
+
+  # Mode
+  mode <- mode[1]
+  if (!mode %in% c("prop", "count")) {
+    stop("Mode must be either 'prop' or 'count'.")
+  }
+
+  # Check if the specified conditions are valid
+  if (is.null(levels(object[[split.by]]))) {
+    conditions <- unique(object[[split.by]])
+  } else {
+    conditions <- levels(object[[split.by]])
+  }
+  # If conditions is a dataframe, convert to character vector
+  if (is.data.frame(conditions)) {
+    conditions <- conditions[[split.by]]
+  }
+  unique_conditions <- conditions[conditions %in% unique(summary_df$condition)] %>% unique()
+  if (length(unique_conditions) < 2) {
+    stop("The split.by column must contain at least two unique conditions.")
+  }
+  if (is.null(x_condition) && is.null(y_condition)) {
+    if (length(unique_conditions) > 2) {
+      stop("When there are more than two unique conditions, both x_condition and y_condition must be specified.")
+    } else {
+      x_condition <- unique_conditions[1]
+      y_condition <- unique_conditions[2]
+      message(paste0("Using ", x_condition, " for x-axis and ", y_condition, " for y-axis."))
+    }
+  } else if (is.null(x_condition) || is.null(y_condition)) {
+    stop("Both x_condition and y_condition must be specified or both left as NULL.")
+  } else {
+    if (!(x_condition %in% unique_conditions)) {
+      stop("x_condition must be one of the unique values in the split.by column.")
+    }
+    if (!(y_condition %in% unique_conditions)) {
+      stop("y_condition must be one of the unique values in the split.by column.")
+    }
+    if (x_condition == y_condition) {
+      stop("x_condition and y_condition must be different.")
+    }
+  }
+
+  # Retain only the specified conditions
+  summary_df <- summary_df %>% filter(condition %in% c(x_condition, y_condition))
+  summary_df$condition <- factor(summary_df$condition, levels = c(x_condition, y_condition))
+
+  # Check if the specified groups are valid
+  if (!is.null(group.use)) {
+    if (!all(group.use %in% unique(summary_df$group))) {
+      stop("All values in group.use must be present in the group.by column.")
+    }
+    summary_df <- summary_df %>% filter(group %in% group.use)
+  }
+
+  if (is.null(levels(object[[group.by]]))) {
+    groups <- unique(object[[group.by]])
+  } else {
+    groups <- levels(object[[group.by]])
+  }
+  # If groups is a dataframe, convert to character vector
+  if (is.data.frame(groups)) {
+    groups <- groups[[group.by]]
+  }
+  unique_groups <- groups[groups %in% unique(summary_df$group)] %>% unique()
+  if (length(unique_groups) < 1) {
+    stop("The group.by column must contain at least one valid group.")
+  }
+  summary_df$group <- factor(summary_df$group, levels = unique_groups)
+
+  # Get the x and y data for plotting
+  if (mode == "prop") {
+    x_data <- summary_df %>%
+        filter(condition == x_condition) %>%
+        filter(group %in% unique_groups) %>%
+        select(group, prop) %>%
+        rename(x_value = prop)
+    y_data <- summary_df %>%
+        filter(condition == y_condition) %>%
+        filter(group %in% unique_groups) %>%
+        select(group, prop) %>%
+        rename(y_value = prop)
+    if  (percentage) {
+      x_data$x_value <- x_data$x_value * 100
+      y_data$y_value <- y_data$y_value * 100
+    }
+  } else {
+    x_data <- summary_df %>% filter(condition == x_condition) %>% select(group, count) %>% rename(x_value = count)
+    y_data <- summary_df %>% filter(condition == y_condition) %>% select(group, count) %>% rename(y_value = count)
+  }
+
+  plot_df <- merge(x_data, y_data, by = "group")
+  plot_df[is.na(plot_df)] <- 0 # Replace NA with 0
+  rownames(plot_df) <- plot_df$group
+  plot_df <- plot_df[, c("x_value", "y_value", "group")]
+
+  # Define axis labels
+  if (is.null(x_label)) {
+    x_label <- paste0(if (mode == "prop" && percentage) "Percentage" else if (mode == "prop" && !percentage) "Proportion" else "Count", " in ", x_condition)
+  }
+  if (is.null(y_label)) {
+    y_label <- paste0(if (mode == "prop" && percentage) "Percentage" else if (mode == "prop" && !percentage) "Proportion" else "Count", " in ", y_condition)
+  }
+
+  # Remove groups with zero counts in both conditions if requested
+  if (remove_zero) {
+    zero_idx <- plot_df$x_value == 0 & plot_df$y_value == 0
+    if (any(zero_idx)) {
+      warning(paste0(sum(zero_idx), " group(s) with zero counts in both conditions will be removed."))
+      plot_df <- plot_df[!zero_idx, ]
+      message(paste0("Remaining ", nrow(plot_df), " group(s) after removing zeros."))
+
+      # Update factor levels
+      plot_df$group <- factor(plot_df$group)
+      # Update colors if provided
+      if (!is.null(colors)) {
+        colors <- colors[levels(plot_df$group)]
+      }
+
+      if (nrow(plot_df) == 0) {
+        stop("No groups remaining after removing zeros. Please check your inputs.")
+      }
+    }
+  }
+
+  rm(object) # Free memory
+  gc()
+
+  # Generate the base plot
+  p <- ggplot(plot_df, aes(x = x_value, y = y_value, fill = group)) +
+    geom_point(
+      size = point_size,
+      alpha = point_alpha,
+      shape = ifelse(point_border, 21, 16),
+      stroke = ifelse(point_border, point_border_stroke, 0),
+      color = ifelse(point_border, "black", NA)
+    ) +
+    theme_classic() +
+    labs(
+      x = x_label,
+      y = y_label
+    ) +
+    theme(
+      axis.title = element_text(face = "bold"),
+      legend.position = legend_position
+    )
+
+  # Check legend
+  if (legend_position != "none") {
+    p <- p + theme(
+      legend.title = element_text(face = "bold")
+    ) +
+      labs(fill = legend_title)
+  }
+
+  # Add diagonal reference line if requested
+  if (add_diagonal) {
+    p <- p + geom_abline(slope = diagonal_slope, intercept = diagonal_intercept, linetype = diagonal_linetype, color = diagonal_color, size = diagonal_size)
+  }
+
+  # Add custom colors if provided
+  if (!is.null(colors)) {
+    if (length(colors) != length(unique(plot_df$group))) {
+      stop("The colors must have the same length as the number of unique groups.")
+    } else if (!all(names(colors) %in% unique(plot_df$group))) {
+      stop("The colors must have the same names as the unique groups.")
+    } else {
+      # arrange the colors based on the groups
+      colors <- colors[unique(plot_df$group)]
+      p <- p + scale_fill_manual(values = colors)
+    }
+  }
+
+  # Add labels if requested
+  if (label) {
+    p <- p + ggrepel::geom_text_repel(
+      aes(label = group),
+      color = "black",
+      size = label_text_size,
+      segment.color = "grey50",
+      segment.size = 0.6,
+      max.overlaps = Inf)
+  }
+
+  return(p)
 }
