@@ -41,6 +41,15 @@ plot_volcano2(
   y_lab = bquote(~-log[10] ~ adj.P),
   axis_lab_size = 12,
   lab_size = 3.5,
+  label_arrow = TRUE,
+  label_arrow_type = "closed",
+  label_arrow_ends = "last",
+  label_force = 10,
+  label_point_padding = 1,
+  label_box_padding = 0.4,
+  label_segment_curvature = 0,
+  label_segment_angle = 90,
+  label_segment_ncp = 1,
   max_overlaps = 10,
   ...
 )
@@ -126,6 +135,24 @@ of up and down-regulated genes}
 \item{axis_lab_size}{The size of the axis labels}
 
 \item{lab_size}{The size of the gene labels}
+
+\item{label_arrow}{A logical value indicating whether to draw arrow connectors}
+
+\item{label_arrow_type}{The arrow style: "closed", "open"}
+
+\item{label_arrow_ends}{Where the arrow points: "first" (toward label), "last" (toward dot)}
+
+\item{label_force}{The repulsion force for text spreading}
+
+\item{label_point_padding}{The padding to avoid overlapping points}
+
+\item{label_box_padding}{The padding to avoid overlapping text boxes}
+
+\item{label_segment_curvature}{The curvature of connecting lines (0 = straight)}
+
+\item{label_segment_angle}{The angle for curved connectors}
+
+\item{label_segment_ncp}{The control point density for curves}
 
 \item{max_overlaps}{The maximum number of overlaps for the gene labels}
 }

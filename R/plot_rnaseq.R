@@ -377,6 +377,24 @@ plot_volcano <- function(
 #' @param axis_lab_size The size of the axis labels
 #'
 #' @param lab_size The size of the gene labels
+#' 
+#' @param label_arrow A logical value indicating whether to draw arrow connectors
+#' 
+#' @param label_arrow_type The arrow style: "closed", "open"
+#' 
+#' @param label_arrow_ends Where the arrow points: "first" (toward label), "last" (toward dot)
+#' 
+#' @param label_force The repulsion force for text spreading
+#' 
+#' @param label_point_padding The padding to avoid overlapping points
+#' 
+#' @param label_box_padding The padding to avoid overlapping text boxes
+#' 
+#' @param label_segment_curvature The curvature of connecting lines (0 = straight)
+#' 
+#' @param label_segment_angle The angle for curved connectors
+#'
+#' @param label_segment_ncp The control point density for curves
 #'
 #' @param max_overlaps The maximum number of overlaps for the gene labels
 #'
@@ -429,6 +447,15 @@ plot_volcano2 <- function(
     y_lab = bquote(~ -log[10] ~ adj.P),
     axis_lab_size = 12,
     lab_size = 3.5,
+    label_arrow = TRUE,
+    label_arrow_type = "closed",
+    label_arrow_ends = "last",
+    label_force = 10,
+    label_point_padding = 1,
+    label_box_padding = 0.4,
+    label_segment_curvature = 0,
+    label_segment_angle = 90,
+    label_segment_ncp = 1,
     max_overlaps = 10,
     ...) {
   # Check if the DE method is valid, case-insensitive
@@ -547,26 +574,41 @@ plot_volcano2 <- function(
   # Add the labels to the plot
   if (!is.null(label_data)) {
     if (draw_connectors) {
+
       v_plot <- v_plot + ggrepel::geom_text_repel(
         data = label_data,
         aes(x = logfc, y = log_p, label = label),
         size = lab_size,
-        max.overlaps = max_overlaps,
-        segment.color = "black",
-        segment.size = 0.5,
-        segment.alpha = 0.5,
-        nudge_x = 0.2,
-        nudge_y = 0.2,
         fontface = "bold",
+        color = "black",
+        max.overlaps = max_overlaps,
+        point.padding = grid::unit(0.6, "lines"),
+        box.padding = grid::unit(0.8, "lines"),
+        force = label_force * 2,
+        force_pull = 0,
+        min.segment.length = 0,
+        max.iter = 5000,
+        max.time = 10,
+        segment.color = "black",
+        segment.size = 1,
+        segment.alpha = 0.8,
+        segment.curvature = label_segment_curvature,
+        segment.angle = label_segment_angle,
+        segment.ncp = label_segment_ncp,
+        arrow = grid::arrow(
+          length = grid::unit(0.25, "cm"),
+          type   = "closed",
+          ends   = label_arrow_ends
+        ),
+        seed = 123
       )
     } else {
       v_plot <- v_plot + geom_text(
         data = label_data,
         aes(x = logfc, y = log_p, label = label),
         size = lab_size,
-        nudge_x = 0.2,
-        nudge_y = 0.2,
-        fontface = "bold"
+        fontface = "bold",
+        color = "black"
       )
     }
   }

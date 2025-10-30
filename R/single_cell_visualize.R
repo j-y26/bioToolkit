@@ -175,8 +175,6 @@ add_dimension_arrows <- function(plot,
 #' @param legend_title_bold Whether to bold the legend title, default is FALSE
 #'
 #' @import ggplot2
-#' @import Seurat
-#'
 #' @export
 #'
 #' @return a ggplot object with the axes, legend, and grid manipulated
@@ -197,19 +195,23 @@ manipulate_sc_plot <- function(plot,
 
   # Remove axes
   if (remove_axes) {
-    plot <- plot + NoAxes()
+    if (!requireNamespace("Seurat", quietly = TRUE)) stop("Package 'Seurat' is required.")
+    plot <- plot + Seurat::NoAxes()
   }
   # Remove legend
   if (remove_legend) {
-    plot <- plot + NoLegend()
+    if (!requireNamespace("Seurat", quietly = TRUE)) stop("Package 'Seurat' is required.")
+    plot <- plot + Seurat::NoLegend()
   }
   # Remove grid
   if (remove_grid) {
-    plot <- plot + NoGrid()
+    if (!requireNamespace("Seurat", quietly = TRUE)) stop("Package 'Seurat' is required.")
+    plot <- plot + Seurat::NoGrid()
   }
   # Restore legend
   if (restore_legend) {
-    plot <- plot + RestoreLegend()
+    if (!requireNamespace("Seurat", quietly = TRUE)) stop("Package 'Seurat' is required.")
+    plot <- plot + Seurat::RestoreLegend()
   }
   # Set legend position
   if (!is.null(legend_position)) {
@@ -311,7 +313,6 @@ manipulate_sc_plot <- function(plot,
 #'
 #' @import ggplot2
 #' @import patchwork
-#' @import Seurat
 #'
 #' @export
 #'
@@ -1012,7 +1013,6 @@ annotation_sankey_plot <- function(
 #' @return A ggplot2 object
 #'
 #' @import ggplot2 dplyr
-#' @importFrom Seurat DiscretePalette
 #'
 #' @export
 #'
@@ -1037,7 +1037,8 @@ grouped_bar_plot <- function(df,
 
   # Define the colors
   if (length(palette) == 1 && palette %in% c("alphabet", "alphabet2", "glasbey", "polychrome", "stepped", "parade")) {
-    colors <- Seurat::DiscretePalette(
+  if (!requireNamespace("Seurat", quietly = TRUE)) stop("Package 'Seurat' is required.")
+  colors <- Seurat::DiscretePalette(
       n = length(unique(df[[group.by]])),
       palette = palette
     )

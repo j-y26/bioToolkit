@@ -1,7 +1,7 @@
 Package: bioToolkit
 Type: Package
 Title: An R package hosting useful functions for data analysis
-Version: 0.1.7
+Version: 0.1.8
 Author: person("Jielin", "Yang",
                 email = "jielin.yang@sickkids.ca",
                 role = c("aut", "cre"),
@@ -21,30 +21,29 @@ Imports:
     ggplot2,
     patchwork,
     grid,
-    edgeR,
     tibble,
     scales,
     tidyr,
     grDevices,
-    RColorBrewer,
-    colorspace,
-    plotly,
     stats,
+    rlang,
+    aplot,
+    data.table,
+    ggrepel,
+    stringr
+Suggests:
+    edgeR,
     Matrix,
     Seurat,
     GSEABase,
-    rlang,
     ChIPseeker,
-    aplot,
     GenomicRanges,
     GSVA,
     BiocParallel,
     IRanges,
     Rsamtools,
-    data.table,
-    ggrepel,
     rtracklayer,
     Biobase,
-    stringr,
-    grid
-    
+    RColorBrewer,
+    colorspace,
+    plotly
