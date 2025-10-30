@@ -384,6 +384,10 @@ plot_volcano <- function(
 #' 
 #' @param label_arrow_ends Where the arrow points: "first" (toward label), "last" (toward dot)
 #' 
+#' @param segment_size The size of the connector segments
+#' 
+#' @param segment_alpha The transparency level of the connector segments
+#' 
 #' @param label_force The repulsion force for text spreading
 #' 
 #' @param label_point_padding The padding to avoid overlapping points
@@ -450,6 +454,8 @@ plot_volcano2 <- function(
     label_arrow = TRUE,
     label_arrow_type = "closed",
     label_arrow_ends = "last",
+    segment_size = 0.8,
+    segment_alpha = 1,
     label_force = 10,
     label_point_padding = 1,
     label_box_padding = 0.4,
@@ -590,8 +596,8 @@ plot_volcano2 <- function(
         max.iter = 5000,
         max.time = 10,
         segment.color = "black",
-        segment.size = 1,
-        segment.alpha = 0.8,
+        segment.size = segment_size,
+        segment.alpha = segment_alpha,
         segment.curvature = label_segment_curvature,
         segment.angle = label_segment_angle,
         segment.ncp = label_segment_ncp,

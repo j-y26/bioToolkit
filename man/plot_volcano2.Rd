@@ -44,6 +44,8 @@ plot_volcano2(
   label_arrow = TRUE,
   label_arrow_type = "closed",
   label_arrow_ends = "last",
+  segment_size = 0.8,
+  segment_alpha = 1,
   label_force = 10,
   label_point_padding = 1,
   label_box_padding = 0.4,
@@ -141,6 +143,10 @@ of up and down-regulated genes}
 \item{label_arrow_type}{The arrow style: "closed", "open"}
 
 \item{label_arrow_ends}{Where the arrow points: "first" (toward label), "last" (toward dot)}
+
+\item{segment_size}{The size of the connector segments}
+
+\item{segment_alpha}{The transparency level of the connector segments}
 
 \item{label_force}{The repulsion force for text spreading}
 
