@@ -20,13 +20,13 @@
 #' @return A list of csAnno objects, each containing the detailed annotation of
 #'         each peak set. See `ChIPseeker` package for more details.
 #'
-#' @importFrom ChIPseeker annotatePeak
-#'
 #' @export
 #'
 peak_category_qc <- function(peak_list,
                              peak_names = NULL,
                              TxDb) {
+  check_installed("ChIPseeker", reason = "for peak annotation")
+
   # Check if peak_list is a named list
   if (!is.list(peak_list)) {
     stop("peak_list must be a list of GRanges objects")
@@ -90,7 +90,6 @@ peak_category_qc <- function(peak_list,
 #' @import ggplot2 patchwork
 #' @importFrom dplyr bind_rows
 #' @importFrom tidyr pivot_longer
-#' @importFrom ChIPseeker annotatePeak
 #'
 #' @export
 #'
@@ -99,6 +98,8 @@ peak_category_plot <- function(peak_list,
                                TxDb,
                                palette = "polychrome",
                                plot_title = "Peak Category QC") {
+  check_installed("ChIPseeker", reason = "for peak annotation")
+
   # Annotate peaks
   annotated_peaks <- peak_category_qc(peak_list, peak_names, TxDb)
 
@@ -163,7 +164,7 @@ peak_category_plot <- function(peak_list,
 #' @param upstream A numeric value specifying the upstream region to consider for TSS enrichment.
 #'
 #' @param downstream A numeric value specifying the downstream region to consider for TSS enrichment.
-#' 
+#'
 #' @param nbin An integer specifying the number of bins to use for the TSS enrichment plot.
 #'
 #' @param plot_title A character string for the title of the plot. Default is
@@ -172,8 +173,6 @@ peak_category_plot <- function(peak_list,
 #' @return A ggplot object representing the TSS enrichment plot.
 #'
 #' @import ggplot2 patchwork
-#' @importFrom aplot plot_list
-#' @importFrom ChIPseeker peak_Profile_Heatmap
 #'
 #' @export
 #'
@@ -184,6 +183,9 @@ peak_tss_enrichment <- function(peaks,
                                 downstream = 3000,
                                 nbin = 800,
                                 plot_title = "Peak TSS Enrichment") {
+  check_installed("ChIPseeker", reason = "for peak annotation")
+  check_installed("aplot", reason = "for combining plots")
+
   # Check if peaks is a named list
   if (!is.list(peaks)) {
     stop("peaks must be a list of GRanges objects")
@@ -250,7 +252,7 @@ peak_tss_enrichment <- function(peaks,
 #' @param peak_names A character vector of names corresponding to the peaks in
 #'                   `peaks`. If not provided, names will be extracted from
 #'                   `peaks` names. Default is `NULL`.
-#' 
+#'
 #' @param max_length An integer specifying the maximum length of the peaks to consider.
 #'
 #' @param plot_title A character string for the title of the plot. Default is
@@ -261,7 +263,6 @@ peak_tss_enrichment <- function(peaks,
 #'         across different peak sets.
 #'
 #' @import ggplot2 patchwork
-#' @importFrom GenomicRanges width
 #'
 #' @export
 #'
@@ -269,6 +270,8 @@ peak_width_distribution <- function(peaks,
                                     peak_names = NULL,
                                     max_length = 10000,
                                     plot_title = "Peak Width Distribution") {
+  check_installed("GenomicRanges", reason = "for peak width calculations")
+
   # Check if peaks is a named list
   if (!is.list(peaks)) {
     stop("peaks must be a list of GRanges objects")
@@ -320,8 +323,8 @@ peak_width_distribution <- function(peaks,
 
     # Histogram with density curve
     p <- ggplot(df, aes(x = width)) +
-      geom_histogram(aes(y = ..density..), binwidth = 50, fill = cols[i], color = "black", alpha = 0.6, boundary = 0) +
-      geom_density(color = "darkblue", size = 1) +
+      geom_histogram(aes(y = after_stat(density)), binwidth = 50, fill = cols[i], color = "black", alpha = 0.6, boundary = 0) +
+      geom_density(color = "darkblue", linewidth = 1) +
       labs(title = name,
            x = "Peak Width (bp)",
            y = "Density") +
@@ -375,13 +378,6 @@ peak_width_distribution <- function(peaks,
 #'
 #' @return A data frame containing the FRiP scores for each peak set.
 #'
-#' @importFrom GenomicRanges GRanges seqnames sort
-#' @importFrom IRanges IRanges
-#' @importFrom Rsamtools TabixFile scanTabix
-#' @importFrom rtracklayer import
-#' @importFrom BiocParallel bplapply MulticoreParam
-#' @importFrom data.table fread
-#'
 #' @export
 #'
 peak_calc_frip <- function(peaks,
@@ -389,6 +385,13 @@ peak_calc_frip <- function(peaks,
                            fragment_file,
                            threads = 8,
                            is_indexed = NULL) {
+  check_installed("GenomicRanges", reason = "for genomic range operations")
+  check_installed("IRanges", reason = "for interval range operations")
+  check_installed("Rsamtools", reason = "for reading tabix files")
+  check_installed("rtracklayer", reason = "for importing genomic data")
+  check_installed("BiocParallel", reason = "for parallel processing")
+  check_installed("data.table", reason = "for fast data reading")
+
   # Check if peaks is a named list
   if (!is.list(peaks)) {
     stop("peaks must be a list of GRanges objects")
@@ -447,7 +450,7 @@ peak_calc_frip <- function(peaks,
       if (length(fragments) == 0) {
         warning(paste("No fragments found for chromosome", chr, "in the fragment file."))
           empty_result <- rep(list(c(total = 0L, in_peaks = 0L)), length(chr_peaks))
-          setNames(empty_result) <- names(chr_peaks)
+          names(empty_result) <- names(chr_peaks)
         return(empty_result)
       }
       dt <- data.table::fread(text = fragments, header = FALSE, sep = "\t", showProgress = TRUE)
@@ -467,10 +470,10 @@ peak_calc_frip <- function(peaks,
         which = GenomicRanges::GRanges(chr, IRanges::IRanges(1, MAX_TABIX_END)),
         format = "BED"
       )
-      if (is.null(td) || length(td) == 0) {
+      if (is.null(dt) || length(dt) == 0) {
         warning(paste("No fragments found for chromosome", chr, "in the fragment file."))
         empty_result <- rep(list(c(total = 0L, in_peaks = 0L)), length(chr_peaks))
-        setNames(empty_result) <- names(chr_peaks)
+        names(empty_result) <- names(chr_peaks)
         return(empty_result)
       }
       cat("Fragments read successfully for chromosome:", chr, "\n")
@@ -521,26 +524,27 @@ peak_calc_frip <- function(peaks,
 
 
 #' @title Plot FRiP scores
-#' 
+#'
 #' @description This function generates a bar plot of FRiP (Fraction of Reads in Peaks)
-#' 
+#'
 #' @param frip_df A data frame containing the FRiP scores for each peak set, the output of `peak_calc_frip`.
-#' 
+#'
 #' @param palette A valid palette name from "alphabet", "alphabet2", "glasbey", "polychrome", "stepped", and "parade".
 #' Alternatively, a vector of colors can be provided with the same length as unique groups.
-#' 
+#'
 #' @param plot_title A character string for the title of the plot. Default is "FRiP Score".
-#' 
+#'
 #' @return A ggplot object representing the bar plot of FRiP scores.
-#' 
+#'
 #' @import ggplot2
-#' @importFrom Seurat DiscretePalette
-#' 
+#'
 #' @export
-#' 
+#'
 peak_plot_frip <- function(frip_df,
                            palette = "polychrome",
                            plot_title = "FRiP Score") {
+  check_installed("Seurat", reason = "for color palettes")
+
   # Check if frip_df is a data frame
   if (!is.data.frame(frip_df)) {
     stop("frip_df must be a data frame")

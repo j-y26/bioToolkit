@@ -68,18 +68,18 @@ rank_de_genes <- function(
 
 
 #' @title Generate rank file for GSEA
-#' 
+#'
 #' @description This function generates a rank file for Gene Set Enrichment
 #'              Analysis (GSEA) based on the differential expression analysis
 #'              results. The rank file contains the gene names and their ranks,
 #'              which is the pi-value. Higher pi-values indicate higher
 #'              rank.
-#' 
+#'
 #' @param de_results A data frame containing the results of differential
 #'                   expression analysis. The data frame should have at least
 #'                   a column for log2 fold change and a column for (adjusted)
 #'                   p-value.
-#' 
+#'
 #' @param save_file The name of the file to save the rank file. Default is NULL.
 #'                  If NULL, the rank file will not be saved to disk.
 #'
@@ -105,11 +105,11 @@ rank_de_genes <- function(
 #'          \item{piValue}{The pi-value of the gene}
 #'          \item{rank}{The rank of the gene based on the pi-value}
 #'         And if \code{save_file} is not NULL, a rank file will be saved to disk.
-#' 
+#'
 #' @importFrom utils write.table
 #' @import dplyr
 #' @importFrom tibble rownames_to_column
-#' 
+#'
 generate_de_rank_file <- function(
     de_results,
     save_file = NULL,
@@ -134,23 +134,23 @@ generate_de_rank_file <- function(
 
 
 #' @title Filter genes based on differential expression analysis results
-#' 
+#'
 #' @description This function filters genes based on the results of differential
 #'              expression analysis for RNA-seq data. The user can specify the
 #'              minimum log2 fold change and maximum adjusted p-value to filter
 #'              the genes.
-#' 
+#'
 #' @param de_results A data frame containing the results of differential
 #'                   expression analysis. The data frame should have at least
 #'                   a column for log2 fold change and a column for (adjusted)
 #'                   p-value.
-#' 
+#'
 #' @param log2fc_min The minimum log2 fold change to filter genes. Default is
 #'                   0, which means no filtering based on log2 fold change.
-#' 
+#'
 #' @param pvalue_max The maximum adjusted p-value to filter genes. Default is
 #'                   0.05.
-#' 
+#'
 #' @param de_method The method used for differential expression analysis.
 #'                  Must be one of "edgeR" or "DESeq2". Default is "edgeR".
 #'                  Use this argument to automatically set the column names
@@ -159,20 +159,20 @@ generate_de_rank_file <- function(
 #'                  column names for log2 fold change and P-value using the
 #'                  \code{log2fc_col} and \code{pvalue_col} arguments,
 #'                  respectively.
-#' 
+#'
 #' @param pvalue_col The name of the column in \code{de_results} that contains
 #'                   the p-values. If not NULL, overrides the default column
 #'                   name based on \code{de_method}.
-#'                  
+#'
 #' @param log2fc_col The name of the column in \code{de_results} that contains
 #'                   the log2 fold changes.
-#' 
+#'
 #' @export
-#' 
+#'
 #' @return A list of two data frames:
 #'          \item{up_reg}{Data frame containing up-regulated genes}
 #'          \item{down_reg}{Data frame containing down-regulated genes}
-#' 
+#'
 filter_de_genes <- function(
     de_results,
     log2fc_min = 0,
@@ -203,32 +203,32 @@ filter_de_genes <- function(
 
 
 #' @title Filter out genes with low expression based on minimum group size
-#' 
+#'
 #' @description This function filters out genes with low expression based on
 #'              the minimum group size. The user can specify the minimum number
 #'              of samples in which the gene should be expressed. Essentially,
 #'              a gene is kept only if it has at least 1 count per million
 #'              (CPM) in at least \code{min_group_size} samples.
-#' 
+#'
 #' @param raw_counts A data frame containing the raw counts of genes. The data
 #'                   frame should have samples as columns and genes as rows.
 #'                   All values should be non-negative integers.
-#' 
+#'
 #' @param min_group_size The minimum number of samples in which the gene should
 #'                       be expressed. Default is 4.
-#' 
-#' @importFrom edgeR cpm DGEList
-#' 
+#'
 #' @export
-#' 
+#'
 #' @return A data frame containing the filtered raw counts
-#' 
+#'
 filter_low_expression_genes <- function(raw_counts, min_group_size = 4) {
+  check_installed("edgeR", reason = "for CPM-based gene filtering")
+
   # Convert raw counts to DGEList object
-  dge <- DGEList(counts = raw_counts)
+  dge <- edgeR::DGEList(counts = raw_counts)
 
   # Calculate counts per million (CPM)
-  cpm_values <- cpm(dge)
+  cpm_values <- edgeR::cpm(dge)
 
   # Filter genes based on minimum group size
   keep_genes <- rowSums(cpm_values > 1) >= min_group_size
@@ -239,41 +239,41 @@ filter_low_expression_genes <- function(raw_counts, min_group_size = 4) {
 
 
 #' @title Summarize group expression values for each gene
-#' 
+#'
 #' @description This function summarizes the expression values of genes for each
 #'              group. The user can specify the method to summarize the values
 #'              for each group. The default method is to calculate the mean of
 #'              the expression values.
-#' 
+#'
 #' @param counts A data frame containing the expression values of genes. The
 #'               data frame should have samples as columns and genes as rows.
 #'               All values should be numeric.
-#' 
+#'
 #' @param group_info A data frame containing the group information of samples.
 #'                  The data frame should have samples as rows and groups as
 #'                  columns. One column should contain the information to group
 #'                  the samples.
-#' 
+#'
 #' @param group_by The name of the column in \code{group_info} that contains the
 #'                 information to group the samples. Row names must be the same
 #'                 as the column names in \code{counts}.
-#' 
+#'
 #' @param method The method to summarize the expression values for each group.
 #'               Must be one of "mean", "median", "min", "max", or "sum".
 #'               Default is "mean".
-#' 
+#'
 #' @param pre_scale A logical value indicating whether to pre-scale the counts
 #'                  before summarizing. Default is FALSE. Scaling will be done
 #'                  using the \code{scale} function. Scaling is done across
 #'                  samples for each gene.
-#' 
+#'
 #' @param post_scale A logical value indicating whether to post-scale the
 #'                   summarized values. Default is FALSE. Scaling will be done
 #'                   using the \code{scale} function. Scaling is done across
 #'                   groups for each gene.
-#' 
+#'
 #' @export
-#' 
+#'
 #' @return A data frame containing the summarized expression values for each
 #'         gene across samples in each group.
 #'
@@ -351,23 +351,23 @@ summarize_group_expression <- function(counts,
 }
 
 #' @title Extract PCA loadings from PCA object
-#' 
+#'
 #' @description This function extracts the PCA loadings from a PCA object
 #'              generated using the \code{prcomp} function.
-#' 
+#'
 #' @param pca_obj A PCA object generated using the \code{prcomp} function.
-#' 
+#'
 #' @param pcs A vector of integers specifying the principal components to
 #'            extract the loadings. Default is to extract PC 1-3.
-#' 
+#'
 #' @param top_n The number of top genes to extract for each principal component.
 #'              Default is 20.
-#' 
+#'
 #' @export
-#' 
+#'
 #' @return A list, where each element is a PC, and each element is a named vector
 #'         containing the top genes and their loadings.
-#' 
+#'
 extract_pc_loadings <- function(pca_obj,
                                 pcs = 1:3,
                                 top_n = 20) {
@@ -380,7 +380,7 @@ extract_pc_loadings <- function(pca_obj,
   if (!is.numeric(pcs) || any(pcs %% 1 != 0) || any(pcs <= 0)) {
     stop("pcs must be a vector of positive integers.")
   }
-  
+
   # Check if top_n is a positive integer
   if (!is.numeric(top_n) || top_n %% 1 != 0 || top_n <= 0) {
     stop("top_n must be a positive integer.")

@@ -1,7 +1,7 @@
 Package: bioToolkit
 Type: Package
 Title: An R package hosting useful functions for data analysis
-Version: 0.1.8
+Version: 0.1.9
 Author: person("Jielin", "Yang",
                 email = "jielin.yang@sickkids.ca",
                 role = c("aut", "cre"),
@@ -15,8 +15,8 @@ LazyData: true
 URL: https://github.com/j-y26/bioToolkit
 BugReports: https://github.com/j-y26/bioToolkit/issues
 biocViews: BiomedicalInformatics
-RoxygenNote: 7.3.2
-Imports: 
+RoxygenNote: 7.3.3
+Imports:
     dplyr,
     ggplot2,
     patchwork,
@@ -27,14 +27,16 @@ Imports:
     grDevices,
     stats,
     rlang,
+    utils
+Suggests:
     aplot,
     data.table,
-    ggrepel,
-    stringr
-Suggests:
     edgeR,
+    ggrepel,
     Matrix,
+    purrr,
     Seurat,
+    stringr,
     GSEABase,
     ChIPseeker,
     GenomicRanges,

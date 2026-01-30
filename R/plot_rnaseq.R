@@ -78,8 +78,6 @@
 #'
 #' @import ggplot2 dplyr rlang
 #'
-#' @importFrom ggrepel geom_text_repel
-#'
 #' @return A volcano plot
 #'
 #' @export
@@ -233,6 +231,7 @@ plot_volcano <- function(
   # Add the labels to the plot
   if (!is.null(label_data)) {
     if (draw_connectors) {
+      check_installed("ggrepel", reason = "for text labels")
       v_plot <- v_plot + ggrepel::geom_text_repel(
         data = label_data,
         aes(x = logfc, y = log_p, label = label),
@@ -404,10 +403,6 @@ plot_volcano <- function(
 #'
 #' @import ggplot2 dplyr rlang
 #'
-#' @importFrom ggrepel geom_text_repel
-#' 
-#' @importFrom stringr str_wrap
-#' 
 #' @importFrom grid arrow unit
 #'
 #' @return A volcano plot
@@ -581,6 +576,7 @@ plot_volcano2 <- function(
   if (!is.null(label_data)) {
     if (draw_connectors) {
 
+      check_installed("ggrepel", reason = "for text labels")
       v_plot <- v_plot + ggrepel::geom_text_repel(
         data = label_data,
         aes(x = logfc, y = log_p, label = label),
@@ -627,6 +623,7 @@ plot_volcano2 <- function(
     v_plot <- v_plot + theme(plot.margin = margin(t = 10))
 
     # Wrap text for better display
+    check_installed("stringr", reason = "for text wrapping")
     up_arrow_text_wrapped <- stringr::str_wrap(up_arrow_text, width = arrow_text_wrap)
     down_arrow_text_wrapped <- stringr::str_wrap(down_arrow_text, width = arrow_text_wrap)
 

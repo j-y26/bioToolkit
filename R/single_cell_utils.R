@@ -91,24 +91,23 @@ get_meta_pivot <- function(
 #'              embeddings. It will  modify/overwrite the original embedding
 #'              matrix. However, the biological meaning of the embedding is
 #'              not changed. Only for visualization purposes.
-#' 
+#'
 #' @param obj A Seurat object
-#' 
+#'
 #' @param reduction The name of the dimensionality reduction to be transformed
 #'                 (e.g. "pca", "umap", "tsne")
-#' 
+#'
 #' @param flip_horizontal A boolean indicating whether to flip the embedding
 #'                        horizontally (default = FALSE)
-#' 
+#'
 #' @param flip_vertical A boolean indicating whether to flip the embedding
 #'                       vertically (default = FALSE)
-#' 
+#'
 #' @param rotate A numeric value indicating the angle (in degrees) to rotate
 #'               the embedding (default = 0)
-#' 
+#'
 #' @export
-#' @import Seurat
-#' 
+#'
 transform_embedding <- function(
   obj,
   reduction = "umap",
@@ -116,13 +115,15 @@ transform_embedding <- function(
   flip_vertical = FALSE,
   rotate = 0
 ) {
+  check_installed("Seurat", reason = "to transform embeddings")
+
   # Check if the reduction exists
   if (!reduction %in% names(obj@reductions)) {
     stop(paste("The reduction", reduction, "does not exist in the object"))
   }
 
   # Extract the embedding matrix
-  embedding <- Embeddings(obj, reduction = reduction)
+  embedding <- Seurat::Embeddings(obj, reduction = reduction)
   if (is.null(embedding)) {
     stop(paste("The embedding", reduction, "does not exist in the object"))
   }

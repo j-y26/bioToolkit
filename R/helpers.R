@@ -18,8 +18,6 @@
 #'
 #' @return A vector of colors (hexadecimal)
 #'
-#' @importFrom scales show_col
-#'
 #' @export
 #'
 #' @references https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
@@ -30,6 +28,7 @@ ggplotColours <- function(n = 6, h = c(0, 360) + 15, showColor = FALSE) {
 
   # Show the colors, if desired
   if (showColor) {
+    check_installed("scales", reason = "to display colors")
     scales::show_col(colors)
   } else {
     return(colors)
@@ -46,7 +45,7 @@ ggplotColours <- function(n = 6, h = c(0, 360) + 15, showColor = FALSE) {
 #' @param weights A vector of weights (numeric)
 #'
 #' @return A mixed color (hexadecimal)
-#' 
+#'
 #' @importFrom grDevices col2rgb rgb
 #'
 #' @export
@@ -84,27 +83,27 @@ mix_colors <- function(colors, weights = rep(1, length(colors))) {
 
 
 #' @title Sort the Colors by Hue
-#' 
+#'
 #' @description This function takes an input character vector of colors and
 #'              sorts them by hue.
-#' 
+#'
 #' @param colors A character vector of colors (hexadecimal)
-#' 
+#'
 #' @return A character vector of colors sorted by hue
-#' 
-#' @import colorspace
-#' 
+#'
 #' @export
-#' 
+#'
 sort_colors_by_hue <- function(colors) {
   # Check if the input is a character vector
   if (!is.character(colors)) {
     stop("Input must be a character vector of colors")
   }
-  
+
+  check_installed("colorspace", reason = "to sort colors by hue")
+
   # Convert colors to polarLUV (HCL) color space
   colors_hcl <- colorspace::hex2RGB(colors)
-  colors_hcl <- as(colors_hcl, "polarLUV")
+  colors_hcl <- methods::as(colors_hcl, "polarLUV")
   colors_hcl <- colorspace::coords(colors_hcl)
 
   # Sort colors by hue

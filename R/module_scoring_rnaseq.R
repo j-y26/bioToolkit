@@ -6,6 +6,7 @@
 log_normalize <- function(data, normalized = TRUE) {
   if (!normalized) {
     # Assume using raw counts
+    check_installed("edgeR", reason = "for normalization of raw counts")
     dge <- edgeR::DGEList(counts = data)
     dge <- edgeR::calcNormFactors(dge)
     data <- edgeR::cpm(dge, log = TRUE)
@@ -33,11 +34,11 @@ log_normalize <- function(data, normalized = TRUE) {
 #'
 #' @export
 #'
-#' @importFrom GSEABase GeneSet GeneSetCollection getGmt toGmt
-#'
 format_gene_sets <- function(gsc,
                              to = c("GeneSetCollection", "list", "gmt")) {
   to <- match.arg(to)
+
+  check_installed("GSEABase", reason = "for gene set manipulation")
 
   # Convert input to GeneSetCollection, if not already
   if (is.character(gsc)) {
@@ -111,9 +112,6 @@ format_gene_sets <- function(gsc,
 #'
 #' @importFrom ggplot2 cut_number
 #' @importFrom stats rnorm
-#' @importFrom Matrix rowMeans colMeans
-#' @importFrom Seurat CaseMatch
-#' @importFrom edgeR DGEList calcNormFactors cpm
 #'
 calc_module_scores <- function(data,
                                modules,
@@ -122,6 +120,9 @@ calc_module_scores <- function(data,
                                nbin = 24,
                                ctrl = 100,
                                seed = 123) {
+
+  check_installed("Matrix", reason = "for matrix operations")
+  check_installed("Seurat", reason = "for CaseMatch gene name matching")
 
   # Check if data is a matrix
   if (!is.matrix(data) && !is.data.frame(data)) {
@@ -304,9 +305,6 @@ calc_module_scores <- function(data,
 #'
 #' @export
 #'
-#' @importFrom GSVA ssgseaParam gsva
-#' @importFrom Biobase ExpressionSet
-#'
 calc_module_scores_ssgsea <- function(data,
                                       modules,
                                       expr_normalized = TRUE,
@@ -314,6 +312,10 @@ calc_module_scores_ssgsea <- function(data,
                                       maxSize = Inf,
                                       alpha = 0.75,
                                       normalize = TRUE) {
+
+  check_installed("GSVA", reason = "for ssGSEA enrichment analysis")
+  check_installed("Biobase", reason = "for ExpressionSet objects")
+
   # Check if data is a matrix or ExpressionSet
   if (!is.matrix(data) && !is(data, "ExpressionSet")) {
     stop("data must be a matrix or ExpressionSet")

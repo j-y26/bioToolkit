@@ -350,8 +350,9 @@ calc_expr_corr <- function(
   }
 
   # Convert the model results to a data frame
+  check_installed("purrr", reason = "for list-to-dataframe conversion")
   model_results <- model_results %>%
-    map_dfr(~ .x) %>%
+    purrr::map_dfr(~ .x) %>%
     as_tibble()
 
   # Adjust the p-values

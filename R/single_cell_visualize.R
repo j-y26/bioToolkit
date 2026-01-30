@@ -608,8 +608,6 @@ format_sc_plots <- function(plots,
 #'
 #' @import ggplot2 dplyr
 #'
-#' @importFrom RColorBrewer brewer.pal
-#'
 #' @importFrom scales gradient_n_pal
 #'
 #' @export
@@ -690,18 +688,10 @@ de_dot_plot <- function(
   # Validate grouping columns
   if (!is.null(group_by_features) && !group_by_features %in% colnames(de_results)) {
     stop(paste0("The group_by_features ", group_by_features, " must be a column in the de_results data frame"))
-
-    if (length(unique(de_results[[group_by_features]]) == 1)) {
-      stop(paste0("The group_by_features ", group_by_features, " must have more than one unique value"))
-    }
   }
 
   if (!is.null(group_by_comparisons) && !group_by_comparisons %in% colnames(de_results)) {
     stop(paste0("The group_by_comparisons ", group_by_comparisons, " must be a column in the de_results data frame"))
-
-    if (length(unique(de_results[[group_by_comparisons]]) == 1)) {
-      stop(paste0("The group_by_comparisons ", group_by_comparisons, " must have more than one unique value"))
-    }
   }
 
   # Find and note any requested features that are not in the de_results
@@ -794,6 +784,7 @@ de_dot_plot <- function(
   # Check the colors for the dots
   if (!is.null(palette)) {
     # Obtain the low, mid, and high colors from the palette
+    check_installed("RColorBrewer", reason = "for brewer.pal color palettes")
     palette_colors <- RColorBrewer::brewer.pal(9, palette)
     pal_func <- scales::gradient_n_pal(palette_colors)
     down_color <- pal_func(0)
@@ -862,7 +853,6 @@ de_dot_plot <- function(
 #'
 #' @param font_size The font size of the text, default is 10
 #'
-#' @importFrom plotly plot_ly layout
 #' @import dplyr
 #'
 #' @export
@@ -879,6 +869,8 @@ annotation_sankey_plot <- function(
   pad = 15,
   font_size = 10
 ) {
+  check_installed("plotly", reason = "for Sankey plots")
+
   # Check if the object is a Seurat object or a data frame
   if (is(object, "Seurat")) {
     object <- object@meta.data
@@ -905,7 +897,7 @@ annotation_sankey_plot <- function(
   if (is.null(nodes)) {
     nodes <- unique(unlist(object))
   } else {
-    object <- object %>% filter_all(any_vars(. %in% nodes))
+    object <- object %>% filter(if_any(everything(), ~ . %in% nodes))
   }
 
   # Assign colors to the nodes
@@ -1050,7 +1042,7 @@ grouped_bar_plot <- function(df,
   }
 
   # Create the bar plot
-  plot <- ggplot(df, aes_string(x = split.by, y = frequency, fill = group.by)) +
+  plot <- ggplot(df, aes(x = .data[[split.by]], y = .data[[frequency]], fill = .data[[group.by]])) +
     geom_bar(stat = "identity", position = mode) +
     scale_fill_manual(values = colors) +
     theme_classic() +
@@ -1076,9 +1068,9 @@ grouped_bar_plot <- function(df,
     # Add totals to the plot
     plot <- plot +
       geom_text(data = total_df,
-        aes_string(x = split.by,
-                   y = "total",
-                    label = "total"),
+        aes(x = .data[[split.by]],
+                   y = .data[["total"]],
+                    label = .data[["total"]]),
         vjust = -0.5,
         fontface = "bold",
         inherit.aes = FALSE,
@@ -1141,14 +1133,11 @@ summarize_group_meta <- function(object, group.by, split.by, cells.use = NULL) {
   # Select only the relevant columns
   df <- object[, c(group.by, split.by)]
 
-  rm(object) # Free memory
-  gc()
-
   # Subset to the specified cells if provided
   if (!is.null(cells.use)) {
     org.ncell <- nrow(df)
-    if (!all(cells.use %in% rownames(object))) {
-      no_id_cells <- setdiff(cells.use, rownames(object))
+    if (!all(cells.use %in% rownames(df))) {
+      no_id_cells <- setdiff(cells.use, rownames(df))
       warning(paste0(length(no_id_cells), " cells in cells.use are not found in the object and will be ignored: ", paste(head(no_id_cells, 10), collapse = ", "), if (length(no_id_cells) > 10) "..." else ""))
       df <- df[rownames(df) %in% cells.use, ]
       message(paste0("Subsetting to ", nrow(df), " cells (", round(100 * nrow(df) / org.ncell, 2), "% of original)"))
@@ -1157,6 +1146,9 @@ summarize_group_meta <- function(object, group.by, split.by, cells.use = NULL) {
       message(paste0("Subsetting to ", nrow(df), " cells (", round(100 * nrow(df) / org.ncell, 2), "% of original)"))
     }
   }
+
+  rm(object) # Free memory
+  gc()
 
   # Rename columns for easier handling
   colnames(df) <- c("group", "condition")
@@ -1283,7 +1275,6 @@ summarize_group_meta <- function(object, group.by, split.by, cells.use = NULL) {
 #' @return A ggplot object representing the scatter plot.
 #'
 #' @import ggplot2 dplyr
-#' @importFrom ggrepel geom_text_repel
 #'
 #' @export
 #'
@@ -1502,6 +1493,7 @@ plot_meta_scatter <- function(
 
   # Add labels if requested
   if (label) {
+    check_installed("ggrepel", reason = "for repelled text labels")
     p <- p + ggrepel::geom_text_repel(
       aes(label = group),
       color = "black",
