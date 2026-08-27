@@ -35,6 +35,7 @@ plot_volcano(
   legend_lab_position = "top",
   legend_icon_size = 4,
   max_overlaps = 10,
+  bold_text = TRUE,
   ...
 )
 }
@@ -107,6 +108,9 @@ of up and down-regulated genes}
 \item{legend_icon_size}{The size of the legend icons}
 
 \item{max_overlaps}{The maximum number of overlaps for the gene labels}
+
+\item{bold_text}{A logical value indicating whether axis titles, axis text,
+legend text, and plot labels should be bold. Default is TRUE.}
 }
 \value{
 A volcano plot

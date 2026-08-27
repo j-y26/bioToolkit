@@ -1,5 +1,121 @@
 # Simplified Plotting for RNA-Seq Data
 
+#' Resolve the log2FC / P-value column names for a volcano plot
+#' @noRd
+.resolve_volcano_columns <- function(de_method, x, y) {
+  de_method <- tolower(de_method)
+  if (de_method == "edger" && is.null(x) && is.null(y)) {
+    x <- FC_COL_EDGER
+    y <- PVAL_COL_EDGER
+  } else if (de_method == "deseq2" && is.null(x) && is.null(y)) {
+    x <- FC_COL_DESEQ2
+    y <- PVAL_COL_DESEQ2
+  } else if (de_method == "limma" && is.null(x) && is.null(y)) {
+    x <- FC_COL_LIMMA
+    y <- PVAL_COL_LIMMA
+  } else if (de_method == "seurat" && is.null(x) && is.null(y)) {
+    x <- FC_COL_SEURAT
+    y <- PVAL_COL_SEURAT
+  } else if (is.null(x) || is.null(y)) {
+    stop("Please provide the column names for log2 fold change and P-value.")
+  }
+  list(x = x, y = y)
+}
+
+#' Shared data prep for plot_volcano() / plot_volcano2()
+#' @noRd
+.prepare_volcano_data <- function(data, de_method, x, y, label,
+                                   selected_labels, p_cutoff, fc_cutoff,
+                                   up_label, down_label, non_de_label,
+                                   up_color, down_color, non_de_color,
+                                   x_lim, y_lim, number_label,
+                                   y_lim_style = "additive") {
+  cols <- .resolve_volcano_columns(de_method, x, y)
+  x <- cols$x
+  y <- cols$y
+
+  # Add additional information for plotting
+  if (label == "row.names") {
+    data <- data %>% mutate(label = rownames(data))
+  } else if (!label %in% colnames(data)) {
+    stop("The label column does not exist in the data frame.")
+  } else {
+    data <- data %>% mutate(label = .data[[label]])
+  }
+
+  data <- data %>%
+    mutate(
+      !!y := ifelse(.data[[y]] == 0, 1e-300, .data[[y]]),
+      log_p = -log10(.data[[y]]),
+      logfc = .data[[x]],
+      group = case_when(
+        .data[[y]] < p_cutoff & .data[[x]] > fc_cutoff ~ up_label,
+        .data[[y]] < p_cutoff & .data[[x]] < -fc_cutoff ~ down_label,
+        TRUE ~ non_de_label
+      ),
+      group = factor(group, levels = c(up_label, down_label, non_de_label))
+    )
+
+  # Calculate the number of up and down-regulated genes. Some DE methods
+  # (e.g. DESeq2's independent filtering) leave NA p-values for some genes,
+  # so na.rm = TRUE is required or the counts silently come out as NA.
+  num_up <- sum(data[[y]] < p_cutoff & data[[x]] > fc_cutoff, na.rm = TRUE) %>% as.character()
+  num_down <- sum(data[[y]] < p_cutoff & data[[x]] < -fc_cutoff, na.rm = TRUE) %>% as.character()
+
+  # Define the limits for the x and y axes
+  if (is.null(x_lim)) {
+    x_lim <- c(min(data$logfc, na.rm = TRUE) - 0.5, max(data$logfc, na.rm = TRUE) + 0.5)
+  }
+  if (is.null(y_lim)) {
+    y_max <- if (y_lim_style == "multiplicative" && number_label) {
+      max(data$log_p, na.rm = TRUE) * 1.2
+    } else {
+      max(data$log_p, na.rm = TRUE) + 1
+    }
+    y_lim <- c(0, y_max)
+  }
+
+  # Color assignment
+  named_colors <- setNames(
+    c(up_color, down_color, non_de_color),
+    c(up_label, down_label, non_de_label)
+  )
+
+  # Prepare the labels for the selected genes
+  if (!is.null(selected_labels)) {
+    # Here we use having to label more than half or 100 genes, whichever is
+    # bigger, to avoid overplotting
+
+    # If less than half or 100 genes, use the selected labels
+    if (length(selected_labels) < max(100, nrow(data) / 2)) {
+      label_data <- data %>%
+        filter(label %in% selected_labels) %>%
+        select(label, logfc, log_p)
+    } else {
+      # Otherwise, choose the top genes based on log_p and logfc
+      # Use a score that is the product of log_p and logfc
+      # Rank and choose the top 10 genes in each direction
+      label_data <- data %>%
+        filter(group %in% c(up_label, down_label)) %>%
+        mutate(score = log_p * abs(logfc)) %>%
+        arrange(desc(score)) %>%
+        group_by(group) %>%
+        slice_head(n = 10) %>%
+        ungroup() %>%
+        select(label, logfc, log_p)
+    }
+  } else {
+    label_data <- NULL
+  }
+
+  list(
+    data = data, x = x, y = y,
+    num_up = num_up, num_down = num_down,
+    x_lim = x_lim, y_lim = y_lim,
+    named_colors = named_colors, label_data = label_data
+  )
+}
+
 #' @title Volcano plot for gene expression analysis
 #'
 #' @description Generate a volcano plot for gene expression analysis based on
@@ -76,6 +192,9 @@
 #'
 #' @param max_overlaps The maximum number of overlaps for the gene labels
 #'
+#' @param bold_text A logical value indicating whether axis titles, axis text,
+#'                  legend text, and plot labels should be bold. Default is TRUE.
+#'
 #' @import ggplot2 dplyr rlang
 #'
 #' @return A volcano plot
@@ -113,119 +232,46 @@ plot_volcano <- function(
     legend_lab_position = "top",
     legend_icon_size = 4,
     max_overlaps = 10,
+    bold_text = TRUE,
     ...) {
-  # Check if the DE method is valid, case-insensitive
-  de_method <- tolower(de_method)
-  if (de_method == "edger" && is.null(x) && is.null(y)) {
-    x <- FC_COL_EDGER
-    y <- PVAL_COL_EDGER
-  } else if (de_method == "deseq2" && is.null(x) && is.null(y)) {
-    x <- FC_COL_DESEQ2
-    y <- PVAL_COL_DESEQ2
-  } else if (de_method == "limma" && is.null(x) && is.null(y)) {
-    x <- FC_COL_LIMMA
-    y <- PVAL_COL_LIMMA
-  } else if (de_method == "seurat" && is.null(x) && is.null(y)) {
-    x <- FC_COL_SEURAT
-    y <- PVAL_COL_SEURAT
-  } else {
-    if (is.null(x) || is.null(y)) {
-      stop("Please provide the column names for log2 fold change and P-value.")
-    }
-  }
+  text_face <- if (bold_text) "bold" else "plain"
 
-  # Add additional information for plotting
-  if (label == "row.names") {
-    data <- data %>% mutate(label = rownames(data))
-  } else {
-    if (!label %in% colnames(data)) {
-      stop("The label column does not exist in the data frame.")
-    } else {
-      data <- data %>% mutate(label = .data[[label]])
-    }
-  }
-
-  data <- data %>%
-    mutate(
-      !!y := ifelse(.data[[y]] == 0, 1e-300, .data[[y]]),
-      log_p = -log10(.data[[y]]),
-      logfc = .data[[x]],
-      group = case_when(
-        .data[[y]] < p_cutoff & .data[[x]] > fc_cutoff ~ up_label,
-        .data[[y]] < p_cutoff & .data[[x]] < -fc_cutoff ~ down_label,
-        TRUE ~ non_de_label
-      ),
-      color = case_when(
-        group == up_label ~ up_color,
-        group == down_label ~ down_color,
-        TRUE ~ non_de_color
-      )
-    ) %>%
-      mutate(group = factor(group, levels = c(up_label, down_label, non_de_label)))
-
-  # Calculate the number of up and down-regulated genes
-  num_up <- sum(data[[y]] < p_cutoff & data[[x]] > fc_cutoff) %>% as.character()
-  num_down <- sum(data[[y]] < p_cutoff & data[[x]] < -fc_cutoff) %>% as.character()
-
-  # Define the limits for the x and y axes
-  if (is.null(x_lim)) {
-    x_lim <- c(min(data[[x]], na.rm = TRUE) - 0.5, max(data[[x]], na.rm = TRUE) + 0.5)
-  }
-  if (is.null(y_lim)) {
-    y_lim <- c(0, max(data$log_p, na.rm = TRUE) + 1)
-  }
-
-  # Color assignment
-  named_colors <- setNames(
-    c(up_color, down_color, non_de_color),
-    c(up_label, down_label, non_de_label)
+  prep <- .prepare_volcano_data(
+    data = data, de_method = de_method, x = x, y = y, label = label,
+    selected_labels = selected_labels, p_cutoff = p_cutoff, fc_cutoff = fc_cutoff,
+    up_label = up_label, down_label = down_label, non_de_label = non_de_label,
+    up_color = up_color, down_color = down_color, non_de_color = non_de_color,
+    x_lim = x_lim, y_lim = y_lim, number_label = number_label
   )
+  data <- prep$data
+  num_up <- prep$num_up
+  num_down <- prep$num_down
+  x_lim <- prep$x_lim
+  y_lim <- prep$y_lim
+  named_colors <- prep$named_colors
+  label_data <- prep$label_data
 
   # Create the volcano plot
   v_plot <- ggplot(data, aes(x = logfc, y = log_p)) +
     geom_point(aes(color = group), size = pt_size, alpha = alpha, stroke = NA) +
     scale_color_manual(values = named_colors, drop = TRUE) +
     labs(x = x_lab, y = y_lab) +
-    xlim(x_lim) + ylim(y_lim) +
-    geom_hline(yintercept = -log10(p_cutoff), linetype = "dashed", color = "black", linewidth = 0.3) +
+    coord_cartesian(xlim = x_lim, ylim = y_lim, clip = "off") +
+    geom_hline(yintercept = -log10(p_cutoff), linetype = "dashed", color = "grey40", linewidth = 0.3) +
     theme_classic(base_size = axis_lab_size) +
     theme(
       legend.position = legend_lab_position,
       legend.title = element_blank(),
-      legend.text = element_text(size = legend_lab_size),
+      legend.text = element_text(size = legend_lab_size, face = text_face),
+      axis.title = element_text(face = text_face),
+      axis.text = element_text(face = text_face),
+      plot.margin = margin(10, 10, 10, 10)
     )
 
   if (fc_cutoff > 0) {
       v_plot <- v_plot +
           geom_vline(xintercept = c(-fc_cutoff, fc_cutoff),
-                     linetype = "dashed", color = "black", linewidth = 0.3)
-  }
-
-  # Prepare the labels for the selected genes
-  if (!is.null(selected_labels)) {
-    # Here we use having to label more than half or 100 genes, whichever is bigger
-    # to avoid overplotting
-
-    # If less than half or 100 genes, use the selected labels
-    if (length(selected_labels) < max(100, nrow(data) / 2)) {
-      label_data <- data %>%
-        filter(label %in% selected_labels) %>%
-        select(label, logfc, log_p)
-    } else {
-      # Otherwise, choose the top genes based on log_p and logfc
-      # Use a score that is the product of log_p and logfc
-      # Rank and choose the top 10 genes in each direction
-      label_data <- data %>%
-        filter(group %in% c(up_label, down_label)) %>%
-        mutate(score = log_p * abs(logfc)) %>%
-        arrange(desc(score)) %>%
-        group_by(group) %>%
-        slice_head(n = 10) %>%
-        ungroup() %>%
-        select(label, logfc, log_p)
-    }
-  } else {
-    label_data <- NULL
+                     linetype = "dashed", color = "grey40", linewidth = 0.3)
   }
 
   # Add the labels to the plot
@@ -242,7 +288,7 @@ plot_volcano <- function(
         segment.alpha = 0.5,
         nudge_x = 0.2,
         nudge_y = 0.2,
-        fontface = "bold",
+        fontface = text_face,
       )
     } else {
       v_plot <- v_plot + geom_text(
@@ -251,7 +297,7 @@ plot_volcano <- function(
         size = lab_size,
         nudge_x = 0.2,
         nudge_y = 0.2,
-        fontface = "bold"
+        fontface = text_face
       )
     }
   }
@@ -268,7 +314,7 @@ plot_volcano <- function(
       hjust = 1,
       vjust = num_label_vjust,
       size = num_label_size,
-      fontface = "bold"
+      fontface = text_face
     ) + annotate(
       "text",
       x = x_lim[1],
@@ -277,7 +323,7 @@ plot_volcano <- function(
       hjust = 0,
       vjust = num_label_vjust,
       size = num_label_size,
-      fontface = "bold"
+      fontface = text_face
     )
   }
 
@@ -401,6 +447,9 @@ plot_volcano <- function(
 #'
 #' @param max_overlaps The maximum number of overlaps for the gene labels
 #'
+#' @param bold_text A logical value indicating whether axis titles, axis text,
+#'                  and plot labels should be bold. Default is TRUE.
+#'
 #' @import ggplot2 dplyr rlang
 #'
 #' @importFrom grid arrow unit
@@ -458,74 +507,26 @@ plot_volcano2 <- function(
     label_segment_angle = 90,
     label_segment_ncp = 1,
     max_overlaps = 10,
+    bold_text = TRUE,
     ...) {
-  # Check if the DE method is valid, case-insensitive
-  de_method <- tolower(de_method)
-  if (de_method == "edger" && is.null(x) && is.null(y)) {
-    x <- FC_COL_EDGER
-    y <- PVAL_COL_EDGER
-  } else if (de_method == "deseq2" && is.null(x) && is.null(y)) {
-    x <- FC_COL_DESEQ2
-    y <- PVAL_COL_DESEQ2
-  } else if (de_method == "limma" && is.null(x) && is.null(y)) {
-    x <- FC_COL_LIMMA
-    y <- PVAL_COL_LIMMA
-  } else if (de_method == "seurat" && is.null(x) && is.null(y)) {
-    x <- FC_COL_SEURAT
-    y <- PVAL_COL_SEURAT
-  } else {
-    if (is.null(x) || is.null(y)) {
-      stop("Please provide the column names for log2 fold change and P-value.")
-    }
-  }
+  text_face <- if (bold_text) "bold" else "plain"
+  arrow_text_face <- if (bold_text) "bold.italic" else "italic"
 
-  # Add additional information for plotting
-  if (label == "row.names") {
-    data <- data %>% mutate(label = rownames(data))
-  } else {
-    if (!label %in% colnames(data)) {
-      stop("The label column does not exist in the data frame.")
-    } else {
-      data <- data %>% mutate(label = .data[[label]])
-    }
-  }
-
-  data <- data %>%
-    mutate(
-      !!y := ifelse(.data[[y]] == 0, 1e-300, .data[[y]]),
-      log_p = -log10(.data[[y]]),
-      logfc = .data[[x]],
-      group = case_when(
-        .data[[y]] < p_cutoff & .data[[x]] > fc_cutoff ~ up_label,
-        .data[[y]] < p_cutoff & .data[[x]] < -fc_cutoff ~ down_label,
-        TRUE ~ non_de_label
-      ),
-      color = case_when(
-        group == up_label ~ up_color,
-        group == down_label ~ down_color,
-        TRUE ~ non_de_color
-      )
-    ) %>%
-      mutate(group = factor(group, levels = c(up_label, down_label, non_de_label)))
-
-  # Calculate the number of up and down-regulated genes
-  num_up <- sum(data[[y]] < p_cutoff & data[[x]] > fc_cutoff) %>% as.character()
-  num_down <- sum(data[[y]] < p_cutoff & data[[x]] < -fc_cutoff) %>% as.character()
-
-  # Define the limits for the x and y axes
-  if (is.null(x_lim)) {
-    x_lim <- c(min(data[[x]], na.rm = TRUE) - 0.5, max(data[[x]], na.rm = TRUE) + 0.5)
-  }
-  if (is.null(y_lim)) {
-    y_max <- ifelse(number_label, max(data$log_p, na.rm = TRUE) * 1.2, max(data$log_p, na.rm = TRUE) + 1)
-    y_lim <- c(0, y_max)
-  }
-
-  # Color assignment
-  named_colors <- setNames(
-    c(up_color, down_color, non_de_color),
-    c(up_label, down_label, non_de_label)
+  prep <- .prepare_volcano_data(
+    data = data, de_method = de_method, x = x, y = y, label = label,
+    selected_labels = selected_labels, p_cutoff = p_cutoff, fc_cutoff = fc_cutoff,
+    up_label = up_label, down_label = down_label, non_de_label = non_de_label,
+    up_color = up_color, down_color = down_color, non_de_color = non_de_color,
+    x_lim = x_lim, y_lim = y_lim, number_label = number_label,
+    y_lim_style = "multiplicative"
   )
+  data <- prep$data
+  num_up <- prep$num_up
+  num_down <- prep$num_down
+  x_lim <- prep$x_lim
+  y_lim <- prep$y_lim
+  named_colors <- prep$named_colors
+  label_data <- prep$label_data
 
   # Create the volcano plot
   v_plot <- ggplot(data, aes(x = logfc, y = log_p)) +
@@ -533,43 +534,18 @@ plot_volcano2 <- function(
     scale_color_manual(values = named_colors, drop = TRUE) +
     labs(x = x_lab, y = y_lab) +
     coord_cartesian(xlim = x_lim, ylim = y_lim, clip = "off") +
-    geom_hline(yintercept = -log10(p_cutoff), linetype = "dashed", color = "black", linewidth = 0.3) +
+    geom_hline(yintercept = -log10(p_cutoff), linetype = "dashed", color = "grey40", linewidth = 0.3) +
     theme_classic(base_size = axis_lab_size) +
     theme(
-      legend.position = "none"
+      legend.position = "none",
+      axis.title = element_text(face = text_face),
+      axis.text = element_text(face = text_face)
     )
 
   if (fc_cutoff > 0) {
       v_plot <- v_plot +
           geom_vline(xintercept = c(-fc_cutoff, fc_cutoff),
-                     linetype = "dashed", color = "black", linewidth = 0.3)
-  }
-
-  # Prepare the labels for the selected genes
-  if (!is.null(selected_labels)) {
-    # Here we use having to label more than half or 100 genes, whichever is bigger
-    # to avoid overplotting
-
-    # If less than half or 100 genes, use the selected labels
-    if (length(selected_labels) < max(100, nrow(data) / 2)) {
-      label_data <- data %>%
-        filter(label %in% selected_labels) %>%
-        select(label, logfc, log_p)
-    } else {
-      # Otherwise, choose the top genes based on log_p and logfc
-      # Use a score that is the product of log_p and logfc
-      # Rank and choose the top 10 genes in each direction
-      label_data <- data %>%
-        filter(group %in% c(up_label, down_label)) %>%
-        mutate(score = log_p * abs(logfc)) %>%
-        arrange(desc(score)) %>%
-        group_by(group) %>%
-        slice_head(n = 10) %>%
-        ungroup() %>%
-        select(label, logfc, log_p)
-    }
-  } else {
-    label_data <- NULL
+                     linetype = "dashed", color = "grey40", linewidth = 0.3)
   }
 
   # Add the labels to the plot
@@ -581,7 +557,7 @@ plot_volcano2 <- function(
         data = label_data,
         aes(x = logfc, y = log_p, label = label),
         size = lab_size,
-        fontface = "bold",
+        fontface = text_face,
         color = "black",
         max.overlaps = max_overlaps,
         point.padding = grid::unit(0.6, "lines"),
@@ -598,7 +574,7 @@ plot_volcano2 <- function(
         segment.angle = label_segment_angle,
         segment.ncp = label_segment_ncp,
         arrow = grid::arrow(
-          length = grid::unit(0.25, "cm"),
+          length = grid::unit(0.18, "cm"),
           type   = "closed",
           ends   = label_arrow_ends
         ),
@@ -609,7 +585,7 @@ plot_volcano2 <- function(
         data = label_data,
         aes(x = logfc, y = log_p, label = label),
         size = lab_size,
-        fontface = "bold",
+        fontface = text_face,
         color = "black"
       )
     }
@@ -627,8 +603,13 @@ plot_volcano2 <- function(
     up_arrow_text_wrapped <- stringr::str_wrap(up_arrow_text, width = arrow_text_wrap)
     down_arrow_text_wrapped <- stringr::str_wrap(down_arrow_text, width = arrow_text_wrap)
 
-    # Calculate y position for arrows
-    arrow_y <- y_lim[2] + arrow_y_offset
+    # Calculate y position for arrows. y_lim already reserves headroom above
+    # the highest point (see y_lim_style = "multiplicative" above); placing
+    # the arrows within that headroom (rather than above y_lim[2]) keeps them
+    # inside the panel so they are actually visible instead of being clipped
+    # by the plot margin.
+    top_gap <- y_lim[2] - max(data$log_p, na.rm = TRUE)
+    arrow_y <- y_lim[2] - arrow_y_offset * top_gap
 
     # Calculate x positions for arrows
     x_range <- x_lim[2] - x_lim[1]
@@ -656,7 +637,7 @@ plot_volcano2 <- function(
                vjust = text_label_vjust,
                hjust = 0.5,
                size = arrow_text_size,
-               fontface = "italic",
+               fontface = arrow_text_face,
                color = arrow_color) +
       # Add number below left arrow
       annotate("text",
@@ -666,6 +647,7 @@ plot_volcano2 <- function(
                vjust = num_label_vjust,
                hjust = 0.5,
                size = num_label_size,
+               fontface = text_face,
                color = arrow_color)
 
     # Add right arrow
@@ -687,7 +669,7 @@ plot_volcano2 <- function(
                 vjust = text_label_vjust,
                 hjust = 0.5,
                 size = arrow_text_size,
-                fontface = "italic",
+                fontface = arrow_text_face,
                 color = arrow_color) +
       # Add number below right arrow
       annotate("text",
@@ -697,6 +679,7 @@ plot_volcano2 <- function(
                 vjust = num_label_vjust,
                 hjust = 0.5,
                 size = num_label_size,
+                fontface = text_face,
                 color = arrow_color)
 
   }

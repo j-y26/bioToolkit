@@ -53,6 +53,7 @@ plot_volcano2(
   label_segment_angle = 90,
   label_segment_ncp = 1,
   max_overlaps = 10,
+  bold_text = TRUE,
   ...
 )
 }
@@ -161,6 +162,9 @@ of up and down-regulated genes}
 \item{label_segment_ncp}{The control point density for curves}
 
 \item{max_overlaps}{The maximum number of overlaps for the gene labels}
+
+\item{bold_text}{A logical value indicating whether axis titles, axis text,
+and plot labels should be bold. Default is TRUE.}
 }
 \value{
 A volcano plot
