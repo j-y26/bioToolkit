@@ -3,16 +3,24 @@
 #' @title Publication-quality dimensionality reduction plot
 #'
 #' @description Plots cells on a 2D reduction (UMAP, tSNE, PCA, ...) coloured by
-#'              a grouping variable. The panel (the scatter itself) has a fixed
-#'              absolute size set by `panel.width` and `panel.height`, so it is
-#'              identical across figures regardless of legend size or position.
-#'              Use \code{\link{save_umap}} to save it: the output file is sized
-#'              to fit the panel, legend and margins exactly.
+#'              a grouping variable, optionally split into one panel per level
+#'              of a second variable. Every panel (the scatter itself) has a
+#'              fixed absolute size set by `panel.width` and `panel.height`, so
+#'              panels are identical across figures regardless of how many there
+#'              are and of the legend's size or position. Split plots share a
+#'              single legend covering all groups, even when a panel contains
+#'              only some of them. Use \code{\link{save_dimplot}} to save it: the
+#'              output file is sized to fit the panels, strips, legend and
+#'              margins exactly.
 #'
 #' @param object A Seurat object
 #'
 #' @param group.by Metadata column to colour cells by. If NULL, the active
 #'                 identities are used
+#'
+#' @param split.by Metadata column to split the plot by, one panel per level.
+#'                 If NULL (default), a single panel is drawn. Levels with no
+#'                 cells are dropped
 #'
 #' @param reduction Name of the reduction to plot, default is "umap"
 #'
@@ -40,7 +48,7 @@
 #'                       is 0.4
 #'
 #' @param label Whether to label groups at their median position, default is
-#'              FALSE
+#'              FALSE. When split, groups are labelled within each panel
 #'
 #' @param label.size Size of the group labels, default is 3.5
 #'
@@ -54,9 +62,19 @@
 #'
 #' @param legend.text.size Font size of the legend text, default is 11
 #'
-#' @param panel.width Width of the panel in inches, default is 4
+#' @param ncol Number of panel columns when `split.by` is given. If NULL
+#'             (default), all panels are laid out in a single row
 #'
-#' @param panel.height Height of the panel in inches, default is `panel.width`
+#' @param panel.width Width of a single panel in inches, default is 4
+#'
+#' @param panel.height Height of a single panel in inches, default is
+#'                     `panel.width`
+#'
+#' @param panel.spacing Gap between panels in inches, default is 0.1
+#'
+#' @param strip.text.size Font size of the panel (split) labels, default is 12
+#'
+#' @param strip.text.face Font face of the panel labels, default is "bold"
 #'
 #' @param rasterize Whether to rasterize the points while keeping text, legend
 #'                  and arrows as vectors: "auto" (default) rasterizes when there
@@ -84,6 +102,7 @@
 DimPlot_bioToolkit <- function(
     object,
     group.by = NULL,
+    split.by = NULL,
     reduction = "umap",
     cols = NULL,
     pt.size = 0.15,
@@ -99,8 +118,12 @@ DimPlot_bioToolkit <- function(
     legend.ncol = NULL,
     legend.pt.size = 3.5,
     legend.text.size = 11,
+    ncol = NULL,
     panel.width = 4,
     panel.height = panel.width,
+    panel.spacing = 0.1,
+    strip.text.size = 12,
+    strip.text.face = "bold",
     rasterize = "auto",
     raster.threshold = 1e4,
     raster.dpi = 1000,
@@ -127,14 +150,36 @@ DimPlot_bioToolkit <- function(
     group <- if (is.null(group.by)) {
         Seurat::Idents(object)[rownames(emb)]
     } else {
-        Seurat::FetchData(object, vars = group.by, cells = rownames(emb))[[1]]
+        fetch_meta(object, group.by, rownames(emb))
     }
 
     # Construct a data frame with embedding coordinates and group information
     df <- data.frame(x = emb[, 1], y = emb[, 2], group = group)
     if (!is.factor(df$group)) df$group <- factor(df$group)
 
-    # Resolve colours up front so outlines can reuse them
+    # One panel per level of the splitting variable. Levels are dropped to what
+    # is actually present so that no empty panel is drawn and the layout below
+    # matches the panels ggplot2 creates
+    split_plot <- !is.null(split.by)
+    if (split_plot) {
+        if (length(split.by) != 1) stop("`split.by` must be a single metadata column", call. = FALSE)
+        split <- fetch_meta(object, split.by, rownames(emb))
+        if (!is.factor(split)) split <- factor(split)
+        split <- droplevels(split)
+        # Cells with no value get their own panel rather than being dropped
+        if (anyNA(split)) split <- addNA(split)
+        df$split <- split
+        n_panels <- nlevels(df$split)
+        panel_ncol <- if (is.null(ncol)) n_panels else min(max(as.integer(ncol), 1L), n_panels)
+        panel_nrow <- ceiling(n_panels / panel_ncol)
+    } else {
+        panel_ncol <- 1L
+        panel_nrow <- 1L
+    }
+
+    # Resolve colours up front so outlines can reuse them. Levels are kept for
+    # the whole data set, not per panel, so that every panel of a split plot is
+    # coloured the same way and shares one complete legend
     if (is.null(cols)) {
         df$group <- droplevels(df$group)
         cols <- stats::setNames(scales::hue_pal()(nlevels(df$group)), levels(df$group))
@@ -196,6 +241,8 @@ DimPlot_bioToolkit <- function(
 
     p <- p +
         points_layer(geom_point(aes(colour = group), size = pt.size, alpha = alpha, stroke = 0)) +
+        # drop = FALSE keeps every group in the legend even when a panel, or the
+        # whole plot, does not contain all of them
         scale_colour_manual(values = cols, na.value = na.color, drop = FALSE) +
         guides(colour = guide_legend(
             ncol = legend.ncol,
@@ -212,18 +259,29 @@ DimPlot_bioToolkit <- function(
             # Gap between panel and legend on whichever side the legend is
             legend.box.spacing = unit(0.3, "cm"),
             legend.background = element_blank(),
-            # Fixed panel size: the scatter itself is identical across plots
-            # regardless of legend size or position
-            panel.widths = unit(panel.width, "in"),
-            panel.heights = unit(panel.height, "in"),
+            # Fixed panel size: each scatter is identical across plots regardless
+            # of the number of panels and of the legend's size or position. Given
+            # one unit per panel column / row, ggplot2 sizes each panel, rather
+            # than the panel area as a whole
+            panel.widths = unit(rep(panel.width, panel_ncol), "in"),
+            panel.heights = unit(rep(panel.height, panel_nrow), "in"),
+            panel.spacing = unit(panel.spacing, "in"),
+            strip.text = element_text(
+                size = strip.text.size, face = strip.text.face,
+                margin = margin(b = 0.15, unit = "cm")
+            ),
+            strip.background = element_blank(),
             plot.background = element_rect(fill = if (transparent_bg) "transparent" else bg, colour = NA),
             # Extra bottom/left margin makes room for the arrow labels
             plot.margin = margin(0.2, 0.2, 0.6, 0.6, "cm")
         )
 
+    if (split_plot) p <- p + facet_wrap(~ split, ncol = panel_ncol)
+
     if (label) {
         check_installed("ggrepel", reason = "to label groups")
-        centers <- stats::aggregate(cbind(x, y) ~ group, data = df, FUN = stats::median)
+        by <- if (split_plot) cbind(x, y) ~ group + split else cbind(x, y) ~ group
+        centers <- stats::aggregate(by, data = df, FUN = stats::median)
         p <- p + ggrepel::geom_text_repel(
             data = centers,
             aes(label = group),
@@ -237,18 +295,28 @@ DimPlot_bioToolkit <- function(
         )
     }
 
-    # Arrows in place of axes
-    add_dimension_arrows(p, reduction = reduction, ...)
+    # Arrows in place of axes, drawn once in the bottom left panel
+    if (split_plot) {
+        lv <- levels(df$split)
+        bottom_left <- factor(lv[(panel_nrow - 1) * panel_ncol + 1], levels = lv, exclude = NULL)
+        apply_arrow_grob(
+            p,
+            dimension_arrow_grob(reduction = reduction, ...),
+            data = data.frame(split = bottom_left)
+        )
+    } else {
+        add_dimension_arrows(p, reduction = reduction, ...)
+    }
 }
 
 
 #' @title Save a fixed-panel plot sized to fit its contents
 #'
-#' @description Saves a plot whose panel has a fixed absolute size (e.g. from
+#' @description Saves a plot whose panels have a fixed absolute size (e.g. from
 #'              \code{\link{DimPlot_bioToolkit}}). The width and height of the
-#'              file are computed from the panel, legend and margins, measured
-#'              with the same kind of device the file is written with so that
-#'              font metrics match.
+#'              file are computed from the panels, strips, legend and margins,
+#'              measured with the same kind of device the file is written with
+#'              so that font metrics match.
 #'
 #' @param plot A ggplot object with a fixed panel size
 #'
@@ -264,7 +332,7 @@ DimPlot_bioToolkit <- function(
 #'
 #' @export
 #'
-save_umap <- function(plot, filename, dpi = 1000, bg = NULL, ...) {
+save_dimplot <- function(plot, filename, dpi = 1000, bg = NULL, ...) {
     # Build the gtable once, on the same kind of device it will be saved to, and
     # draw that exact gtable so measured and saved layouts cannot differ
     raster_ext <- grepl("\\.(png|jpe?g|tiff?|bmp)$", filename, ignore.case = TRUE)
@@ -290,6 +358,47 @@ save_umap <- function(plot, filename, dpi = 1000, bg = NULL, ...) {
     ggsave(filename, gt, width = dims[["width"]], height = dims[["height"]], units = "in",
            dpi = dpi, bg = bg, limitsize = FALSE, ...)
     invisible(dims)
+}
+
+
+#' @rdname save_dimplot
+#'
+#' @description `save_umap()` is a deprecated alias of `save_dimplot()`, which
+#'              is named for the fact that reductions other than UMAP are
+#'              plotted just as well.
+#'
+#' @export
+#'
+save_umap <- function(plot, filename, dpi = 1000, bg = NULL, ...) {
+    warning("`save_umap()` is deprecated, use `save_dimplot()` instead", call. = FALSE)
+    save_dimplot(plot = plot, filename = filename, dpi = dpi, bg = bg, ...)
+}
+
+
+#' Fetch one variable for a fixed set of cells
+#'
+#' `Seurat::FetchData()` silently drops cells whose value is `NA`, which would
+#' misalign the result with the embedding it is meant to annotate. The values
+#' are therefore indexed back onto `cells`, restoring the dropped ones as `NA`
+#' so that they can be shown as their own group or panel.
+#'
+#' @param object A Seurat object
+#'
+#' @param var Name of the variable to fetch
+#'
+#' @param cells Cell names to fetch, in the order they are wanted
+#'
+#' @return A vector with one value per cell in `cells`
+#'
+#' @keywords internal
+fetch_meta <- function(object, var, cells) {
+    data <- withCallingHandlers(
+        Seurat::FetchData(object, vars = var, cells = cells),
+        warning = function(w) {
+            if (grepl("missing data", conditionMessage(w))) invokeRestart("muffleWarning")
+        }
+    )
+    data[[1]][match(cells, rownames(data))]
 }
 
 

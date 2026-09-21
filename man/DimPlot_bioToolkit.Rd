@@ -7,6 +7,7 @@
 DimPlot_bioToolkit(
   object,
   group.by = NULL,
+  split.by = NULL,
   reduction = "umap",
   cols = NULL,
   pt.size = 0.15,
@@ -22,8 +23,12 @@ DimPlot_bioToolkit(
   legend.ncol = NULL,
   legend.pt.size = 3.5,
   legend.text.size = 11,
+  ncol = NULL,
   panel.width = 4,
   panel.height = panel.width,
+  panel.spacing = 0.1,
+  strip.text.size = 12,
+  strip.text.face = "bold",
   rasterize = "auto",
   raster.threshold = 10000,
   raster.dpi = 1000,
@@ -37,6 +42,10 @@ DimPlot_bioToolkit(
 
 \item{group.by}{Metadata column to colour cells by. If NULL, the active
 identities are used}
+
+\item{split.by}{Metadata column to split the plot by, one panel per level.
+If NULL (default), a single panel is drawn. Levels with no
+cells are dropped}
 
 \item{reduction}{Name of the reduction to plot, default is "umap"}
 
@@ -64,7 +73,7 @@ is 0.6}
 is 0.4}
 
 \item{label}{Whether to label groups at their median position, default is
-FALSE}
+FALSE. When split, groups are labelled within each panel}
 
 \item{label.size}{Size of the group labels, default is 3.5}
 
@@ -78,9 +87,19 @@ chooses based on the number of groups and the position}
 
 \item{legend.text.size}{Font size of the legend text, default is 11}
 
-\item{panel.width}{Width of the panel in inches, default is 4}
+\item{ncol}{Number of panel columns when `split.by` is given. If NULL
+(default), all panels are laid out in a single row}
 
-\item{panel.height}{Height of the panel in inches, default is `panel.width`}
+\item{panel.width}{Width of a single panel in inches, default is 4}
+
+\item{panel.height}{Height of a single panel in inches, default is
+`panel.width`}
+
+\item{panel.spacing}{Gap between panels in inches, default is 0.1}
+
+\item{strip.text.size}{Font size of the panel (split) labels, default is 12}
+
+\item{strip.text.face}{Font face of the panel labels, default is "bold"}
 
 \item{rasterize}{Whether to rasterize the points while keeping text, legend
 and arrows as vectors: "auto" (default) rasterizes when there
@@ -105,9 +124,13 @@ a ggplot object
 }
 \description{
 Plots cells on a 2D reduction (UMAP, tSNE, PCA, ...) coloured by
-             a grouping variable. The panel (the scatter itself) has a fixed
-             absolute size set by `panel.width` and `panel.height`, so it is
-             identical across figures regardless of legend size or position.
-             Use \code{\link{save_umap}} to save it: the output file is sized
-             to fit the panel, legend and margins exactly.
+             a grouping variable, optionally split into one panel per level
+             of a second variable. Every panel (the scatter itself) has a
+             fixed absolute size set by `panel.width` and `panel.height`, so
+             panels are identical across figures regardless of how many there
+             are and of the legend's size or position. Split plots share a
+             single legend covering all groups, even when a panel contains
+             only some of them. Use \code{\link{save_dimplot}} to save it: the
+             output file is sized to fit the panels, strips, legend and
+             margins exactly.
 }

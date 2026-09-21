@@ -59,6 +59,45 @@ add_dimension_arrows <- function(plot,
     stop("The plot must be a ggplot object")
   }
 
+  arrow_grob <- dimension_arrow_grob(
+    reduction = reduction,
+    dims = dims,
+    arrow_length = arrow_length,
+    x_coord_adjust = x_coord_adjust,
+    y_coord_adjust = y_coord_adjust,
+    arrow_size = arrow_size,
+    arrow_width = arrow_width,
+    arrow_line_width = arrow_line_width,
+    arrow_color = arrow_color,
+    text_font_size = text_font_size,
+    text_dst = text_dst
+  )
+
+  apply_arrow_grob(plot, arrow_grob)
+}
+
+
+#' Build the dimension arrow grob
+#'
+#' Draws the two arrows and their labels in absolute units, measured from the
+#' bottom left corner of whichever viewport (i.e. panel) the grob is drawn in.
+#'
+#' @inheritParams add_dimension_arrows
+#'
+#' @return A grob tree
+#'
+#' @keywords internal
+dimension_arrow_grob <- function(reduction = "umap",
+                                 dims = NULL,
+                                 arrow_length = 2,
+                                 x_coord_adjust = 0.25,
+                                 y_coord_adjust = x_coord_adjust,
+                                 arrow_size = 0.25,
+                                 arrow_width = 0.2,
+                                 arrow_line_width = 3,
+                                 arrow_color = "black",
+                                 text_font_size = 12,
+                                 text_dst = 0.3) {
   # Get the dimension names if not provided
   if (is.null(dims)) {
     # Check if the reduction method is valid
@@ -137,10 +176,40 @@ add_dimension_arrows <- function(plot,
   )
 
   # Combine the grobs into a single grob
-  arrow_grob <- grobTree(arrow_x, arrow_y, arrowhead_x, arrowhead_y, label_x, label_y)
+  grobTree(arrow_x, arrow_y, arrowhead_x, arrowhead_y, label_x, label_y)
+}
 
-  plot <- plot +
-    annotation_custom(arrow_grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+
+#' Draw an arrow grob in one or all panels of a plot
+#'
+#' `annotation_custom()` has no data of its own and is therefore drawn in every
+#' panel. Passing `data` a single row that carries the facetting variable
+#' restricts the grob to the matching panel, which is how the arrows are kept to
+#' the bottom left panel of a split plot.
+#'
+#' @param plot A ggplot object
+#'
+#' @param grob The grob to draw, e.g. from \code{\link{dimension_arrow_grob}}
+#'
+#' @param data A one-row data frame naming the panel to draw in, or NULL
+#'             (default) to draw in every panel
+#'
+#' @return a ggplot object
+#'
+#' @keywords internal
+apply_arrow_grob <- function(plot, grob, data = NULL) {
+  annotation <- if (is.null(data)) {
+    annotation_custom(grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
+  } else {
+    layer(
+      geom = GeomCustomAnn, stat = StatIdentity, position = PositionIdentity,
+      data = data, mapping = NULL, inherit.aes = FALSE, show.legend = FALSE,
+      params = list(grob = grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
+    )
+  }
+
+  plot +
+    annotation +
     coord_cartesian(clip = "off") +
     theme(
       axis.title = element_blank(),
@@ -148,8 +217,6 @@ add_dimension_arrows <- function(plot,
       axis.text = element_blank(),
       axis.line = element_blank()
     )
-
-  return(plot)
 }
 
 #' @title Helper to manipulate ggplots using Seurat's patchwork functions
