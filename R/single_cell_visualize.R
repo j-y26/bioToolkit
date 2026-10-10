@@ -100,19 +100,7 @@ dimension_arrow_grob <- function(reduction = "umap",
                                  text_dst = 0.3) {
   # Get the dimension names if not provided
   if (is.null(dims)) {
-    # Check if the reduction method is valid
-      reduction <- tolower(reduction)
-    if (grepl("umap", reduction)) {
-      dims <- c("UMAP-1", "UMAP-2")
-    } else if (grepl("tsne", reduction) | grepl("t-sne", reduction)){
-      dims <- c("tSNE-1", "tSNE-2")
-    } else if (grepl("pca", reduction)) {
-      dims <- c("PC-1", "PC-2")
-    } else if (grepl("spatial", reduction)) {
-      dims <- c("Spatial-1", "Spatial-2")
-    } else {
-      dims <- c(paste0(reduction, "-1"), paste0(reduction, "-2"))
-    }
+    dims <- reduction_dim_labels(reduction)
   }
 
   # Arrow shaft grobs (without arrowheads)
@@ -177,6 +165,32 @@ dimension_arrow_grob <- function(reduction = "umap",
 
   # Combine the grobs into a single grob
   grobTree(arrow_x, arrow_y, arrowhead_x, arrowhead_y, label_x, label_y)
+}
+
+
+#' Axis labels for the dimensions of a reduction
+#'
+#' @param reduction Name of the reduction, e.g. "umap"
+#'
+#' @param dims The two dimensions plotted, default is 1 and 2
+#'
+#' @return A character vector of two labels, e.g. "UMAP-1" and "UMAP-2"
+#'
+#' @keywords internal
+reduction_dim_labels <- function(reduction, dims = c(1, 2)) {
+  reduction <- tolower(reduction)
+  prefix <- if (grepl("umap", reduction)) {
+    "UMAP"
+  } else if (grepl("tsne", reduction) | grepl("t-sne", reduction)) {
+    "tSNE"
+  } else if (grepl("pca", reduction)) {
+    "PC"
+  } else if (grepl("spatial", reduction)) {
+    "Spatial"
+  } else {
+    reduction
+  }
+  paste0(prefix, "-", dims)
 }
 
 

@@ -4,10 +4,15 @@
 \alias{fixed_gtable_size}
 \title{Absolute size of a gtable, including legends that overflow their cell}
 \usage{
-fixed_gtable_size(gt)
+fixed_gtable_size(gt, patchwork = FALSE, margin = 0.1)
 }
 \arguments{
 \item{gt}{A gtable with absolute widths and heights}
+
+\item{patchwork}{Whether `gt` is the gtable of a patchwork}
+
+\item{margin}{Smallest gap between a legend and the device edge in a
+patchwork, in inches}
 }
 \value{
 Named numeric vector with width and height in inches
@@ -19,5 +24,10 @@ in the gtable's widths/heights. The legend is centred on its cell and the
 gtable is centred on the device, so the device is enlarged to the legend size
 plus twice the larger of the spaces before and after its cell, which keeps at
 least the plot margin on both sides of the legend.
+}
+\details{
+In a patchwork, the space before and after a legend's cell holds the other
+plots rather than margins, so the device is instead enlarged just enough for
+the legend to keep `margin` inches from the device edge.
 }
 \keyword{internal}

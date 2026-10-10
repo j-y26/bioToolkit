@@ -9,7 +9,12 @@ DimPlot_bioToolkit(
   group.by = NULL,
   split.by = NULL,
   reduction = "umap",
+  dims = c(1, 2),
+  cells = NULL,
+  cells.highlight = NULL,
+  full.extent = FALSE,
   cols = NULL,
+  na.value = "grey88",
   pt.size = 0.15,
   alpha = 1,
   shuffle = TRUE,
@@ -24,12 +29,13 @@ DimPlot_bioToolkit(
   legend.pt.size = 3.5,
   legend.text.size = 11,
   ncol = NULL,
+  by.row = TRUE,
   panel.width = 4,
   panel.height = panel.width,
   panel.spacing = 0.1,
   strip.text.size = 12,
   strip.text.face = "bold",
-  rasterize = "auto",
+  raster = NULL,
   raster.threshold = 10000,
   raster.dpi = 1000,
   bg = "white",
@@ -49,8 +55,26 @@ cells are dropped}
 
 \item{reduction}{Name of the reduction to plot, default is "umap"}
 
+\item{dims}{The two dimensions of the reduction to plot, default is 1 and 2}
+
+\item{cells}{Cells to plot, as names or indices (e.g. from
+\code{Seurat::WhichCells()}). Other cells are left out of the
+plot entirely. If NULL (default), all cells are plotted}
+
+\item{cells.highlight}{Cells to colour, as names or indices. Other plotted
+cells are drawn in `na.value` and left out of the
+legend. If NULL (default), all plotted cells are
+coloured}
+
+\item{full.extent}{Whether the axes span all cells of the object rather than
+only the plotted ones, so that a plot of a subset of cells
+lines up with a plot of the whole object. Default is FALSE}
+
 \item{cols}{Colours for the groups, either named by group or in the order of
 the group levels. If NULL, the default ggplot2 hue palette is used}
+
+\item{na.value}{Colour of cells with no group and of cells not in
+`cells.highlight`, default is "grey88"}
 
 \item{pt.size}{Point size, default is 0.15}
 
@@ -90,6 +114,9 @@ chooses based on the number of groups and the position}
 \item{ncol}{Number of panel columns when `split.by` is given. If NULL
 (default), all panels are laid out in a single row}
 
+\item{by.row}{Whether panels fill the grid row by row (default, TRUE) or
+column by column (FALSE)}
+
 \item{panel.width}{Width of a single panel in inches, default is 4}
 
 \item{panel.height}{Height of a single panel in inches, default is
@@ -101,11 +128,11 @@ chooses based on the number of groups and the position}
 
 \item{strip.text.face}{Font face of the panel labels, default is "bold"}
 
-\item{rasterize}{Whether to rasterize the points while keeping text, legend
-and arrows as vectors: "auto" (default) rasterizes when there
+\item{raster}{Whether to rasterize the points while keeping text, legend
+and arrows as vectors: NULL (default) rasterizes when there
 are more than `raster.threshold` cells, or TRUE / FALSE}
 
-\item{raster.threshold}{Number of cells above which `rasterize = "auto"`
+\item{raster.threshold}{Number of cells above which `raster = NULL`
 rasterizes, default is 10000}
 
 \item{raster.dpi}{Resolution of the rasterized points, default is 1000. Match
@@ -117,7 +144,8 @@ transparent background}
 \item{seed}{Random seed used for shuffling and label placement, default is
 42. The global random number generator state is not changed}
 
-\item{...}{Additional arguments passed to \code{\link{add_dimension_arrows}}}
+\item{...}{Additional arguments passed to \code{\link{add_dimension_arrows}}.
+`rasterize` is accepted as a deprecated alias of `raster`}
 }
 \value{
 a ggplot object

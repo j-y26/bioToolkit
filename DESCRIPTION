@@ -1,7 +1,7 @@
 Package: bioToolkit
 Type: Package
 Title: An R package hosting useful functions for data analysis
-Version: 0.3.1
+Version: 0.4.0
 Author: person("Jielin", "Yang",
                 email = "jielin.yang@sickkids.ca",
                 role = c("aut", "cre"),
@@ -27,7 +27,8 @@ Imports:
     grDevices,
     stats,
     rlang,
-    utils
+    utils,
+    viridisLite
 Suggests:
     aplot,
     data.table,
@@ -50,4 +51,8 @@ Suggests:
     colorspace,
     plotly,
     ggrastr,
-    ragg
+    ragg,
+    hexbin,
+    SeuratObject,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

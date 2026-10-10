@@ -10,7 +10,7 @@ save_dimplot(plot, filename, dpi = 1000, bg = NULL, ...)
 save_umap(plot, filename, dpi = 1000, bg = NULL, ...)
 }
 \arguments{
-\item{plot}{A ggplot object with a fixed panel size}
+\item{plot}{A ggplot or patchwork object with fixed panel sizes}
 
 \item{filename}{File to save to; the format is inferred from the extension}
 
@@ -25,10 +25,12 @@ The width and height of the saved file in inches, invisibly
 }
 \description{
 Saves a plot whose panels have a fixed absolute size (e.g. from
-             \code{\link{DimPlot_bioToolkit}}). The width and height of the
-             file are computed from the panels, strips, legend and margins,
-             measured with the same kind of device the file is written with
-             so that font metrics match.
+             \code{\link{DimPlot_bioToolkit}} or
+             \code{\link{FeaturePlot_bioToolkit}}), including patchwork
+             combinations of such plots. The width and height of the file are
+             computed from the panels, strips, legends and margins, measured
+             with the same kind of device the file is written with so that
+             font metrics match.
 
 `save_umap()` is a deprecated alias of `save_dimplot()`, which
              is named for the fact that reductions other than UMAP are

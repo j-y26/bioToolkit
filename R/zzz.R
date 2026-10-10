@@ -44,3 +44,598 @@ check_installed <- function(pkg, reason = NULL) {
 is_ggplot <- function(x) {
   inherits(x, "gg")
 }
+
+
+#' Stop unless ggplot2 supports fixed panel sizes
+#'
+#' @keywords internal
+check_fixed_panel_support <- function() {
+    if (utils::packageVersion("ggplot2") < "4.0.0") {
+        stop("ggplot2 >= 4.0.0 is required for fixed panel sizes", call. = FALSE)
+    }
+}
+
+
+# Helpers shared by the reduction plots ---------------------------------------
+
+#' Fetch one variable for a fixed set of cells
+#'
+#' `Seurat::FetchData()` silently drops cells whose value is `NA`, which would
+#' misalign the result with the embedding it is meant to annotate. The values
+#' are therefore indexed back onto `cells`, restoring the dropped ones as `NA`
+#' so that they can be shown as their own group or panel.
+#'
+#' @param object A Seurat object
+#'
+#' @param var Name of the variable to fetch
+#'
+#' @param cells Cell names to fetch, in the order they are wanted
+#'
+#' @return A vector with one value per cell in `cells`
+#'
+#' @keywords internal
+fetch_meta <- function(object, var, cells) {
+    data <- withCallingHandlers(
+        Seurat::FetchData(object, vars = var, cells = cells),
+        warning = function(w) {
+            if (grepl("missing data", conditionMessage(w))) invokeRestart("muffleWarning")
+        }
+    )
+    data[[1]][match(cells, rownames(data))]
+}
+
+
+#' Resolve the `raster` argument, accepting the deprecated `rasterize`
+#'
+#' @param raster NULL, TRUE or FALSE
+#'
+#' @param dots The list of `...` arguments, which may hold `rasterize`
+#'
+#' @return NULL, TRUE or FALSE
+#'
+#' @keywords internal
+resolve_raster_arg <- function(raster, dots) {
+    if (!is.null(dots$rasterize)) {
+        warning("`rasterize` is deprecated, use `raster` instead", call. = FALSE)
+        raster <- if (identical(dots$rasterize, "auto")) NULL else dots$rasterize
+    }
+    if (!(is.null(raster) || isTRUE(raster) || isFALSE(raster))) {
+        stop("`raster` must be NULL, TRUE or FALSE", call. = FALSE)
+    }
+    raster
+}
+
+
+
+#' Resolve the dimensions to plot and their arrow labels
+#'
+#' Before `dims` selected the dimensions, it was passed through `...` to the
+#' arrows as their labels. A character `dims` is therefore still taken as the
+#' arrow labels of the first two dimensions.
+#'
+#' @param dims Two dimension indices, or two arrow labels
+#'
+#' @param reduction Name of the reduction
+#'
+#' @return A list with the integer `dims` and their arrow `labels`
+#'
+#' @keywords internal
+resolve_dims <- function(dims, reduction) {
+    if (is.character(dims)) return(list(dims = c(1L, 2L), labels = dims))
+    if (length(dims) != 2 || anyNA(dims)) stop("`dims` must be two dimension indices", call. = FALSE)
+    dims <- as.integer(dims)
+    list(dims = dims, labels = reduction_dim_labels(reduction, dims))
+}
+
+
+
+#' Resolve cells given as names or indices
+#'
+#' @param cells NULL, a character vector of cell names, or integer indices
+#'
+#' @param all_cells All available cell names
+#'
+#' @param arg Name of the argument, for messages
+#'
+#' @return A character vector of cell names, a subset of `all_cells` in the
+#'         order of `all_cells`
+#'
+#' @keywords internal
+resolve_cells <- function(cells, all_cells, arg = "cells") {
+    if (is.null(cells)) return(all_cells)
+    if (is.list(cells)) cells <- unlist(cells, use.names = FALSE)
+    if (is.numeric(cells)) cells <- all_cells[cells[cells >= 1 & cells <= length(all_cells)]]
+    cells <- as.character(cells)
+    found <- all_cells[all_cells %in% cells]
+    n_missing <- length(setdiff(cells, all_cells))
+    if (n_missing > 0) warning(n_missing, " cell(s) in `", arg, "` were not found", call. = FALSE)
+    found
+}
+
+
+
+#' Flag the plotted cells that are highlighted
+#'
+#' @param object A Seurat object
+#'
+#' @param cells The plotted cells
+#'
+#' @param cells.highlight Cells to highlight as names or indices of the
+#'                        object's cells, or NULL to highlight all
+#'
+#' @return A logical vector, one value per cell in `cells`
+#'
+#' @keywords internal
+highlight_flags <- function(object, cells, cells.highlight) {
+    if (is.null(cells.highlight)) return(rep(TRUE, length(cells)))
+    highlight <- resolve_cells(cells.highlight, colnames(object), arg = "cells.highlight")
+    flags <- cells %in% highlight
+    if (!any(flags)) warning("None of the plotted cells are in `cells.highlight`", call. = FALSE)
+    flags
+}
+
+
+
+#' Embedding, axis limits and split panels for the plotted cells
+#'
+#' @param object A Seurat object
+#'
+#' @param reduction Name of the reduction
+#'
+#' @param dims Two dimension indices
+#'
+#' @param cells Cells to plot, or NULL for all
+#'
+#' @param split.by Metadata column to split by, or NULL
+#'
+#' @param full.extent Whether the axis limits span all cells of the reduction
+#'                    rather than only the plotted ones
+#'
+#' @return A list with `df` (x, y and, when split, panel per plotted cell,
+#'         with cell names as row names), the axis limits `xlim` and `ylim`,
+#'         `split_plot` and the number of panels `n_panels`
+#'
+#' @keywords internal
+reduction_data <- function(object, reduction, dims, cells, split.by, full.extent) {
+    emb <- Seurat::Embeddings(object, reduction = reduction)
+    if (ncol(emb) < max(dims)) {
+        stop("Reduction '", reduction, "' has fewer than ", max(dims), " dimensions", call. = FALSE)
+    }
+    emb <- emb[, dims, drop = FALSE]
+    keep <- resolve_cells(cells, rownames(emb))
+    if (length(keep) == 0) stop("None of `cells` are in reduction '", reduction, "'", call. = FALSE)
+    xy <- emb[keep, , drop = FALSE]
+    df <- data.frame(x = xy[, 1], y = xy[, 2], row.names = keep)
+
+    # Limits are fixed explicitly, with ggplot2's default 5% expansion, so that
+    # they can span all cells and so that hexagons can be sized to them
+    extent <- if (full.extent) emb else xy
+    xlim <- scales::expand_range(range(extent[, 1]), mul = 0.05)
+    ylim <- scales::expand_range(range(extent[, 2]), mul = 0.05)
+
+    # One panel per level of the splitting variable. Levels are dropped to what
+    # is actually present so that no empty panel is drawn and the layout
+    # matches the panels ggplot2 creates
+    split_plot <- !is.null(split.by)
+    if (split_plot) {
+        if (length(split.by) != 1) stop("`split.by` must be a single metadata column", call. = FALSE)
+        split <- fetch_meta(object, split.by, keep)
+        if (!is.factor(split)) split <- factor(split)
+        split <- droplevels(split)
+        # Cells with no value get their own panel rather than being dropped
+        if (anyNA(split)) split <- addNA(split)
+        df$panel <- split
+    }
+
+    list(
+        df = df, xlim = xlim, ylim = ylim, split_plot = split_plot,
+        n_panels = if (split_plot) nlevels(df$panel) else 1L
+    )
+}
+
+
+
+#' Grid layout of a set of panels
+#'
+#' @param n Number of panels
+#'
+#' @param ncol Requested number of columns, or NULL for `default_ncol`
+#'
+#' @param by.row Whether panels fill the grid row by row (TRUE) or column by
+#'               column (FALSE)
+#'
+#' @param default_ncol Number of columns used when `ncol` is NULL
+#'
+#' @return A list with `ncol`, `nrow`, the facet direction `dir` and the
+#'         index of the bottom left panel, `bottom_left`
+#'
+#' @keywords internal
+panel_layout <- function(n, ncol, by.row, default_ncol) {
+    ncol <- if (is.null(ncol)) default_ncol else as.integer(ncol)
+    ncol <- min(max(ncol, 1L), n)
+    nrow <- as.integer(ceiling(n / ncol))
+    # Filling by column, the last columns may be left empty when n is not a
+    # multiple of nrow, so the number of columns is that actually filled
+    if (!by.row) ncol <- as.integer(ceiling(n / nrow))
+    list(
+        ncol = ncol, nrow = nrow, dir = if (by.row) "h" else "v",
+        bottom_left = if (by.row) (nrow - 1L) * ncol + 1L else nrow
+    )
+}
+
+
+
+#' Run code with a fixed random seed, restoring the caller's RNG state after
+#'
+#' @param seed Random seed
+#'
+#' @param code Code to run
+#'
+#' @return The value of `code`
+#'
+#' @keywords internal
+with_seed <- function(seed, code) {
+    if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+        old_seed <- get(".Random.seed", envir = globalenv(), inherits = FALSE)
+        on.exit(assign(".Random.seed", old_seed, envir = globalenv()), add = TRUE)
+    } else {
+        on.exit(suppressWarnings(rm(".Random.seed", envir = globalenv())), add = TRUE)
+    }
+    set.seed(seed)
+    code
+}
+
+
+#' A function wrapping point layers so that only they are rasterized
+#'
+#' @param raster NULL to rasterize above `threshold` cells, or TRUE / FALSE
+#'
+#' @param n_cells Number of cells plotted
+#'
+#' @param threshold Number of cells above which `raster = NULL` rasterizes
+#'
+#' @param dpi Resolution of the rasterized points
+#'
+#' @return A function taking and returning a layer
+#'
+#' @keywords internal
+points_layer_fun <- function(raster, n_cells, threshold, dpi) {
+    do_raster <- if (is.null(raster)) n_cells > threshold else raster
+    if (do_raster) check_installed("ggrastr", reason = "to rasterize points")
+    function(layer) {
+        if (do_raster) ggrastr::rasterise(layer, dpi = dpi) else layer
+    }
+}
+
+
+
+#' Colour of the gap inside outlines and of label halos
+#'
+#' @param bg Background colour
+#'
+#' @keywords internal
+halo_colour <- function(bg) {
+    if (is.na(bg) || identical(bg, "transparent")) "white" else bg
+}
+
+
+#' Outline layers drawn beneath all cells
+#'
+#' A coloured layer then a background-coloured layer slightly larger than the
+#' points, drawn beneath all cells, give the cell clouds a crisp border.
+#'
+#' @param df Plotted cells
+#'
+#' @param pt.size Point size
+#'
+#' @param outline.size Thickness of the outline
+#'
+#' @param outline.color A single colour, or one colour per row of `df`
+#'
+#' @param halo.color Colour of the gap between the outline and the cells
+#'
+#' @param layer_fun Function wrapping point layers, from
+#'                  \code{\link{points_layer_fun}}
+#'
+#' @return A list of two layers
+#'
+#' @keywords internal
+outline_layers <- function(df, pt.size, outline.size, outline.color, halo.color, layer_fun) {
+    outline <- if (length(outline.color) == 1) {
+        geom_point(data = df, size = pt.size + outline.size, colour = outline.color, stroke = 0)
+    } else {
+        df$outline <- outline.color
+        geom_point(aes(colour = I(outline)), data = df, size = pt.size + outline.size, stroke = 0)
+    }
+    list(
+        layer_fun(outline),
+        layer_fun(geom_point(data = df, size = pt.size + outline.size / 2, colour = halo.color, stroke = 0))
+    )
+}
+
+
+#' Fixed axis limits without expansion
+#'
+#' @param rd Output of \code{\link{reduction_data}}
+#'
+#' @return A list of x and y scales
+#'
+#' @keywords internal
+extent_scales <- function(rd) {
+    list(
+        scale_x_continuous(limits = rd$xlim, expand = expansion(0), oob = scales::oob_keep),
+        scale_y_continuous(limits = rd$ylim, expand = expansion(0), oob = scales::oob_keep)
+    )
+}
+
+
+#' Theme giving panels a fixed absolute size
+#'
+#' @param panel.width,panel.height Size of a single panel in inches
+#'
+#' @param ncol,nrow Number of panel columns and rows
+#'
+#' @param panel.spacing Gap between panels in inches
+#'
+#' @param legend.position Position of the legend
+#'
+#' @param legend.text.size Font size of the legend text
+#'
+#' @param strip.text.size,strip.text.face Font size and face of panel labels
+#'
+#' @param bg Background colour
+#'
+#' @return A list of theme elements
+#'
+#' @keywords internal
+fixed_panel_theme <- function(panel.width, panel.height, ncol, nrow, panel.spacing,
+                              legend.position, legend.text.size, strip.text.size,
+                              strip.text.face, bg) {
+    transparent_bg <- is.na(bg) || identical(bg, "transparent")
+    list(
+        theme_void(base_size = legend.text.size),
+        theme(
+            legend.position = legend.position,
+            legend.text = element_text(size = legend.text.size),
+            legend.margin = margin(0, 0, 0, 0),
+            # Gap between panel and legend on whichever side the legend is
+            legend.box.spacing = unit(0.3, "cm"),
+            legend.background = element_blank(),
+            # Fixed panel size: each scatter is identical across plots regardless
+            # of the number of panels and of the legend's size or position. Given
+            # one unit per panel column / row, ggplot2 sizes each panel, rather
+            # than the panel area as a whole
+            panel.widths = unit(rep(panel.width, ncol), "in"),
+            panel.heights = unit(rep(panel.height, nrow), "in"),
+            panel.spacing = unit(panel.spacing, "in"),
+            strip.text = element_text(
+                size = strip.text.size, face = strip.text.face,
+                margin = margin(b = 0.15, unit = "cm")
+            ),
+            strip.background = element_blank(),
+            plot.background = element_rect(fill = if (transparent_bg) "transparent" else bg, colour = NA),
+            # Extra bottom/left margin makes room for the arrow labels
+            plot.margin = margin(0.2, 0.2, 0.6, 0.6, "cm")
+        )
+    )
+}
+
+
+#' Labels at the median position of each group
+#'
+#' @param df Cells with x, y, group and, when `by_panel`, panel columns
+#'
+#' @param by_panel Whether to label groups within each panel
+#'
+#' @param label.size Size of the labels
+#'
+#' @param label.color Colour of the labels
+#'
+#' @param halo.color Colour of the halo around the labels
+#'
+#' @param seed Seed for label placement
+#'
+#' @return A ggrepel text layer
+#'
+#' @keywords internal
+group_label_layer <- function(df, by_panel, label.size, label.color, halo.color, seed) {
+    check_installed("ggrepel", reason = "to label groups")
+    by <- if (by_panel) cbind(x, y) ~ group + panel else cbind(x, y) ~ group
+    centers <- stats::aggregate(by, data = df, FUN = stats::median)
+    ggrepel::geom_text_repel(
+        data = centers,
+        aes(label = group),
+        size = label.size,
+        fontface = "bold",
+        colour = label.color,
+        bg.colour = halo.color,
+        bg.r = 0.15,
+        seed = seed,
+        min.segment.length = Inf
+    )
+}
+
+
+
+#' Add dimension arrows to one or all panels
+#'
+#' @param p A ggplot object
+#'
+#' @param reduction Name of the reduction
+#'
+#' @param labels The two arrow labels
+#'
+#' @param arrow_args Further arguments to \code{\link{dimension_arrow_grob}}
+#'
+#' @param panel Level of the facetting variable `panel` to draw the arrows in,
+#'              or NULL to draw them in every panel
+#'
+#' @return a ggplot object
+#'
+#' @keywords internal
+add_reduction_arrows <- function(p, reduction, labels, arrow_args, panel = NULL) {
+    grob <- do.call(dimension_arrow_grob, c(list(reduction = reduction, dims = labels), arrow_args))
+    if (is.null(panel)) {
+        apply_arrow_grob(p, grob)
+    } else {
+        lv <- levels(p$data$panel)
+        apply_arrow_grob(p, grob, data = data.frame(panel = factor(panel, levels = lv, exclude = NULL)))
+    }
+}
+
+
+
+#' Give the nested patchworks of a patchwork a fixed size
+#'
+#' patchwork aligns the panels of the plots it combines, but a nested patchwork
+#' (e.g. `a | b` in `(a | b) / c`) has no panel of its own, so its fixed size is
+#' lost: the outer layout is left with relative sizes, and plots sharing a row
+#' or column with it are stretched. On every level that holds a nested
+#' patchwork, each plot is therefore drawn into a ggplot whose single panel has
+#' exactly that plot's size, centred in its cell. Levels without nesting are
+#' left to patchwork's own alignment. Must be called with the device the plot
+#' is measured on open.
+#'
+#' @param plot A patchwork object
+#'
+#' @return The patchwork, rebuilt if it holds nested patchworks
+#'
+#' @keywords internal
+fix_nested_patchworks <- function(plot) {
+    parts <- patchwork_parts(plot)
+    if (!any(vapply(parts$plots, inherits, logical(1), "patchwork"))) return(plot)
+    plots <- lapply(parts$plots, function(p) {
+        # Elements without a fixed size, such as spacers, are left as they are
+        tryCatch(fixed_size_figure(p), error = function(e) p)
+    })
+    patchwork::wrap_plots(plots) + parts$layout + parts$annotation
+}
+
+
+
+#' The plots, layout and annotation of a patchwork
+#'
+#' A patchwork is the last plot added to it, carrying the earlier plots in its
+#' `patches`; the last plot is split off and appended to them, unless it is the
+#' empty placeholder that \code{patchwork::wrap_plots()} creates.
+#'
+#' @param plot A patchwork object
+#'
+#' @return A list with `plots`, `layout` and `annotation`
+#'
+#' @keywords internal
+patchwork_parts <- function(plot) {
+    parts <- plot$patches
+    last <- plot
+    last$patches <- NULL
+    class(last) <- setdiff(class(last), "patchwork")
+    if (!inherits(last, "plot_filler")) parts$plots <- c(parts$plots, list(last))
+    parts
+}
+
+
+#' A ggplot holding a plot as one panel of the plot's fixed size
+#'
+#' @param plot A ggplot or patchwork object with fixed panel sizes
+#'
+#' @return A ggplot object
+#'
+#' @keywords internal
+fixed_size_figure <- function(plot) {
+    is_patchwork <- inherits(plot, "patchwork")
+    gt <- if (is_patchwork) patchwork::patchworkGrob(fix_nested_patchworks(plot)) else ggplotGrob(plot)
+    size <- fixed_gtable_size(gt, patchwork = is_patchwork)
+    ggplot(data.frame(x = c(0, 1), y = c(0, 1)), aes(x = x, y = y)) +
+        geom_blank() +
+        annotation_custom(gt, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+        scale_x_continuous(expand = expansion(0)) +
+        scale_y_continuous(expand = expansion(0)) +
+        theme_void() +
+        theme(
+            panel.widths = unit(size[["width"]], "in"),
+            panel.heights = unit(size[["height"]], "in"),
+            plot.margin = margin(0, 0, 0, 0)
+        )
+}
+
+
+#' Absolute size of a gtable, including legends that overflow their cell
+#'
+#' A legend taller than a fixed-height panel (right/left) or wider than a
+#' fixed-width panel (top/bottom) spills outside its cell and is not reflected
+#' in the gtable's widths/heights. The legend is centred on its cell and the
+#' gtable is centred on the device, so the device is enlarged to the legend size
+#' plus twice the larger of the spaces before and after its cell, which keeps at
+#' least the plot margin on both sides of the legend.
+#'
+#' In a patchwork, the space before and after a legend's cell holds the other
+#' plots rather than margins, so the device is instead enlarged just enough for
+#' the legend to keep `margin` inches from the device edge.
+#'
+#' @param gt A gtable with absolute widths and heights
+#'
+#' @param patchwork Whether `gt` is the gtable of a patchwork
+#'
+#' @param margin Smallest gap between a legend and the device edge in a
+#'               patchwork, in inches
+#'
+#' @return Named numeric vector with width and height in inches
+#'
+#' @keywords internal
+fixed_gtable_size <- function(gt, patchwork = FALSE, margin = 0.1) {
+    if (any(grid::unitType(gt$widths) == "null") || any(grid::unitType(gt$heights) == "null")) {
+        stop("The plot has no fixed size; set theme(panel.widths, panel.heights)", call. = FALSE)
+    }
+    widths <- grid::convertWidth(gt$widths, "in", valueOnly = TRUE)
+    heights <- grid::convertHeight(gt$heights, "in", valueOnly = TRUE)
+    width <- sum(widths)
+    height <- sum(heights)
+
+    for (i in grep("^guide-box", gt$layout$name)) {
+        legend <- gt$grobs[[i]]
+        if (inherits(legend, "zeroGrob")) next
+        pos <- gt$layout[i, ]
+        legend_w <- grid::convertWidth(grid::grobWidth(legend), "in", valueOnly = TRUE)
+        legend_h <- grid::convertHeight(grid::grobHeight(legend), "in", valueOnly = TRUE)
+        before_w <- sum(widths[seq_len(pos$l - 1)])
+        after_w <- sum(widths[-seq_len(pos$r)])
+        before_h <- sum(heights[seq_len(pos$t - 1)])
+        after_h <- sum(heights[-seq_len(pos$b)])
+        cell_w <- sum(widths[pos$l:pos$r])
+        cell_h <- sum(heights[pos$t:pos$b])
+        if (legend_w > cell_w + 1e-3) {
+            width <- max(width, if (patchwork) {
+                overflow_fit(legend_w, before_w + cell_w / 2, sum(widths), margin)
+            } else {
+                legend_w + 2 * max(before_w, after_w)
+            })
+        }
+        if (legend_h > cell_h + 1e-3) {
+            height <- max(height, if (patchwork) {
+                overflow_fit(legend_h, before_h + cell_h / 2, sum(heights), margin)
+            } else {
+                legend_h + 2 * max(before_h, after_h)
+            })
+        }
+    }
+    c(width = width, height = height)
+}
+
+
+#' Device size fitting a legend centred on a point of a centred gtable
+#'
+#' @param legend Size of the legend
+#'
+#' @param centre Position of the legend's centre within the gtable
+#'
+#' @param total Size of the gtable
+#'
+#' @param margin Smallest gap between the legend and the device edge
+#'
+#' @return The device size
+#'
+#' @keywords internal
+overflow_fit <- function(legend, centre, total, margin) {
+    spill <- max(legend / 2 + margin - centre, centre + legend / 2 + margin - total, 0)
+    total + 2 * spill
+}
