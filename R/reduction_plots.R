@@ -45,7 +45,7 @@
 #' @param na.value Colour of cells with no group and of cells not in
 #'                 `cells.highlight`, default is "grey88"
 #'
-#' @param pt.size Point size, default is 0.15
+#' @param pt.size Point size, default is 0.3
 #'
 #' @param alpha Point transparency, default is 1
 #'
@@ -69,6 +69,41 @@
 #'              FALSE. When split, groups are labelled within each panel
 #'
 #' @param label.size Size of the group labels, default is 3.5
+#'
+#' @param mark Whether to draw a dashed line around the cell cloud of each
+#'             group of `mark.by`, kept a fixed distance away from the cells,
+#'             default is FALSE. Typically, cells are coloured by a fine
+#'             annotation (`group.by`) and outlined by a broader one
+#'             (`mark.by`). Stray cells far from the rest of their group are
+#'             left outside the line, and a group split into separate clouds
+#'             gets one line around each. Only cells in `cells.highlight` are
+#'             outlined, and when split, groups are outlined within each panel
+#'
+#' @param mark.by Metadata column whose groups are outlined. If NULL
+#'                (default), the groups of `group.by`
+#'
+#' @param mark.cols Colours of the outlines, either named by group or in the
+#'                  order of the group levels. If NULL (default), the colours
+#'                  of `cols` when `mark.by` is the same as `group.by`, and the
+#'                  default ggplot2 hue palette otherwise
+#'
+#' @param mark.linetype Line type of the outlines, default is "dashed"
+#'
+#' @param mark.linewidth Line width of the outlines, default is 0.5
+#'
+#' @param mark.expand Distance the outlines are pushed out from the edge of
+#'                    the cell clouds, in inches, default is 0.04 (about 1 mm).
+#'                    The smoothed edge itself already lies slightly beyond the
+#'                    outermost cells
+#'
+#' @param mark.smooth Smoothing of the outlines in inches, default is 0.05.
+#'                    Larger values give rounder outlines that bridge larger
+#'                    gaps between cells
+#'
+#' @param mark.coverage Fraction of each group's cells, from its densest
+#'                      regions, that the outlines are drawn around, default is
+#'                      0.98. Lower values leave more of the sparse, stray cells
+#'                      outside the line
 #'
 #' @param legend.position Position of the legend, one of "right" (default),
 #'                        "left", "top", "bottom", "inside" or "none"
@@ -132,7 +167,7 @@ DimPlot_bioToolkit <- function(
     full.extent = FALSE,
     cols = NULL,
     na.value = "grey88",
-    pt.size = 0.15,
+    pt.size = 0.3,
     alpha = 1,
     shuffle = TRUE,
     outline = FALSE,
@@ -141,6 +176,14 @@ DimPlot_bioToolkit <- function(
     outline.darken = 0.4,
     label = FALSE,
     label.size = 3.5,
+    mark = FALSE,
+    mark.by = NULL,
+    mark.cols = NULL,
+    mark.linetype = "dashed",
+    mark.linewidth = 0.5,
+    mark.expand = 0.04,
+    mark.smooth = 0.05,
+    mark.coverage = 0.98,
     legend.position = c("right", "left", "top", "bottom", "inside", "none"),
     legend.ncol = NULL,
     legend.pt.size = 3.5,
@@ -167,6 +210,18 @@ DimPlot_bioToolkit <- function(
     raster <- resolve_raster_arg(raster, arrow_args)
     arrow_args$rasterize <- NULL
     dims <- resolve_dims(dims, reduction)
+    if (mark) {
+        if (!(is.numeric(mark.expand) && length(mark.expand) == 1 && mark.expand >= 0)) {
+            stop("`mark.expand` must be a single non-negative number", call. = FALSE)
+        }
+        if (!(is.numeric(mark.smooth) && length(mark.smooth) == 1 && mark.smooth > 0)) {
+            stop("`mark.smooth` must be a single positive number", call. = FALSE)
+        }
+        if (!(is.numeric(mark.coverage) && length(mark.coverage) == 1 &&
+              mark.coverage > 0 && mark.coverage <= 1)) {
+            stop("`mark.coverage` must be a single number in (0, 1]", call. = FALSE)
+        }
+    }
 
     # Embedding of the plotted cells, with axis limits and split panels
     rd <- reduction_data(object, reduction, dims$dims, cells, split.by, full.extent)
@@ -185,20 +240,25 @@ DimPlot_bioToolkit <- function(
     # all plotted cells, not per panel or highlight, so that every panel of a
     # split plot is coloured the same way and colours do not shift with the
     # highlighted cells
-    if (is.null(cols)) {
-        df$group <- droplevels(df$group)
-        cols <- stats::setNames(scales::hue_pal()(nlevels(df$group)), levels(df$group))
-    } else if (is.null(names(cols))) {
-        if (length(cols) < nlevels(df$group)) {
-            stop("`cols` has ", length(cols), " colours but there are ",
-                 nlevels(df$group), " groups", call. = FALSE)
-        }
-        cols <- stats::setNames(cols[seq_len(nlevels(df$group))], levels(df$group))
-    } else if (length(missing_cols <- setdiff(levels(df$group), names(cols)))) {
-        stop("No colour given for group(s): ", paste(missing_cols, collapse = ", "), call. = FALSE)
-    }
+    resolved <- group_colours(cols, df$group)
+    df$group <- resolved$group
+    cols <- resolved$cols
     # The legend lists the groups present among the coloured cells only
     legend_breaks <- levels(droplevels(df$group[df$highlight]))
+
+    # Groups to outline, by default those of group.by in the same colours
+    if (mark) {
+        same_groups <- is.null(mark.by) || identical(mark.by, group.by)
+        if (same_groups) {
+            df$mark <- df$group
+            mark.cols <- if (is.null(mark.cols)) cols else group_colours(mark.cols, df$mark, "mark.cols")$cols
+        } else {
+            groups <- fetch_meta(object, mark.by, rownames(df))
+            resolved <- group_colours(mark.cols, if (is.factor(groups)) groups else factor(groups), "mark.cols")
+            df$mark <- resolved$group
+            mark.cols <- resolved$cols
+        }
+    }
 
     if (shuffle) df <- with_seed(seed, df[sample.int(nrow(df)), ])
 
@@ -255,6 +315,20 @@ DimPlot_bioToolkit <- function(
 
     if (rd$split_plot) {
         p <- p + facet_wrap(~ panel, ncol = layout$ncol, nrow = layout$nrow, dir = layout$dir)
+    }
+
+    # Outlines are drawn over the cells, as vectors, and their distance from
+    # the cells is set in inches on the fixed-size panel
+    if (mark) {
+        paths <- mark_paths(
+            df[df$highlight, ], by_panel = rd$split_plot, xlim = rd$xlim, ylim = rd$ylim,
+            panel.width = panel.width, panel.height = panel.height,
+            expand = mark.expand, smooth = mark.smooth, coverage = mark.coverage
+        )
+        if (!is.null(paths)) {
+            paths$colour <- unname(mark.cols[as.character(paths$mark)])
+            p <- p + mark_layer(paths, mark.linetype, mark.linewidth)
+        }
     }
 
     if (label) {

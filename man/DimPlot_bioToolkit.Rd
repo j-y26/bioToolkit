@@ -15,7 +15,7 @@ DimPlot_bioToolkit(
   full.extent = FALSE,
   cols = NULL,
   na.value = "grey88",
-  pt.size = 0.15,
+  pt.size = 0.3,
   alpha = 1,
   shuffle = TRUE,
   outline = FALSE,
@@ -24,6 +24,14 @@ DimPlot_bioToolkit(
   outline.darken = 0.4,
   label = FALSE,
   label.size = 3.5,
+  mark = FALSE,
+  mark.by = NULL,
+  mark.cols = NULL,
+  mark.linetype = "dashed",
+  mark.linewidth = 0.5,
+  mark.expand = 0.04,
+  mark.smooth = 0.05,
+  mark.coverage = 0.98,
   legend.position = c("right", "left", "top", "bottom", "inside", "none"),
   legend.ncol = NULL,
   legend.pt.size = 3.5,
@@ -76,7 +84,7 @@ the group levels. If NULL, the default ggplot2 hue palette is used}
 \item{na.value}{Colour of cells with no group and of cells not in
 `cells.highlight`, default is "grey88"}
 
-\item{pt.size}{Point size, default is 0.15}
+\item{pt.size}{Point size, default is 0.3}
 
 \item{alpha}{Point transparency, default is 1}
 
@@ -100,6 +108,41 @@ is 0.4}
 FALSE. When split, groups are labelled within each panel}
 
 \item{label.size}{Size of the group labels, default is 3.5}
+
+\item{mark}{Whether to draw a dashed line around the cell cloud of each
+group of `mark.by`, kept a fixed distance away from the cells,
+default is FALSE. Typically, cells are coloured by a fine
+annotation (`group.by`) and outlined by a broader one
+(`mark.by`). Stray cells far from the rest of their group are
+left outside the line, and a group split into separate clouds
+gets one line around each. Only cells in `cells.highlight` are
+outlined, and when split, groups are outlined within each panel}
+
+\item{mark.by}{Metadata column whose groups are outlined. If NULL
+(default), the groups of `group.by`}
+
+\item{mark.cols}{Colours of the outlines, either named by group or in the
+order of the group levels. If NULL (default), the colours
+of `cols` when `mark.by` is the same as `group.by`, and the
+default ggplot2 hue palette otherwise}
+
+\item{mark.linetype}{Line type of the outlines, default is "dashed"}
+
+\item{mark.linewidth}{Line width of the outlines, default is 0.5}
+
+\item{mark.expand}{Distance the outlines are pushed out from the edge of
+the cell clouds, in inches, default is 0.04 (about 1 mm).
+The smoothed edge itself already lies slightly beyond the
+outermost cells}
+
+\item{mark.smooth}{Smoothing of the outlines in inches, default is 0.05.
+Larger values give rounder outlines that bridge larger
+gaps between cells}
+
+\item{mark.coverage}{Fraction of each group's cells, from its densest
+regions, that the outlines are drawn around, default is
+0.98. Lower values leave more of the sparse, stray cells
+outside the line}
 
 \item{legend.position}{Position of the legend, one of "right" (default),
 "left", "top", "bottom", "inside" or "none"}

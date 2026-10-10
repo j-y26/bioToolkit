@@ -132,3 +132,64 @@ test_that("overflow_fit enlarges the device only when a legend spills", {
     # Spills 0.6 past the left edge with the margin, enlarged on both sides
     expect_equal(overflow_fit(legend = 3, centre = 1, total = 10, margin = 0.1), 11.2)
 })
+
+test_that("fill_holes fills enclosed gaps but not bays open to the edge", {
+    ring <- matrix(FALSE, 7, 7)
+    ring[2:6, 2:6] <- TRUE
+    ring[4, 4] <- FALSE
+    expect_true(all(fill_holes(ring)[2:6, 2:6]))
+
+    bay <- ring
+    bay[4, 4:6] <- FALSE
+    expect_false(any(fill_holes(bay)[4, 4:6]))
+    expect_false(any(fill_holes(ring)[1, ]))
+})
+
+test_that("cloud_outline circles a cloud at the requested distance", {
+    set.seed(1)
+    # A uniform disk of radius 1 inch
+    r <- sqrt(stats::runif(3000))
+    a <- stats::runif(3000, 0, 2 * pi)
+    u <- r * cos(a)
+    v <- r * sin(a)
+    out <- cloud_outline(u, v, expand = 0.1, smooth = 0.05, coverage = 0.98)
+    expect_equal(length(unique(out$ring)), 1)
+    expect_equal(stats::median(sqrt(out$u^2 + out$v^2)), 1.1, tolerance = 0.05)
+
+    # Stray cells far from the cloud are left outside
+    with_strays <- cloud_outline(c(u, 3, 3.1), c(v, 3, -3), expand = 0.1, smooth = 0.05, coverage = 0.98)
+    expect_equal(length(unique(with_strays$ring)), 1)
+    expect_lt(max(with_strays$u), 1.3)
+
+    # Two separate clouds of one group get one outline each
+    two <- cloud_outline(c(u, u + 4), c(v, v), expand = 0.1, smooth = 0.05, coverage = 0.98)
+    expect_equal(length(unique(two$ring)), 2)
+})
+
+test_that("mark_paths works in data units and per panel", {
+    set.seed(2)
+    df <- data.frame(
+        x = c(stats::rnorm(500, 0, 0.5), stats::rnorm(500, 10, 0.5)),
+        y = c(stats::rnorm(500, 0, 0.5), stats::rnorm(500, 0, 0.5)),
+        mark = factor(rep(c("a", "b"), each = 500)),
+        panel = factor(rep(c("p1", "p2"), 500))
+    )
+    paths <- mark_paths(df, by_panel = TRUE, xlim = c(-5, 15), ylim = c(-5, 5),
+                        panel.width = 4, panel.height = 2,
+                        expand = 0.05, smooth = 0.05, coverage = 0.98)
+    expect_setequal(unique(paste(paths$mark, paths$panel)), c("a p1", "a p2", "b p1", "b p2"))
+    expect_true(all(abs(paths$x[paths$mark == "a"]) < 4))
+    expect_true(all(paths$x[paths$mark == "b"] > 6))
+    # Every ring of every panel is its own path
+    expect_equal(length(unique(paths$ring)), 4)
+})
+
+test_that("group_colours names colours by group", {
+    g <- factor(c("b", "a"), levels = c("a", "b", "c"))
+    out <- group_colours(NULL, g)
+    expect_equal(levels(out$group), c("a", "b"))
+    expect_equal(names(out$cols), c("a", "b"))
+    expect_equal(group_colours(c("red", "blue", "green"), g)$cols, c(a = "red", b = "blue", c = "green"))
+    expect_error(group_colours(c("red"), g, arg = "mark.cols"), "`mark.cols` has 1")
+    expect_error(group_colours(c(a = "red"), g), "No colour given")
+})

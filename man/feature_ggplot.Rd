@@ -68,7 +68,7 @@ the scale extend equally far in colour from the centre, so
 that a side with a smaller range does not reach its darkest
 colour}
 
-\item{pt.size}{Point size, default is 0.15}
+\item{pt.size}{Point size, default is 0.3}
 
 \item{alpha}{Point (or tile) transparency, default is 1}
 

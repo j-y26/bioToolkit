@@ -354,6 +354,181 @@ outline_layers <- function(df, pt.size, outline.size, outline.color, halo.color,
 }
 
 
+#' Colours for the levels of a grouping variable
+#'
+#' @param cols NULL for the default ggplot2 hue palette, colours named by
+#'             group, or colours in the order of the group levels
+#'
+#' @param group A factor
+#'
+#' @param arg Name of the argument, for messages
+#'
+#' @return A list with `group`, whose unused levels are dropped when `cols`
+#'         is NULL, and `cols`, named by group
+#'
+#' @keywords internal
+group_colours <- function(cols, group, arg = "cols") {
+    if (is.null(cols)) {
+        group <- droplevels(group)
+        cols <- stats::setNames(scales::hue_pal()(nlevels(group)), levels(group))
+    } else if (is.null(names(cols))) {
+        if (length(cols) < nlevels(group)) {
+            stop("`", arg, "` has ", length(cols), " colours but there are ",
+                 nlevels(group), " groups", call. = FALSE)
+        }
+        cols <- stats::setNames(cols[seq_len(nlevels(group))], levels(group))
+    } else if (length(missing_cols <- setdiff(levels(group), names(cols)))) {
+        stop("No colour given for group(s): ", paste(missing_cols, collapse = ", "), call. = FALSE)
+    }
+    list(group = group, cols = cols)
+}
+
+
+#' Outlines around the cell clouds of each group, in data units
+#'
+#' Cells are converted to inches on the panel, outlined by
+#' \code{\link{cloud_outline}} per group (and per panel, when split), and
+#' converted back, so that the outlines keep the same distance from the cells
+#' and the same smoothness on the page whatever the range of the embedding.
+#'
+#' @param df Cells with x, y, mark and, when `by_panel`, panel columns
+#'
+#' @param by_panel Whether to outline groups within each panel
+#'
+#' @param xlim,ylim Axis limits of the panel
+#'
+#' @param panel.width,panel.height Size of a panel in inches
+#'
+#' @inheritParams cloud_outline
+#'
+#' @return A data frame with x, y, mark, ring (one per closed outline) and,
+#'         when `by_panel`, panel columns
+#'
+#' @keywords internal
+mark_paths <- function(df, by_panel, xlim, ylim, panel.width, panel.height,
+                       expand, smooth, coverage) {
+    df <- df[!is.na(df$mark), , drop = FALSE]
+    x_per_in <- diff(xlim) / panel.width
+    y_per_in <- diff(ylim) / panel.height
+    sets <- if (by_panel) split(df, list(df$mark, df$panel), drop = TRUE) else split(df, df$mark, drop = TRUE)
+    paths <- lapply(seq_along(sets), function(i) {
+        d <- sets[[i]]
+        out <- cloud_outline(
+            (d$x - xlim[1]) / x_per_in, (d$y - ylim[1]) / y_per_in,
+            expand = expand, smooth = smooth, coverage = coverage
+        )
+        if (nrow(out) == 0) return(NULL)
+        res <- data.frame(
+            x = xlim[1] + out$u * x_per_in, y = ylim[1] + out$v * y_per_in,
+            mark = d$mark[1], ring = paste(i, out$ring, sep = ".")
+        )
+        if (by_panel) res$panel <- d$panel[1]
+        res
+    })
+    do.call(rbind, paths)
+}
+
+
+#' Smooth outline around the cloud of a set of cells
+#'
+#' The cells are binned onto a grid and smoothed with a Gaussian kernel of sd
+#' `smooth`. The region where this density is at least its value at the
+#' `1 - coverage` quantile of the cells is the cloud: the sparsest cells, such
+#' as strays far from the rest, fall outside it. Holes in the cloud are
+#' filled. The cloud is then blurred and cut at the level that, along a
+#' straight edge, lies exactly `expand` beyond it, which both pushes the
+#' outline away from the cells and rounds its corners. Anything enclosed by
+#' the outline is filled again so that only outer outlines are returned.
+#'
+#' @param u,v Coordinates of the cells, in inches
+#'
+#' @param expand Distance between the cloud and its outline, in inches
+#'
+#' @param smooth Smoothing of the cloud, in inches. Larger values give rounder
+#'               outlines that bridge larger gaps between cells
+#'
+#' @param coverage Fraction of the cells, from the densest regions, taken to
+#'                 form the cloud
+#'
+#' @param resolution Spacing of the grid, in inches
+#'
+#' @return A data frame with u, v and ring columns, one closed ring per
+#'         separate part of the cloud
+#'
+#' @keywords internal
+cloud_outline <- function(u, v, expand, smooth, coverage, resolution = 0.01) {
+    # Blurring with an sd of at least half the distance keeps the cut level
+    # at no less than 2.3% of the blurred cloud, well clear of numerical noise
+    blur <- max(smooth, expand / 2)
+    edge <- stats::pnorm(-expand / blur)
+    margin <- expand + 3 * blur + 3 * smooth
+    gu <- seq(min(u) - margin, max(u) + margin + resolution, by = resolution)
+    gv <- seq(min(v) - margin, max(v) + margin + resolution, by = resolution)
+    kernel <- function(g, sd) stats::dnorm(outer(g, g, "-"), sd = sd) * resolution
+    bu <- round((u - gu[1]) / resolution) + 1
+    bv <- round((v - gv[1]) / resolution) + 1
+
+    counts <- matrix(0, length(gu), length(gv))
+    sums <- rowsum(rep(1, length(u)), bu + (bv - 1) * length(gu))
+    counts[as.integer(rownames(sums))] <- sums
+    density <- kernel(gu, smooth) %*% counts %*% kernel(gv, smooth)
+    level <- stats::quantile(density[cbind(bu, bv)], 1 - coverage, names = FALSE)
+    cloud <- fill_holes(density >= level)
+
+    field <- kernel(gu, blur) %*% (cloud * 1) %*% kernel(gv, blur)
+    field[fill_holes(field >= edge) & field < edge] <- 1
+    iso <- isoband::isolines(gu, gv, t(field), edge)[[1]]
+    data.frame(u = iso$x, v = iso$y, ring = iso$id)
+}
+
+
+#' Fill the holes of a logical mask
+#'
+#' @param mask A logical matrix
+#'
+#' @return The mask with every FALSE cell that cannot be reached from the
+#'         border without crossing a TRUE cell set to TRUE
+#'
+#' @keywords internal
+fill_holes <- function(mask) {
+    open <- !mask
+    n <- nrow(mask)
+    m <- ncol(mask)
+    reach <- matrix(FALSE, n, m)
+    reach[c(1, n), ] <- open[c(1, n), ]
+    reach[, c(1, m)] <- open[, c(1, m)]
+    repeat {
+        grown <- reach
+        grown[-1, ] <- grown[-1, ] | reach[-n, ]
+        grown[-n, ] <- grown[-n, ] | reach[-1, ]
+        grown[, -1] <- grown[, -1] | reach[, -m]
+        grown[, -m] <- grown[, -m] | reach[, -1]
+        grown <- grown & open
+        if (sum(grown) == sum(reach)) break
+        reach <- grown
+    }
+    mask | (open & !reach)
+}
+
+
+#' Dashed outlines around the cell clouds of each group
+#'
+#' @param paths Output of \code{\link{mark_paths}}, with a colour column
+#'
+#' @param linetype,linewidth Line type and width of the outlines
+#'
+#' @return A polygon layer, drawn in vector form
+#'
+#' @keywords internal
+mark_layer <- function(paths, linetype, linewidth) {
+    geom_polygon(
+        aes(x = x, y = y, group = ring, colour = I(colour)), data = paths,
+        fill = NA, linetype = linetype, linewidth = linewidth, inherit.aes = FALSE,
+        show.legend = FALSE
+    )
+}
+
+
 #' Fixed axis limits without expansion
 #'
 #' @param rd Output of \code{\link{reduction_data}}

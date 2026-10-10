@@ -107,7 +107,7 @@
 #'              TRUE; on a diverging scale, cells further from the centre are
 #'              drawn on top. If FALSE, cells are drawn in random order
 #'
-#' @param pt.size Point size, default is 0.15
+#' @param pt.size Point size, default is 0.3
 #'
 #' @param alpha Point (or tile) transparency, default is 1
 #'
@@ -247,7 +247,7 @@ FeaturePlot_bioToolkit <- function(
     diverging = "auto",
     center = 0,
     order = TRUE,
-    pt.size = 0.15,
+    pt.size = 0.3,
     alpha = 1,
     outline = FALSE,
     outline.color = "black",

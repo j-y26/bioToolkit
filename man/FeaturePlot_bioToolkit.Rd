@@ -24,7 +24,7 @@ FeaturePlot_bioToolkit(
   diverging = "auto",
   center = 0,
   order = TRUE,
-  pt.size = 0.15,
+  pt.size = 0.3,
   alpha = 1,
   outline = FALSE,
   outline.color = "black",
@@ -142,7 +142,7 @@ colour}
 TRUE; on a diverging scale, cells further from the centre are
 drawn on top. If FALSE, cells are drawn in random order}
 
-\item{pt.size}{Point size, default is 0.15}
+\item{pt.size}{Point size, default is 0.3}
 
 \item{alpha}{Point (or tile) transparency, default is 1}
 
