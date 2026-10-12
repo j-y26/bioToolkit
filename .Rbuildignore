@@ -3,3 +3,4 @@
 ^README\.Rmd$
 ^LICENSE\.md$
 ^test_data$
+^dev$
