@@ -14,7 +14,7 @@ point_marks(cells, v, cut)
 \item{cut}{The resolved `na.cutoff`}
 }
 \value{
-A data frame with x, y, value and coloured columns
+A data frame with cell, x, y, value and coloured columns
 }
 \description{
 One mark per cell for `geom = "point"`

@@ -7,8 +7,11 @@
 #'              scores, ...). Like \code{\link{DimPlot_bioToolkit}}, every panel
 #'              has a fixed absolute size set by `panel.width` and
 #'              `panel.height`, so that panels are identical across figures; use
-#'              \code{\link{save_dimplot}} to save the plot, or a patchwork
-#'              combination of plots, sized to fit.
+#'              \code{\link{save_plot}} to save the plot, or a patchwork
+#'              combination of plots, sized to fit. Text sizes follow the
+#'              size preset of \code{\link{theme_bioToolkit}}, and the values
+#'              behind each panel can be written out with
+#'              \code{\link{export_source_data}}.
 #'
 #'              Cells go through three steps:
 #'              \enumerate{
@@ -66,14 +69,14 @@
 #'             `hex.fun`); "density" colours each cell by values smoothed over
 #'             neighbouring cells (see `density.method`)
 #'
-#' @param cols The colour palette, from low to high values (through the centre
-#'             for a diverging scale). One of: NULL (default) for "bioToolkit"
-#'             or, for a diverging scale, "blue-magenta"; a preset name
-#'             ("bioToolkit", "blue-magenta", "blue-purple"); a viridis option
-#'             ("magma", "inferno", "plasma", "viridis", "cividis", "rocket",
-#'             "mako", "turbo", or the letters "A" to "H"); an RColorBrewer
-#'             palette name; a vector of two or more colours; or a function
-#'             returning `n` colours
+#' @param cols The colours of the scale. If NULL (default), "bioToolkit" or,
+#'             for a diverging scale, "blue-magenta". Otherwise two or more
+#'             colours from low to high values, e.g. `c("grey90", "darkred")`
+#'             (low, high) or, for a diverging scale, `c("#2166AC", "white",
+#'             "#B2182B")` (low, centre, high); or the name of a sequential or
+#'             diverging palette (see \code{\link{show_palettes}}), such as
+#'             "viridis", "magma" or "tol-burd", or of an RColorBrewer
+#'             palette
 #'
 #' @param na.value Colour of cells (or tiles) that are not coloured. If NULL
 #'                 (default), "grey88", or "grey70" for a diverging scale so
@@ -126,7 +129,8 @@
 #' @param label.by Metadata column whose groups are labelled when
 #'                 `label = TRUE`. If NULL (default), the active identities
 #'
-#' @param label.size Size of the group labels, default is 3.5
+#' @param label.size Size of the group labels in mm. If NULL (default), 3.5
+#'                   at the default preset, scaled with the preset's text size
 #'
 #' @param label.color Colour of the group labels, default is "black"
 #'
@@ -171,11 +175,17 @@
 #' @param legend.title.face Font face of the legend title. "auto" (default)
 #'                          sets gene names in italics
 #'
-#' @param legend.length Length of the colour bar in inches, default is 1.5
+#' @param legend.length Length of the colour bar in inches. If NULL (default),
+#'                      1.5 at the default preset, scaled with the preset's
+#'                      text size
 #'
-#' @param legend.width Thickness of the colour bar in inches, default is 0.15
+#' @param legend.width Thickness of the colour bar in inches. If NULL
+#'                     (default), 0.15 at the default preset, scaled with the
+#'                     preset's text size
 #'
-#' @param legend.text.size Font size of the legend text, default is 11
+#' @param legend.text.size Font size of the legend text and title in points.
+#'                         If NULL (default), the base size of the preset (11
+#'                         at the default preset)
 #'
 #' @param ncol Number of panel columns. If NULL (default), split panels are
 #'             laid out in a single row, and several features in up to four
@@ -195,7 +205,9 @@
 #'
 #' @param panel.spacing Gap between panels in inches, default is 0.1
 #'
-#' @param strip.text.size Font size of the panel labels, default is 12
+#' @param strip.text.size Font size of the panel labels in points. If NULL
+#'                        (default), the large size of the preset (12 at the
+#'                        default preset)
 #'
 #' @param strip.text.face Font face of the panel labels, default is "bold".
 #'                        Gene names are additionally set in italics
@@ -211,8 +223,9 @@
 #' @param raster.dpi Resolution of the rasterized points, default is 1000. Match
 #'                   the `dpi` used when saving raster (e.g. png) output
 #'
-#' @param bg Background colour, default is "white". Use "transparent" for a
-#'           transparent background
+#' @param bg Background colour, default is "transparent", so that the figure
+#'           can be placed on any background (gaps inside outlines and label
+#'           halos are then white). Use e.g. "white" for an opaque background
 #'
 #' @param seed Random seed used for drawing order and label placement, default
 #'             is 42. The global random number generator state is not changed
@@ -254,7 +267,7 @@ FeaturePlot_bioToolkit <- function(
     outline.size = 0.6,
     label = FALSE,
     label.by = NULL,
-    label.size = 3.5,
+    label.size = NULL,
     label.color = "black",
     hex.bins = 60,
     hex.fun = c("mean", "pct"),
@@ -265,21 +278,21 @@ FeaturePlot_bioToolkit <- function(
     legend.direction = NULL,
     legend.title = "auto",
     legend.title.face = "auto",
-    legend.length = 1.5,
-    legend.width = 0.15,
-    legend.text.size = 11,
+    legend.length = NULL,
+    legend.width = NULL,
+    legend.text.size = NULL,
     ncol = NULL,
     by.row = TRUE,
     combine = TRUE,
     panel.width = 4,
     panel.height = panel.width,
     panel.spacing = 0.1,
-    strip.text.size = 12,
+    strip.text.size = NULL,
     strip.text.face = "bold",
     raster = NULL,
     raster.threshold = 1e4,
     raster.dpi = 1000,
-    bg = "white",
+    bg = "transparent",
     seed = 42,
     ...
 ) {
@@ -304,6 +317,14 @@ FeaturePlot_bioToolkit <- function(
     raster <- resolve_raster_arg(raster, arrow_args)
     arrow_args$rasterize <- NULL
     dims <- resolve_dims(dims, reduction)
+    # Sizes not given are taken from the preset of theme_bioToolkit()
+    sizes <- preset_sizes()
+    if (is.null(legend.text.size)) legend.text.size <- sizes$base
+    if (is.null(strip.text.size)) strip.text.size <- sizes$large
+    k <- preset_scale()
+    if (is.null(label.size)) label.size <- 3.5 * k
+    if (is.null(legend.length)) legend.length <- 1.5 * k
+    if (is.null(legend.width)) legend.width <- 0.15 * k
 
     features <- unique(features)
     n_features <- length(features)
@@ -449,9 +470,15 @@ FeaturePlot_bioToolkit <- function(
     } else {
         list(ncol = layout$ncol, nrow = layout$nrow, byrow = by.row)
     }
-    do.call(patchwork::wrap_plots, c(
+    combined <- do.call(patchwork::wrap_plots, c(
         list(plots, guides = if (collect) "collect" else "keep"), grid
     )) & theme(legend.position = legend.position)
+    # A patchwork draws its own background, from ggplot2's global theme unless
+    # set, which would hide the panels' (transparent by default) background
+    transparent_bg <- is.na(bg) || identical(bg, "transparent")
+    combined + patchwork::plot_annotation(theme = theme(
+        plot.background = element_rect(fill = if (transparent_bg) "transparent" else bg, colour = NA)
+    ))
 }
 
 
@@ -559,7 +586,7 @@ feature_ggplot <- function(members, colour_scale, strip, strip.face,
             )
         ) +
         extent_scales(rd) +
-        fixed_panel_theme(
+        embedding_theme(
             panel.width = panel.width, panel.height = panel.height,
             ncol = facet_ncol, nrow = facet_nrow, panel.spacing = panel.spacing,
             legend.position = legend.position, legend.text.size = legend.text.size,
@@ -582,7 +609,32 @@ feature_ggplot <- function(members, colour_scale, strip, strip.face,
             label.color = label.color, halo.color = halo.color, seed = seed
         )
     }
+    # The values behind the panels, for export_source_data(): one row per cell
+    # with the value it is coloured by, or one row per tile for hexagons
+    attr(p, "source_data") <- feature_source_data(marks, hex)
     p
+}
+
+
+#' Values behind the panels of a feature plot
+#'
+#' @param marks Marks of all panels, with a panel column
+#'
+#' @param hex Whether the marks are hexagon vertices
+#'
+#' @return For cells, a data frame with cell, panel, x, y, value and coloured
+#'         columns; for hexagons, one row per tile with its centre
+#'
+#' @keywords internal
+feature_source_data <- function(marks, hex) {
+    if (!hex) return(marks[, c("cell", "panel", "x", "y", "value", "coloured")])
+    key <- paste(marks$panel, marks$tile)
+    first <- !duplicated(key)
+    data.frame(
+        panel = marks$panel[first], tile = marks$tile[first],
+        x = stats::ave(marks$x, key)[first], y = stats::ave(marks$y, key)[first],
+        value = marks$value[first], coloured = marks$coloured[first]
+    )
 }
 
 
@@ -735,12 +787,12 @@ above_cutoff <- function(v, cut) {
 #'
 #' @param cut The resolved `na.cutoff`
 #'
-#' @return A data frame with x, y, value and coloured columns
+#' @return A data frame with cell, x, y, value and coloured columns
 #'
 #' @keywords internal
 point_marks <- function(cells, v, cut) {
     data.frame(
-        x = cells$x, y = cells$y, value = v,
+        cell = rownames(cells), x = cells$x, y = cells$y, value = v,
         coloured = cells$highlight & !is.na(v) & above_cutoff(v, cut)
     )
 }
@@ -770,7 +822,7 @@ density_marks <- function(cells, v, cut, rd, bandwidth, method) {
         value[use] <- smooth_values(cells$x[use], cells$y[use], v[use], rd$xlim, rd$ylim, bandwidth, method)
     }
     data.frame(
-        x = cells$x, y = cells$y, value = value,
+        cell = rownames(cells), x = cells$x, y = cells$y, value = value,
         coloured = use & above_cutoff(value, cut)
     )
 }
@@ -969,7 +1021,7 @@ resolve_colour_scale <- function(members, scale_features, min.cutoff, max.cutoff
 
     list(
         limits = limits,
-        colours = resolve_feature_palette(cols, is_diverging),
+        colours = resolve_continuous_palette(cols, is_diverging),
         rescaler = rescaler,
         na.value = if (is.null(na.value)) (if (is_diverging) "grey70" else "grey88") else na.value,
         diverging = is_diverging
@@ -1036,64 +1088,4 @@ legend_title_label <- function(legend.title, legend.title.face, scale_features,
         return(bquote(italic(.(f)) ~ .(suffix)))
     }
     paste(c(f, suffix), collapse = " ")
-}
-
-
-#' Preset continuous palettes for feature plots
-#'
-#' "bioToolkit" is the reversed plasma palette, trimmed at its pale yellow end
-#' so that low values stay visible on white: low values are light and coloured,
-#' never grey, so they are not mistaken for cells drawn in `na.value`, and high
-#' values are dark and stand out. "blue-magenta" is a diverging palette whose
-#' sides stay distinct with red-green colour blindness and whose light grey
-#' centre stays visible on white; "blue-purple" has a truer purple, at the cost
-#' of looking blue on both sides with red-green colour blindness.
-#'
-#' @return A named list of colour vectors
-#'
-#' @keywords internal
-feature_palette_presets <- function() {
-    list(
-        bioToolkit = viridisLite::plasma(256, begin = 0, end = 0.92, direction = -1),
-        `blue-magenta` = c("#005C9B", "#0075A6", "#3D92B7", "#88B1CA", "#BECFDB", "#EBEBEB",
-                           "#E0C6D1", "#D19CB4", "#C16F98", "#AE3C7B", "#9B0062"),
-        `blue-purple` = c("#0B3C7D", "#175196", "#326DB0", "#6B97CA", "#ACC2DF", "#F0EEF2",
-                          "#D7BCD8", "#BA84BB", "#964097", "#752379", "#561A5E")
-    )
-}
-
-
-#' Resolve the `cols` argument of a feature plot into colours
-#'
-#' @param cols See \code{\link{FeaturePlot_bioToolkit}}
-#'
-#' @param diverging Whether the scale is diverging, which sets the default
-#'
-#' @return A vector of colours, from low to high
-#'
-#' @keywords internal
-resolve_feature_palette <- function(cols, diverging) {
-    if (is.null(cols)) cols <- if (diverging) "blue-magenta" else "bioToolkit"
-    if (is.function(cols)) return(cols(256))
-    presets <- feature_palette_presets()
-    if (length(cols) == 1) {
-        if (cols %in% names(presets)) return(presets[[cols]])
-        viridis <- c(magma = "A", inferno = "B", plasma = "C", viridis = "D",
-                     cividis = "E", rocket = "F", mako = "G", turbo = "H")
-        if (tolower(cols) %in% names(viridis) || cols %in% viridis) {
-            option <- if (cols %in% viridis) cols else viridis[[tolower(cols)]]
-            return(viridisLite::viridis(256, option = option))
-        }
-        if (requireNamespace("RColorBrewer", quietly = TRUE) &&
-            cols %in% rownames(RColorBrewer::brewer.pal.info)) {
-            n <- RColorBrewer::brewer.pal.info[cols, "maxcolors"]
-            return(RColorBrewer::brewer.pal(n, cols))
-        }
-        stop("Unknown palette '", cols, "'; give a preset, viridis or RColorBrewer ",
-             "palette name, or two or more colours", call. = FALSE)
-    }
-    ok <- vapply(cols, function(col) !inherits(try(grDevices::col2rgb(col), silent = TRUE), "try-error"),
-                 logical(1))
-    if (!all(ok)) stop("Invalid colour(s) in `cols`: ", paste(cols[!ok], collapse = ", "), call. = FALSE)
-    unname(cols)
 }

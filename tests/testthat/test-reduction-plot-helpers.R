@@ -63,24 +63,26 @@ test_that("resolve_na_cutoff separates zeros only for non-negative data", {
     expect_error(resolve_na_cutoff("zero", c(0, 1), "point"), "auto")
 })
 
-test_that("resolve_feature_palette resolves every kind of palette", {
-    presets <- feature_palette_presets()
-    expect_equal(resolve_feature_palette(NULL, FALSE), presets$bioToolkit)
-    expect_equal(resolve_feature_palette(NULL, TRUE), presets$`blue-magenta`)
-    expect_equal(resolve_feature_palette("blue-purple", TRUE), presets$`blue-purple`)
-    expect_length(resolve_feature_palette("mako", FALSE), 256)
-    expect_equal(resolve_feature_palette("G", FALSE), resolve_feature_palette("mako", FALSE))
-    expect_equal(resolve_feature_palette(c("grey90", "red"), FALSE), c("grey90", "red"))
-    expect_length(resolve_feature_palette(function(n) rep("red", n), FALSE), 256)
-    expect_error(resolve_feature_palette("not-a-palette", FALSE), "Unknown palette")
-    expect_error(resolve_feature_palette(c("red", "notacolour"), FALSE), "Invalid colour")
+test_that("resolve_continuous_palette resolves every kind of palette", {
+    expect_equal(resolve_continuous_palette(NULL, FALSE), bt_palette("bioToolkit"))
+    expect_equal(resolve_continuous_palette(NULL, TRUE), bt_palette("blue-magenta"))
+    expect_equal(resolve_continuous_palette("blue-purple", TRUE), bt_palette("blue-purple"))
+    expect_length(resolve_continuous_palette("mako", FALSE), 256)
+    # Low / high, and low / mid / high colours
+    expect_equal(resolve_continuous_palette(c("grey90", "red"), FALSE), c("grey90", "red"))
+    expect_equal(resolve_continuous_palette(c(low = "blue", mid = "white", high = "red"), TRUE),
+                 c("blue", "white", "red"))
+    expect_error(resolve_continuous_palette("not-a-palette", FALSE), "Unknown palette")
+    expect_error(resolve_continuous_palette("npg", FALSE), "qualitative")
+    expect_error(resolve_continuous_palette(c("red", "notacolour"), FALSE), "Invalid colour")
     skip_if_not_installed("RColorBrewer")
-    expect_length(resolve_feature_palette("Reds", FALSE), 9)
+    expect_length(resolve_continuous_palette("Reds", FALSE), 9)
 })
 
 test_that("default palette starts light and coloured, not grey", {
-    low <- grDevices::col2rgb(feature_palette_presets()$bioToolkit[1])[, 1]
-    high <- grDevices::col2rgb(feature_palette_presets()$bioToolkit[256])[, 1]
+    pal <- bt_palette("bioToolkit")
+    low <- grDevices::col2rgb(pal[1])[, 1]
+    high <- grDevices::col2rgb(pal[256])[, 1]
     expect_gt(max(low) - min(low), 100)
     expect_gt(sum(low), sum(high))
 })
@@ -184,12 +186,18 @@ test_that("mark_paths works in data units and per panel", {
     expect_equal(length(unique(paths$ring)), 4)
 })
 
-test_that("group_colours names colours by group", {
+test_that("group_colours names colours by group, keeping all levels", {
     g <- factor(c("b", "a"), levels = c("a", "b", "c"))
     out <- group_colours(NULL, g)
-    expect_equal(levels(out$group), c("a", "b"))
-    expect_equal(names(out$cols), c("a", "b"))
+    # Unused levels keep a colour, so that subsets are coloured like the whole
+    expect_equal(levels(out$group), c("a", "b", "c"))
+    expect_equal(out$cols, stats::setNames(bt_palette("scanpy-20", 3), c("a", "b", "c")))
     expect_equal(group_colours(c("red", "blue", "green"), g)$cols, c(a = "red", b = "blue", c = "green"))
+    expect_equal(unname(group_colours("npg", g)$cols), bt_palette("npg", 3))
+    # Colours picked by index and named
+    picked <- stats::setNames(bt_palette("scanpy-20")[c(5, 1, 2)], c("c", "a", "b"))
+    expect_equal(group_colours(picked, g)$cols, picked)
     expect_error(group_colours(c("red"), g, arg = "mark.cols"), "`mark.cols` has 1")
     expect_error(group_colours(c(a = "red"), g), "No colour given")
+    expect_error(group_colours("mako", g), "sequential palette")
 })

@@ -32,14 +32,14 @@ the scale extend equally far in colour from the centre, so
 that a side with a smaller range does not reach its darkest
 colour}
 
-\item{cols}{The colour palette, from low to high values (through the centre
-for a diverging scale). One of: NULL (default) for "bioToolkit"
-or, for a diverging scale, "blue-magenta"; a preset name
-("bioToolkit", "blue-magenta", "blue-purple"); a viridis option
-("magma", "inferno", "plasma", "viridis", "cividis", "rocket",
-"mako", "turbo", or the letters "A" to "H"); an RColorBrewer
-palette name; a vector of two or more colours; or a function
-returning `n` colours}
+\item{cols}{The colours of the scale. If NULL (default), "bioToolkit" or,
+for a diverging scale, "blue-magenta". Otherwise two or more
+colours from low to high values, e.g. `c("grey90", "darkred")`
+(low, high) or, for a diverging scale, `c("#2166AC", "white",
+"#B2182B")` (low, centre, high); or the name of a sequential or
+diverging palette (see \code{\link{show_palettes}}), such as
+"viridis", "magma" or "tol-burd", or of an RColorBrewer
+palette}
 
 \item{na.value}{Colour of cells (or tiles) that are not coloured. If NULL
 (default), "grey88", or "grey70" for a diverging scale so

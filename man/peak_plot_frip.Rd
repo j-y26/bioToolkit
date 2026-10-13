@@ -4,13 +4,14 @@
 \alias{peak_plot_frip}
 \title{Plot FRiP scores}
 \usage{
-peak_plot_frip(frip_df, palette = "polychrome", plot_title = "FRiP Score")
+peak_plot_frip(frip_df, palette = "polychrome-36", plot_title = "FRiP Score")
 }
 \arguments{
 \item{frip_df}{A data frame containing the FRiP scores for each peak set, the output of `peak_calc_frip`.}
 
-\item{palette}{A valid palette name from "alphabet", "alphabet2", "glasbey", "polychrome", "stepped", and "parade".
-Alternatively, a vector of colors can be provided with the same length as unique groups.}
+\item{palette}{A qualitative palette name from \code{\link{list_palettes}}
+(default "polychrome-36"), or a vector of colors with at least
+as many colors as peak sets.}
 
 \item{plot_title}{A character string for the title of the plot. Default is "FRiP Score".}
 }

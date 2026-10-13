@@ -380,8 +380,10 @@ calc_expr_corr <- function(
   )
 
   # Save the volcano plot
-  ggsave(file.path(base_dir, paste0(query_var, "_correlation_volcano.", file_type)),
-         plot = p_volcano, dpi = dpi, width = 5, height = 6)
+  # The volcano has no fixed panel size yet (roadmap item R2), so the file size
+  # is given explicitly
+  save_plot(p_volcano, file.path(base_dir, paste0(query_var, "_correlation_volcano.", file_type)),
+            width = 5, height = 6, dpi = dpi)
 
   results <- list(
     model_list = model_list,

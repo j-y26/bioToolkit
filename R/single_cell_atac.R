@@ -529,8 +529,9 @@ peak_calc_frip <- function(peaks,
 #'
 #' @param frip_df A data frame containing the FRiP scores for each peak set, the output of `peak_calc_frip`.
 #'
-#' @param palette A valid palette name from "alphabet", "alphabet2", "glasbey", "polychrome", "stepped", and "parade".
-#' Alternatively, a vector of colors can be provided with the same length as unique groups.
+#' @param palette A qualitative palette name from \code{\link{list_palettes}}
+#'                (default "polychrome-36"), or a vector of colors with at least
+#'                as many colors as peak sets.
 #'
 #' @param plot_title A character string for the title of the plot. Default is "FRiP Score".
 #'
@@ -541,9 +542,8 @@ peak_calc_frip <- function(peaks,
 #' @export
 #'
 peak_plot_frip <- function(frip_df,
-                           palette = "polychrome",
+                           palette = "polychrome-36",
                            plot_title = "FRiP Score") {
-  check_installed("Seurat", reason = "for color palettes")
 
   # Check if frip_df is a data frame
   if (!is.data.frame(frip_df)) {
@@ -559,10 +559,9 @@ peak_plot_frip <- function(frip_df,
   # Create the bar plot
   p <- ggplot(frip_df, aes(x = peak_set, y = frip_score, fill = peak_set)) +
     geom_bar(stat = "identity") +
-    scale_fill_manual(values = Seurat::DiscretePalette(
-      palette = palette,
-      n = length(unique(frip_df$peak_set))
-    )) +
+    scale_fill_manual(values = group_colours(
+      palette, factor(unique(frip_df$peak_set)), arg = "palette"
+    )$cols) +
     labs(title = plot_title, x = "Peak Set", y = "FRiP Score") +
     theme_classic() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))

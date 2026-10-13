@@ -10,7 +10,7 @@ grouped_bar_plot(
   split.by,
   frequency,
   mode = c("stack", "fill"),
-  palette = "polychrome",
+  palette = "polychrome-36",
   title = NULL,
   show_totals = FALSE
 )
@@ -27,8 +27,9 @@ or proportions).}
 
 \item{mode}{Either "stack" or "fill".}
 
-\item{palette}{A valid palette name from "alphabet", "alphabet2", "glasbey", "polychrome", "stepped", and "parade".
-Alternatively, a vector of colors can be provided with the same length as unique groups.}
+\item{palette}{A qualitative palette name from \code{\link{list_palettes}}
+(default "polychrome-36"), or a vector of colors with at least
+as many colors as groups.}
 
 \item{title}{Plot title.}
 

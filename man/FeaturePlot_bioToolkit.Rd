@@ -31,7 +31,7 @@ FeaturePlot_bioToolkit(
   outline.size = 0.6,
   label = FALSE,
   label.by = NULL,
-  label.size = 3.5,
+  label.size = NULL,
   label.color = "black",
   hex.bins = 60,
   hex.fun = c("mean", "pct"),
@@ -42,21 +42,21 @@ FeaturePlot_bioToolkit(
   legend.direction = NULL,
   legend.title = "auto",
   legend.title.face = "auto",
-  legend.length = 1.5,
-  legend.width = 0.15,
-  legend.text.size = 11,
+  legend.length = NULL,
+  legend.width = NULL,
+  legend.text.size = NULL,
   ncol = NULL,
   by.row = TRUE,
   combine = TRUE,
   panel.width = 4,
   panel.height = panel.width,
   panel.spacing = 0.1,
-  strip.text.size = 12,
+  strip.text.size = NULL,
   strip.text.face = "bold",
   raster = NULL,
   raster.threshold = 10000,
   raster.dpi = 1000,
-  bg = "white",
+  bg = "transparent",
   seed = 42,
   ...
 )
@@ -101,14 +101,14 @@ colours hexagonal tiles by a summary of the cells in them (see
 `hex.fun`); "density" colours each cell by values smoothed over
 neighbouring cells (see `density.method`)}
 
-\item{cols}{The colour palette, from low to high values (through the centre
-for a diverging scale). One of: NULL (default) for "bioToolkit"
-or, for a diverging scale, "blue-magenta"; a preset name
-("bioToolkit", "blue-magenta", "blue-purple"); a viridis option
-("magma", "inferno", "plasma", "viridis", "cividis", "rocket",
-"mako", "turbo", or the letters "A" to "H"); an RColorBrewer
-palette name; a vector of two or more colours; or a function
-returning `n` colours}
+\item{cols}{The colours of the scale. If NULL (default), "bioToolkit" or,
+for a diverging scale, "blue-magenta". Otherwise two or more
+colours from low to high values, e.g. `c("grey90", "darkred")`
+(low, high) or, for a diverging scale, `c("#2166AC", "white",
+"#B2182B")` (low, centre, high); or the name of a sequential or
+diverging palette (see \code{\link{show_palettes}}), such as
+"viridis", "magma" or "tol-burd", or of an RColorBrewer
+palette}
 
 \item{na.value}{Colour of cells (or tiles) that are not coloured. If NULL
 (default), "grey88", or "grey70" for a diverging scale so
@@ -161,7 +161,8 @@ given}
 \item{label.by}{Metadata column whose groups are labelled when
 `label = TRUE`. If NULL (default), the active identities}
 
-\item{label.size}{Size of the group labels, default is 3.5}
+\item{label.size}{Size of the group labels in mm. If NULL (default), 3.5
+at the default preset, scaled with the preset's text size}
 
 \item{label.color}{Colour of the group labels, default is "black"}
 
@@ -206,11 +207,17 @@ feature)}
 \item{legend.title.face}{Font face of the legend title. "auto" (default)
 sets gene names in italics}
 
-\item{legend.length}{Length of the colour bar in inches, default is 1.5}
+\item{legend.length}{Length of the colour bar in inches. If NULL (default),
+1.5 at the default preset, scaled with the preset's
+text size}
 
-\item{legend.width}{Thickness of the colour bar in inches, default is 0.15}
+\item{legend.width}{Thickness of the colour bar in inches. If NULL
+(default), 0.15 at the default preset, scaled with the
+preset's text size}
 
-\item{legend.text.size}{Font size of the legend text, default is 11}
+\item{legend.text.size}{Font size of the legend text and title in points.
+If NULL (default), the base size of the preset (11
+at the default preset)}
 
 \item{ncol}{Number of panel columns. If NULL (default), split panels are
 laid out in a single row, and several features in up to four
@@ -230,7 +237,9 @@ by the caller}
 
 \item{panel.spacing}{Gap between panels in inches, default is 0.1}
 
-\item{strip.text.size}{Font size of the panel labels, default is 12}
+\item{strip.text.size}{Font size of the panel labels in points. If NULL
+(default), the large size of the preset (12 at the
+default preset)}
 
 \item{strip.text.face}{Font face of the panel labels, default is "bold".
 Gene names are additionally set in italics}
@@ -246,8 +255,9 @@ rasterizes, default is 10000}
 \item{raster.dpi}{Resolution of the rasterized points, default is 1000. Match
 the `dpi` used when saving raster (e.g. png) output}
 
-\item{bg}{Background colour, default is "white". Use "transparent" for a
-transparent background}
+\item{bg}{Background colour, default is "transparent", so that the figure
+can be placed on any background (gaps inside outlines and label
+halos are then white). Use e.g. "white" for an opaque background}
 
 \item{seed}{Random seed used for drawing order and label placement, default
 is 42. The global random number generator state is not changed}
@@ -266,8 +276,11 @@ Colours cells on a 2D reduction (UMAP, tSNE, PCA, ...) by the
              scores, ...). Like \code{\link{DimPlot_bioToolkit}}, every panel
              has a fixed absolute size set by `panel.width` and
              `panel.height`, so that panels are identical across figures; use
-             \code{\link{save_dimplot}} to save the plot, or a patchwork
-             combination of plots, sized to fit.
+             \code{\link{save_plot}} to save the plot, or a patchwork
+             combination of plots, sized to fit. Text sizes follow the
+             size preset of \code{\link{theme_bioToolkit}}, and the values
+             behind each panel can be written out with
+             \code{\link{export_source_data}}.
 
              Cells go through three steps:
              \enumerate{

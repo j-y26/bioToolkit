@@ -84,7 +84,8 @@ is 0.6}
 FALSE. Groups are the active identities unless `label.by` is
 given}
 
-\item{label.size}{Size of the group labels, default is 3.5}
+\item{label.size}{Size of the group labels in mm. If NULL (default), 3.5
+at the default preset, scaled with the preset's text size}
 
 \item{label.color}{Colour of the group labels, default is "black"}
 
@@ -95,11 +96,17 @@ given}
 "horizontal". If NULL (default), horizontal for top
 and bottom legends and vertical otherwise}
 
-\item{legend.length}{Length of the colour bar in inches, default is 1.5}
+\item{legend.length}{Length of the colour bar in inches. If NULL (default),
+1.5 at the default preset, scaled with the preset's
+text size}
 
-\item{legend.width}{Thickness of the colour bar in inches, default is 0.15}
+\item{legend.width}{Thickness of the colour bar in inches. If NULL
+(default), 0.15 at the default preset, scaled with the
+preset's text size}
 
-\item{legend.text.size}{Font size of the legend text, default is 11}
+\item{legend.text.size}{Font size of the legend text and title in points.
+If NULL (default), the base size of the preset (11
+at the default preset)}
 
 \item{legend.title.face}{Font face of the legend title. "auto" (default)
 sets gene names in italics}
@@ -111,7 +118,9 @@ sets gene names in italics}
 
 \item{panel.spacing}{Gap between panels in inches, default is 0.1}
 
-\item{strip.text.size}{Font size of the panel labels, default is 12}
+\item{strip.text.size}{Font size of the panel labels in points. If NULL
+(default), the large size of the preset (12 at the
+default preset)}
 
 \item{rd}{Output of \code{\link{reduction_data}}}
 
@@ -126,8 +135,9 @@ rasterizes, default is 10000}
 \item{raster.dpi}{Resolution of the rasterized points, default is 1000. Match
 the `dpi` used when saving raster (e.g. png) output}
 
-\item{bg}{Background colour, default is "white". Use "transparent" for a
-transparent background}
+\item{bg}{Background colour, default is "transparent", so that the figure
+can be placed on any background (gaps inside outlines and label
+halos are then white). Use e.g. "white" for an opaque background}
 
 \item{halo.color}{Colour of the gap inside outlines and of label halos}
 

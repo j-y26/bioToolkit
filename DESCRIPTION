@@ -1,7 +1,7 @@
 Package: bioToolkit
 Type: Package
 Title: An R package hosting useful functions for data analysis
-Version: 0.4.1
+Version: 0.5.0
 Author: person("Jielin", "Yang",
                 email = "jielin.yang@sickkids.ca",
                 role = c("aut", "cre"),
@@ -16,6 +16,8 @@ URL: https://github.com/j-y26/bioToolkit
 BugReports: https://github.com/j-y26/bioToolkit/issues
 biocViews: BiomedicalInformatics
 RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.1.0)
 Imports:
     dplyr,
     ggplot2,
@@ -26,6 +28,7 @@ Imports:
     tidyr,
     grDevices,
     isoband,
+    methods,
     stats,
     rlang,
     utils,
@@ -55,5 +58,8 @@ Suggests:
     ragg,
     hexbin,
     SeuratObject,
+    writexl,
+    png,
+    jpeg,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

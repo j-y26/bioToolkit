@@ -23,7 +23,7 @@ DimPlot_bioToolkit(
   outline.size = 0.6,
   outline.darken = 0.4,
   label = FALSE,
-  label.size = 3.5,
+  label.size = NULL,
   mark = FALSE,
   mark.by = NULL,
   mark.cols = NULL,
@@ -34,19 +34,19 @@ DimPlot_bioToolkit(
   mark.coverage = 0.98,
   legend.position = c("right", "left", "top", "bottom", "inside", "none"),
   legend.ncol = NULL,
-  legend.pt.size = 3.5,
-  legend.text.size = 11,
+  legend.pt.size = NULL,
+  legend.text.size = NULL,
   ncol = NULL,
   by.row = TRUE,
   panel.width = 4,
   panel.height = panel.width,
   panel.spacing = 0.1,
-  strip.text.size = 12,
+  strip.text.size = NULL,
   strip.text.face = "bold",
   raster = NULL,
   raster.threshold = 10000,
   raster.dpi = 1000,
-  bg = "white",
+  bg = "transparent",
   seed = 42,
   ...
 )
@@ -78,8 +78,14 @@ coloured}
 only the plotted ones, so that a plot of a subset of cells
 lines up with a plot of the whole object. Default is FALSE}
 
-\item{cols}{Colours for the groups, either named by group or in the order of
-the group levels. If NULL, the default ggplot2 hue palette is used}
+\item{cols}{Colours for the groups. If NULL (default), "scanpy-20" (or
+"scanpy-102" above 20 groups). Otherwise a palette name (see
+\code{\link{show_palettes}}), colours named by group (e.g.
+picked with \code{bt_palette("scanpy-20")[c(1, 3, 2)]} and
+named by cell type), or colours in the order of the group
+levels. Every level of `group.by` gets a colour, including
+levels with no plotted cell, so that a plot of a subset of cells
+uses the same colours as a plot of all}
 
 \item{na.value}{Colour of cells with no group and of cells not in
 `cells.highlight`, default is "grey88"}
@@ -107,7 +113,8 @@ is 0.4}
 \item{label}{Whether to label groups at their median position, default is
 FALSE. When split, groups are labelled within each panel}
 
-\item{label.size}{Size of the group labels, default is 3.5}
+\item{label.size}{Size of the group labels in mm. If NULL (default), 3.5
+at the default preset, scaled with the preset's text size}
 
 \item{mark}{Whether to draw a dashed line around the cell cloud of each
 group of `mark.by`, kept a fixed distance away from the cells,
@@ -121,10 +128,9 @@ outlined, and when split, groups are outlined within each panel}
 \item{mark.by}{Metadata column whose groups are outlined. If NULL
 (default), the groups of `group.by`}
 
-\item{mark.cols}{Colours of the outlines, either named by group or in the
-order of the group levels. If NULL (default), the colours
-of `cols` when `mark.by` is the same as `group.by`, and the
-default ggplot2 hue palette otherwise}
+\item{mark.cols}{Colours of the outlines, as for `cols`. If NULL (default),
+the colours of `cols` when `mark.by` is the same as
+`group.by`, and the default colours otherwise}
 
 \item{mark.linetype}{Line type of the outlines, default is "dashed"}
 
@@ -150,9 +156,12 @@ outside the line}
 \item{legend.ncol}{Number of legend columns. If NULL (default), ggplot2
 chooses based on the number of groups and the position}
 
-\item{legend.pt.size}{Size of the legend keys, default is 3.5}
+\item{legend.pt.size}{Size of the legend keys. If NULL (default), 3.5 at the
+default preset, scaled with the preset's text size}
 
-\item{legend.text.size}{Font size of the legend text, default is 11}
+\item{legend.text.size}{Font size of the legend text in points. If NULL
+(default), the base size of the preset (11 at the
+default preset)}
 
 \item{ncol}{Number of panel columns when `split.by` is given. If NULL
 (default), all panels are laid out in a single row}
@@ -167,7 +176,9 @@ column by column (FALSE)}
 
 \item{panel.spacing}{Gap between panels in inches, default is 0.1}
 
-\item{strip.text.size}{Font size of the panel (split) labels, default is 12}
+\item{strip.text.size}{Font size of the panel (split) labels in points. If
+NULL (default), the large size of the preset (12 at
+the default preset)}
 
 \item{strip.text.face}{Font face of the panel labels, default is "bold"}
 
@@ -181,8 +192,9 @@ rasterizes, default is 10000}
 \item{raster.dpi}{Resolution of the rasterized points, default is 1000. Match
 the `dpi` used when saving raster (e.g. png) output}
 
-\item{bg}{Background colour, default is "white". Use "transparent" for a
-transparent background}
+\item{bg}{Background colour, default is "transparent", so that the figure
+can be placed on any background (gaps inside outlines and label
+halos are then white). Use e.g. "white" for an opaque background}
 
 \item{seed}{Random seed used for shuffling and label placement, default is
 42. The global random number generator state is not changed}
@@ -201,7 +213,8 @@ Plots cells on a 2D reduction (UMAP, tSNE, PCA, ...) coloured by
              panels are identical across figures regardless of how many there
              are and of the legend's size or position. Split plots share a
              single legend covering all groups, even when a panel contains
-             only some of them. Use \code{\link{save_dimplot}} to save it: the
+             only some of them. Use \code{\link{save_plot}} to save it: the
              output file is sized to fit the panels, strips, legend and
-             margins exactly.
+             margins exactly. Text sizes follow the size preset of
+             \code{\link{theme_bioToolkit}} (option `bioToolkit.preset`).
 }

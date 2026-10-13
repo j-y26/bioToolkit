@@ -1076,8 +1076,9 @@ annotation_sankey_plot <- function(
 #'
 #' @param mode Either "stack" or "fill".
 #'
-#' @param palette A valid palette name from "alphabet", "alphabet2", "glasbey", "polychrome", "stepped", and "parade".
-#'                Alternatively, a vector of colors can be provided with the same length as unique groups.
+#' @param palette A qualitative palette name from \code{\link{list_palettes}}
+#'                (default "polychrome-36"), or a vector of colors with at least
+#'                as many colors as groups.
 #'
 #' @param title Plot title.
 #'
@@ -1094,7 +1095,7 @@ grouped_bar_plot <- function(df,
                              split.by,
                              frequency,
                              mode = c("stack", "fill"),
-                             palette = "polychrome",
+                             palette = "polychrome-36",
                              title = NULL,
                              show_totals = FALSE) {
   # Check if the required columns are present
@@ -1104,23 +1105,12 @@ grouped_bar_plot <- function(df,
 
   # Check if mode is valid
   mode <- match.arg(mode)
-  if (!mode %in% c("stack", "fill")) {
-    stop("Mode must be either 'stack' or 'fill'.")
-  }
 
-  # Define the colors
-  if (length(palette) == 1 && palette %in% c("alphabet", "alphabet2", "glasbey", "polychrome", "stepped", "parade")) {
-  if (!requireNamespace("Seurat", quietly = TRUE)) stop("Package 'Seurat' is required.")
-  colors <- Seurat::DiscretePalette(
-      n = length(unique(df[[group.by]])),
-      palette = palette
-    )
-  } else if (length(palette) == length(unique(df[[group.by]]))) {
-    # Use custom colors
-    colors <- palette
-  } else {
-    stop("Palette must be one of 'alphabet', 'alphabet2', 'glasbey', 'polychrome', 'stepped', and 'parade' or a vector of colors with the same length as unique groups.")
-  }
+  # Define the colors, from the palette registry or as given
+  groups <- df[[group.by]]
+  colors <- group_colours(
+    palette, if (is.factor(groups)) droplevels(groups) else factor(groups), arg = "palette"
+  )$cols
 
   # Create the bar plot
   plot <- ggplot(df, aes(x = .data[[split.by]], y = .data[[frequency]], fill = .data[[group.by]])) +

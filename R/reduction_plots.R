@@ -9,9 +9,10 @@
 #'              panels are identical across figures regardless of how many there
 #'              are and of the legend's size or position. Split plots share a
 #'              single legend covering all groups, even when a panel contains
-#'              only some of them. Use \code{\link{save_dimplot}} to save it: the
+#'              only some of them. Use \code{\link{save_plot}} to save it: the
 #'              output file is sized to fit the panels, strips, legend and
-#'              margins exactly.
+#'              margins exactly. Text sizes follow the size preset of
+#'              \code{\link{theme_bioToolkit}} (option `bioToolkit.preset`).
 #'
 #' @param object A Seurat object
 #'
@@ -39,8 +40,14 @@
 #'                    only the plotted ones, so that a plot of a subset of cells
 #'                    lines up with a plot of the whole object. Default is FALSE
 #'
-#' @param cols Colours for the groups, either named by group or in the order of
-#'             the group levels. If NULL, the default ggplot2 hue palette is used
+#' @param cols Colours for the groups. If NULL (default), "scanpy-20" (or
+#'             "scanpy-102" above 20 groups). Otherwise a palette name (see
+#'             \code{\link{show_palettes}}), colours named by group (e.g.
+#'             picked with \code{bt_palette("scanpy-20")[c(1, 3, 2)]} and
+#'             named by cell type), or colours in the order of the group
+#'             levels. Every level of `group.by` gets a colour, including
+#'             levels with no plotted cell, so that a plot of a subset of cells
+#'             uses the same colours as a plot of all
 #'
 #' @param na.value Colour of cells with no group and of cells not in
 #'                 `cells.highlight`, default is "grey88"
@@ -68,7 +75,8 @@
 #' @param label Whether to label groups at their median position, default is
 #'              FALSE. When split, groups are labelled within each panel
 #'
-#' @param label.size Size of the group labels, default is 3.5
+#' @param label.size Size of the group labels in mm. If NULL (default), 3.5
+#'                   at the default preset, scaled with the preset's text size
 #'
 #' @param mark Whether to draw a dashed line around the cell cloud of each
 #'             group of `mark.by`, kept a fixed distance away from the cells,
@@ -82,10 +90,9 @@
 #' @param mark.by Metadata column whose groups are outlined. If NULL
 #'                (default), the groups of `group.by`
 #'
-#' @param mark.cols Colours of the outlines, either named by group or in the
-#'                  order of the group levels. If NULL (default), the colours
-#'                  of `cols` when `mark.by` is the same as `group.by`, and the
-#'                  default ggplot2 hue palette otherwise
+#' @param mark.cols Colours of the outlines, as for `cols`. If NULL (default),
+#'                  the colours of `cols` when `mark.by` is the same as
+#'                  `group.by`, and the default colours otherwise
 #'
 #' @param mark.linetype Line type of the outlines, default is "dashed"
 #'
@@ -111,9 +118,12 @@
 #' @param legend.ncol Number of legend columns. If NULL (default), ggplot2
 #'                    chooses based on the number of groups and the position
 #'
-#' @param legend.pt.size Size of the legend keys, default is 3.5
+#' @param legend.pt.size Size of the legend keys. If NULL (default), 3.5 at the
+#'                       default preset, scaled with the preset's text size
 #'
-#' @param legend.text.size Font size of the legend text, default is 11
+#' @param legend.text.size Font size of the legend text in points. If NULL
+#'                         (default), the base size of the preset (11 at the
+#'                         default preset)
 #'
 #' @param ncol Number of panel columns when `split.by` is given. If NULL
 #'             (default), all panels are laid out in a single row
@@ -128,7 +138,9 @@
 #'
 #' @param panel.spacing Gap between panels in inches, default is 0.1
 #'
-#' @param strip.text.size Font size of the panel (split) labels, default is 12
+#' @param strip.text.size Font size of the panel (split) labels in points. If
+#'                        NULL (default), the large size of the preset (12 at
+#'                        the default preset)
 #'
 #' @param strip.text.face Font face of the panel labels, default is "bold"
 #'
@@ -142,8 +154,9 @@
 #' @param raster.dpi Resolution of the rasterized points, default is 1000. Match
 #'                   the `dpi` used when saving raster (e.g. png) output
 #'
-#' @param bg Background colour, default is "white". Use "transparent" for a
-#'           transparent background
+#' @param bg Background colour, default is "transparent", so that the figure
+#'           can be placed on any background (gaps inside outlines and label
+#'           halos are then white). Use e.g. "white" for an opaque background
 #'
 #' @param seed Random seed used for shuffling and label placement, default is
 #'             42. The global random number generator state is not changed
@@ -175,7 +188,7 @@ DimPlot_bioToolkit <- function(
     outline.size = 0.6,
     outline.darken = 0.4,
     label = FALSE,
-    label.size = 3.5,
+    label.size = NULL,
     mark = FALSE,
     mark.by = NULL,
     mark.cols = NULL,
@@ -186,19 +199,19 @@ DimPlot_bioToolkit <- function(
     mark.coverage = 0.98,
     legend.position = c("right", "left", "top", "bottom", "inside", "none"),
     legend.ncol = NULL,
-    legend.pt.size = 3.5,
-    legend.text.size = 11,
+    legend.pt.size = NULL,
+    legend.text.size = NULL,
     ncol = NULL,
     by.row = TRUE,
     panel.width = 4,
     panel.height = panel.width,
     panel.spacing = 0.1,
-    strip.text.size = 12,
+    strip.text.size = NULL,
     strip.text.face = "bold",
     raster = NULL,
     raster.threshold = 1e4,
     raster.dpi = 1000,
-    bg = "white",
+    bg = "transparent",
     seed = 42,
     ...
 ) {
@@ -210,6 +223,13 @@ DimPlot_bioToolkit <- function(
     raster <- resolve_raster_arg(raster, arrow_args)
     arrow_args$rasterize <- NULL
     dims <- resolve_dims(dims, reduction)
+    # Sizes not given are taken from the preset of theme_bioToolkit()
+    sizes <- preset_sizes()
+    if (is.null(legend.text.size)) legend.text.size <- sizes$base
+    if (is.null(strip.text.size)) strip.text.size <- sizes$large
+    k <- preset_scale()
+    if (is.null(label.size)) label.size <- 3.5 * k
+    if (is.null(legend.pt.size)) legend.pt.size <- 3.5 * k
     if (mark) {
         if (!(is.numeric(mark.expand) && length(mark.expand) == 1 && mark.expand >= 0)) {
             stop("`mark.expand` must be a single non-negative number", call. = FALSE)
@@ -227,19 +247,16 @@ DimPlot_bioToolkit <- function(
     rd <- reduction_data(object, reduction, dims$dims, cells, split.by, full.extent)
     df <- rd$df
 
-    # Fetch groups for the plotted cells so rows are guaranteed to align
-    group <- if (is.null(group.by)) {
-        Seurat::Idents(object)[rownames(df)]
-    } else {
-        fetch_meta(object, group.by, rownames(df))
-    }
-    df$group <- if (is.factor(group)) group else factor(group)
+    # Fetch groups for the plotted cells so rows are guaranteed to align. The
+    # levels are those of all cells of the object, so that colours do not
+    # depend on which cells are plotted
+    df$group <- fetch_group(object, group.by, rownames(df))
     df$highlight <- highlight_flags(object, rownames(df), cells.highlight)
 
-    # Resolve colours up front so outlines can reuse them. Levels are kept for
-    # all plotted cells, not per panel or highlight, so that every panel of a
-    # split plot is coloured the same way and colours do not shift with the
-    # highlighted cells
+    # Resolve colours up front so outlines can reuse them: `cols`, else the
+    # default palette. Levels are kept for all cells, not per panel or
+    # highlight, so that every panel of a split plot is coloured the same way
+    # and colours do not shift with the plotted or highlighted cells
     resolved <- group_colours(cols, df$group)
     df$group <- resolved$group
     cols <- resolved$cols
@@ -253,8 +270,7 @@ DimPlot_bioToolkit <- function(
             df$mark <- df$group
             mark.cols <- if (is.null(mark.cols)) cols else group_colours(mark.cols, df$mark, "mark.cols")$cols
         } else {
-            groups <- fetch_meta(object, mark.by, rownames(df))
-            resolved <- group_colours(mark.cols, if (is.factor(groups)) groups else factor(groups), "mark.cols")
+            resolved <- group_colours(mark.cols, fetch_group(object, mark.by, rownames(df)), "mark.cols")
             df$mark <- resolved$group
             mark.cols <- resolved$cols
         }
@@ -300,7 +316,7 @@ DimPlot_bioToolkit <- function(
             override.aes = list(size = legend.pt.size, alpha = 1)
         )) +
         extent_scales(rd) +
-        fixed_panel_theme(
+        embedding_theme(
             panel.width = panel.width, panel.height = panel.height,
             ncol = layout$ncol, nrow = layout$nrow,
             panel.spacing = panel.spacing, legend.position = legend.position,
@@ -309,8 +325,8 @@ DimPlot_bioToolkit <- function(
         ) +
         theme(
             legend.title = element_blank(),
-            legend.key.size = unit(0.45, "cm"),
-            legend.key.spacing.y = unit(0.05, "cm")
+            legend.key.size = unit(0.45 * k, "cm"),
+            legend.key.spacing.y = unit(0.05 * k, "cm")
         )
 
     if (rd$split_plot) {
@@ -344,74 +360,5 @@ DimPlot_bioToolkit <- function(
         panel = if (rd$split_plot) levels(df$panel)[layout$bottom_left]
     )
 }
-
-
-#' @title Save a fixed-panel plot sized to fit its contents
-#'
-#' @description Saves a plot whose panels have a fixed absolute size (e.g. from
-#'              \code{\link{DimPlot_bioToolkit}} or
-#'              \code{\link{FeaturePlot_bioToolkit}}), including patchwork
-#'              combinations of such plots. The width and height of the file are
-#'              computed from the panels, strips, legends and margins, measured
-#'              with the same kind of device the file is written with so that
-#'              font metrics match.
-#'
-#' @param plot A ggplot or patchwork object with fixed panel sizes
-#'
-#' @param filename File to save to; the format is inferred from the extension
-#'
-#' @param dpi Resolution for raster formats, default is 1000
-#'
-#' @param bg Background colour. If NULL (default), taken from the plot
-#'
-#' @param ... Additional arguments passed to \code{\link[ggplot2]{ggsave}}
-#'
-#' @return The width and height of the saved file in inches, invisibly
-#'
-#' @export
-#'
-save_dimplot <- function(plot, filename, dpi = 1000, bg = NULL, ...) {
-    # Build the gtable once, on the same kind of device it will be saved to, and
-    # draw that exact gtable so measured and saved layouts cannot differ
-    raster_ext <- grepl("\\.(png|jpe?g|tiff?|bmp)$", filename, ignore.case = TRUE)
-    old_dev <- grDevices::dev.cur()
-    if (raster_ext && requireNamespace("ragg", quietly = TRUE)) {
-        tmp <- tempfile(fileext = ".png")
-        ragg::agg_png(tmp, res = dpi)
-        on.exit(unlink(tmp), add = TRUE)
-    } else {
-        grDevices::pdf(NULL)
-    }
-    measure_dev <- grDevices::dev.cur()
-    is_patchwork <- inherits(plot, "patchwork")
-    gt <- if (is_patchwork) patchwork::patchworkGrob(fix_nested_patchworks(plot)) else ggplotGrob(plot)
-    dims <- fixed_gtable_size(gt, patchwork = is_patchwork)
-    grDevices::dev.off(measure_dev)
-    if (old_dev > 1) grDevices::dev.set(old_dev)
-
-    if (is.null(bg)) {
-        background <- gt$grobs[[match("background", gt$layout$name)]]
-        bg <- if (is.null(background$gp$fill)) "transparent" else background$gp$fill
-    }
-
-    ggsave(filename, gt, width = dims[["width"]], height = dims[["height"]], units = "in",
-           dpi = dpi, bg = bg, limitsize = FALSE, ...)
-    invisible(dims)
-}
-
-
-#' @rdname save_dimplot
-#'
-#' @description `save_umap()` is a deprecated alias of `save_dimplot()`, which
-#'              is named for the fact that reductions other than UMAP are
-#'              plotted just as well.
-#'
-#' @export
-#'
-save_umap <- function(plot, filename, dpi = 1000, bg = NULL, ...) {
-    warning("`save_umap()` is deprecated, use `save_dimplot()` instead", call. = FALSE)
-    save_dimplot(plot = plot, filename = filename, dpi = dpi, bg = bg, ...)
-}
-
 
 
