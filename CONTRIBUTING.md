@@ -23,7 +23,7 @@ meaning has the same name and the same default in every function.
 
 | Argument | Meaning |
 |---|---|
-| `group.by`, `split.by` | grouping / panel variables |
+| `group.by`, `split.by` | `group.by`: the lower-level grouping whose levels are compared, marked by their colours (violins, dot-plot rows, heatmap columns); `split.by`: the higher-level grouping, drawn like facets (labelled blocks or panels). E.g. `group.by = "condition", split.by = "cell_type"` compares conditions within each cell type. (Seurat's VlnPlot / DotPlot use `split.by` the other way round.) |
 | `cols` | discrete colours (named or ordered) or a palette name — never `colors` / `palette` |
 | `na.value` | colour of missing / non-coloured marks |
 | `pt.size`, `alpha` | point size and opacity |

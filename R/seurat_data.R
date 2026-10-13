@@ -218,9 +218,143 @@ feature_is_gene <- function(object,
     meta <- colnames(object[[]])
     is_gene <- vapply(features, function(f) {
         if (f %in% meta) return(FALSE)
+        # Genomic regions (peaks of an ATAC / ChIP assay, e.g. "chr1-1000-2000")
+        # are rows of an assay but not gene names
+        if (is_genomic_region(f)) return(FALSE)
         if (f %in% genes) return(TRUE)
         key <- keys[startsWith(f, keys)]
         length(key) > 0 && any(substring(f, nchar(key) + 1) %in% genes)
     }, logical(1))
     stats::setNames(is_gene, features)
+}
+
+
+#' Whether names are genomic regions (e.g. peaks: "chr1-1000-2000")
+#'
+#' @param x Names
+#'
+#' @return A logical vector
+#'
+#' @keywords internal
+is_genomic_region <- function(x) {
+    grepl("^(chr)?[0-9A-Za-z_.]+[-:][0-9]+[-_][0-9]+$", x)
+}
+
+
+#' Fetch any numeric features of the cells: genes, metadata or embeddings
+#'
+#' Used by plots that accept a mix of genes and per-cell values (violin,
+#' ridge and heatmap plots). From a Seurat object, metadata columns (QC
+#' metrics, module scores) are read as they are; genes are read from one
+#' assay, keyed so that they never come from another one
+#' (\code{fetch_features()}), and the assay and layer are reported only when
+#' at least one feature is a gene. Genes missing from the assay are left out
+#' with a warning that names near matches in case (\code{genes_in_assay()}).
+#' From a data frame (e.g. a table of QC metrics), features are its columns.
+#'
+#' @param object A Seurat object, or a data frame with one row per cell
+#'
+#' @param features Feature names
+#'
+#' @param cells Cell names (Seurat object) or row names / indices (data
+#'              frame), in the order wanted
+#'
+#' @param assay Assay name, or NULL for the default assay
+#'
+#' @param slot Layer to read genes from
+#'
+#' @return A list with `data` (a data frame, one column per feature found and
+#'         one row per cell), `is_gene` (logical, named by feature) and
+#'         `assay` (the result of \code{resolve_assay()}, or NULL when no
+#'         feature is a gene)
+#'
+#' @keywords internal
+fetch_plot_values <- function(object,
+                              features,
+                              cells,
+                              assay,
+                              slot) {
+    features <- unique(as.character(features))
+    if (length(features) == 0) stop("No `features` given", call. = FALSE)
+
+    if (is.data.frame(object)) {
+        missing <- setdiff(features, colnames(object))
+        if (length(missing)) {
+            warning("Column(s) not in the data frame are left out: ", paste(missing, collapse = ", "),
+                    call. = FALSE)
+        }
+        features <- intersect(features, colnames(object))
+        if (length(features) == 0) stop("None of `features` are columns of the data frame", call. = FALSE)
+        data <- as.data.frame(object)[cells, features, drop = FALSE]
+        for (f in features) {
+            if (!is.numeric(data[[f]])) stop("Column '", f, "' is not numeric", call. = FALSE)
+        }
+        return(list(data = data, is_gene = stats::setNames(rep(FALSE, length(features)), features),
+                    assay = NULL))
+    }
+
+    meta <- colnames(object[[]])
+    # Features read without an assay: metadata, names already prefixed with
+    # an assay key (e.g. "sct_Cdh5") and embedding dimensions (e.g. "umap_1")
+    red_keys <- vapply(SeuratObject::Reductions(object), function(r) SeuratObject::Key(object[[r]]),
+                       character(1))
+    is_dim <- vapply(features, function(f) any(startsWith(f, red_keys)), logical(1), USE.NAMES = FALSE)
+    direct <- features %in% meta | has_assay_key(object, features) | is_dim
+    assay_info <- NULL
+    if (any(!direct)) {
+        assay_info <- resolve_assay(object, assay, slot)
+        found <- genes_in_assay(object, features[!direct], assay_info)
+        features <- features[direct | features %in% found]
+        if (length(features) == 0) stop("None of `features` were found", call. = FALSE)
+    }
+    data <- fetch_features(object, features, cells, slot, assay_info)
+    is_gene <- feature_is_gene(object, features)
+    list(data = data, is_gene = is_gene, assay = assay_info)
+}
+
+
+#' A grouping variable of the cells, from a Seurat object or a data frame
+#'
+#' As \code{fetch_group()}: levels come from all cells (rows), not only from
+#' `cells`, so that colours match a plot of all cells.
+#'
+#' @param object A Seurat object, or a data frame with one row per cell
+#'
+#' @param var Column name. NULL gives the active identities of a Seurat
+#'            object, or one group ("All cells") for a data frame
+#'
+#' @param cells Cell names or row indices
+#'
+#' @return A factor along `cells`
+#'
+#' @keywords internal
+fetch_plot_group <- function(object,
+                             var,
+                             cells) {
+    if (!is.data.frame(object)) return(fetch_group(object, var, cells))
+    if (is.null(var)) return(factor(rep("All cells", length(cells))))
+    if (length(var) != 1 || !(var %in% colnames(object))) {
+        stop("'", paste(var, collapse = " "), "' is not a column of the data frame", call. = FALSE)
+    }
+    values <- object[[var]]
+    group <- if (is.factor(values)) values else factor(values)
+    names(group) <- rownames(object)
+    unname(group[cells])
+}
+
+
+#' Cells of a Seurat object or rows of a data frame
+#'
+#' @param object A Seurat object, or a data frame with one row per cell
+#'
+#' @param cells NULL for all, or cell names / indices
+#'
+#' @return Cell names (row names of a data frame)
+#'
+#' @keywords internal
+plot_cells <- function(object,
+                       cells) {
+    all_cells <- if (is.data.frame(object)) rownames(object) else colnames(object)
+    if (is.data.frame(object) && anyDuplicated(all_cells)) stop("Row names must be unique", call. = FALSE)
+    resolve_cells(cells, all_cells)
 }

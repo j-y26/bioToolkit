@@ -850,10 +850,9 @@ density_bandwidth <- function(x,
 
 #' Kernel-smoothed values at the cells' own positions
 #'
-#' Cells are binned onto a regular grid over the axis limits; the binned
-#' values (and, for "smooth", the binned counts) are convolved with a Gaussian
-#' kernel, applied along x and along y as two matrix products, and read back at
-#' every cell by bilinear interpolation.
+#' The cells' values (and, for "smooth", their counts) are smoothed on a grid
+#' (\code{kde_grid()}) and read back at every cell by bilinear interpolation
+#' (\code{grid_interpolate()}).
 #'
 #' @param x,y Coordinates of the cells
 #'
@@ -879,6 +878,44 @@ smooth_values <- function(x,
                           bandwidth,
                           method,
                           n_grid = 256L) {
+    weighted <- grid_interpolate(kde_grid(x, y, w, xlim, ylim, bandwidth, n_grid), x, y, xlim, ylim)
+    if (method == "wkde") return(weighted / length(w))
+    # Interpolating the two sums before dividing keeps the ratio stable where
+    # few cells are near a grid point
+    counts <- kde_grid(x, y, rep(1, length(w)), xlim, ylim, bandwidth, n_grid)
+    weighted / grid_interpolate(counts, x, y, xlim, ylim)
+}
+
+
+#' Gaussian kernel sum of weighted cells on a regular grid
+#'
+#' Cells are binned onto a regular grid over the axis limits (nearest grid
+#' point), and the binned weights are convolved with a Gaussian kernel,
+#' applied along x and along y as two matrix products. With unit weights, the
+#' result is a kernel density estimate up to a constant factor. Shared by
+#' `geom = "density"` of \code{\link{FeaturePlot_bioToolkit}} and by
+#' \code{\link{DensityDiffPlot_bioToolkit}}.
+#'
+#' @param x,y Coordinates of the cells
+#'
+#' @param w Weights of the cells
+#'
+#' @param xlim,ylim Axis limits, which the grid spans
+#'
+#' @param bandwidth Kernel standard deviations along x and y
+#'
+#' @param n_grid Number of grid points along each axis
+#'
+#' @return An `n_grid` x `n_grid` matrix: rows along x, columns along y
+#'
+#' @keywords internal
+kde_grid <- function(x,
+                     y,
+                     w,
+                     xlim,
+                     ylim,
+                     bandwidth,
+                     n_grid = 256L) {
     gx <- seq(xlim[1], xlim[2], length.out = n_grid)
     gy <- seq(ylim[1], ylim[2], length.out = n_grid)
     to_bin <- function(z, lim) {
@@ -887,27 +924,39 @@ smooth_values <- function(x,
     bin <- to_bin(x, xlim) + (to_bin(y, ylim) - 1) * n_grid
     kx <- stats::dnorm(outer(gx, gx, "-"), sd = bandwidth[1])
     ky <- stats::dnorm(outer(gy, gy, "-"), sd = bandwidth[2])
-    convolve <- function(z) {
-        grid <- matrix(0, n_grid, n_grid)
-        sums <- rowsum(z, bin)
-        grid[as.integer(rownames(sums))] <- sums
-        kx %*% grid %*% ky
-    }
-    interpolate <- function(grid) {
-        fx <- (x - xlim[1]) / diff(xlim) * (n_grid - 1) + 1
-        fy <- (y - ylim[1]) / diff(ylim) * (n_grid - 1) + 1
-        i <- pmin(pmax(floor(fx), 1), n_grid - 1)
-        j <- pmin(pmax(floor(fy), 1), n_grid - 1)
-        tx <- fx - i
-        ty <- fy - j
-        grid[cbind(i, j)] * (1 - tx) * (1 - ty) + grid[cbind(i + 1, j)] * tx * (1 - ty) +
-            grid[cbind(i, j + 1)] * (1 - tx) * ty + grid[cbind(i + 1, j + 1)] * tx * ty
-    }
-    weighted <- interpolate(convolve(w))
-    if (method == "wkde") return(weighted / length(w))
-    # Interpolating the two sums before dividing keeps the ratio stable where
-    # few cells are near a grid point
-    weighted / interpolate(convolve(rep(1, length(w))))
+    grid <- matrix(0, n_grid, n_grid)
+    if (length(w) == 0) return(grid)
+    sums <- rowsum(w, bin)
+    grid[as.integer(rownames(sums))] <- sums
+    kx %*% grid %*% ky
+}
+
+
+#' Values of a grid at given positions, by bilinear interpolation
+#'
+#' @param grid A square matrix from \code{kde_grid()}
+#'
+#' @param x,y Positions
+#'
+#' @param xlim,ylim Axis limits the grid spans
+#'
+#' @return A numeric vector along `x`
+#'
+#' @keywords internal
+grid_interpolate <- function(grid,
+                             x,
+                             y,
+                             xlim,
+                             ylim) {
+    n_grid <- nrow(grid)
+    fx <- (x - xlim[1]) / diff(xlim) * (n_grid - 1) + 1
+    fy <- (y - ylim[1]) / diff(ylim) * (n_grid - 1) + 1
+    i <- pmin(pmax(floor(fx), 1), n_grid - 1)
+    j <- pmin(pmax(floor(fy), 1), n_grid - 1)
+    tx <- fx - i
+    ty <- fy - j
+    grid[cbind(i, j)] * (1 - tx) * (1 - ty) + grid[cbind(i + 1, j)] * tx * (1 - ty) +
+        grid[cbind(i, j + 1)] * (1 - tx) * ty + grid[cbind(i + 1, j + 1)] * tx * ty
 }
 
 

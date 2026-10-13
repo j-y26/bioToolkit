@@ -45,12 +45,16 @@ are e.g. "Cd3e", human "CD3E"); genes not in the assay are
 left out with a warning. A gene in two groups is drawn in
 both}
 
-\item{group.by}{Metadata column to group cells by. If NULL (default), the
-active identities}
+\item{group.by}{Metadata column to group cells by: one row per group,
+marked by the group's colour (see `group.marker`). If NULL
+(default), the active identities}
 
-\item{split.by}{Metadata column to split each group by (e.g. condition),
-giving one row per group and split, with the rows of a group
-together. Default is NULL}
+\item{split.by}{Metadata column of a higher-level grouping, drawn like
+facets: one labelled block of rows per level, each with one
+row per group. E.g. `group.by = "condition", split.by =
+"cell_type"` compares conditions within each cell type.
+Default is NULL. (Seurat's `split.by` is the other way
+round: it splits each group)}
 
 \item{cells}{Cells to use, as names or indices. If NULL (default), all}
 
@@ -109,7 +113,8 @@ of their colour values (within each group of
 
 \item{cluster.groups}{Whether to order the groups by hierarchical
 clustering of their colour values, default is FALSE.
-With `split.by`, the rows of a group stay together}
+With `split.by`, the groups are ordered the same way
+in every block, by their values in all blocks}
 
 \item{cols}{Colours of the expression scale. If NULL (default),
 "blue-magenta" (diverging) with `scale = TRUE`, else

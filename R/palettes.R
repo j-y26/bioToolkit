@@ -176,6 +176,17 @@ palette_list <- function() {
                               "#D7BCD8", "#BA84BB", "#964097", "#752379", "#561A5E"),
                             "diverging",
                             "bioToolkit; truer purple, but both sides look blue with red-green colour-blindness"),
+        # Dark centre, for heatmaps of z-scores (DoHeatmap_bioToolkit default;
+        # user choice 2026-10-13): Seurat's PurpleAndYellow() construction
+        # (an RGB ramp through black) with teal in place of magenta. Not
+        # perceptually uniform: yellow is lighter than teal, so high values
+        # stand out more than low ones, which suits marker heatmaps, where low
+        # z-scores mostly mean "not expressed". The sides stay blue-grey vs
+        # yellow with red-green colour-blindness
+        `teal-yellow` = pal(grDevices::colorRampPalette(c("#00CED1", "#000000", "#FFE800"))(11),
+                            "diverging",
+                            paste("bioToolkit; RGB ramp #00CED1 - black - #FFE800, built as Seurat's",
+                                  "PurpleAndYellow() (magenta - black - yellow). Default of DoHeatmap_bioToolkit() for cells")),
         `tol-sunset` = pal(c("#364B9A", "#4A7BB7", "#6EA6CD", "#98CAE1", "#C2E4EF", "#EAECCC",
                              "#FEDA8B", "#FDB366", "#F67E4B", "#DD3D2D", "#A50026"),
                            "diverging", tol),

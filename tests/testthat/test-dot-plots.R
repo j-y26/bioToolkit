@@ -148,14 +148,20 @@ test_that("DotPlot_bioToolkit reads the assay given, and reports missing genes",
 test_that("DotPlot_bioToolkit groups genes, splits groups and keeps rows below pct.min", {
     so <- sim_seurat()
     p <- suppressMessages(DotPlot_bioToolkit(so, features = list(Tc = c("Cd3e", "Actb"), Bc = "Ms4a1"),
-                                             group.by = "ct", split.by = "cond", pct.min = 99))
+                                             group.by = "cond", split.by = "ct", pct.min = 99))
     src <- attr(p, "source_data")
     expect_equal(levels(src$feature_group), c("Tc", "Bc"))
     expect_equal(nrow(src), 3 * 2 * 3)
     expect_true(any(!src$drawn))
     b <- ggplot2::ggplot_build(p)
-    # Six rows (3 groups x 2 conditions) are kept, in 3 row panels
+    # Six rows (2 conditions in each of 3 cell types) are kept, in 3 row
+    # panels (blocks = split.by), named by condition (group.by) and marked
+    # by the condition colours
     expect_equal(length(unique(b$layout$layout$ROW)), 3)
+    y <- b$layout$panel_params[[1]]$y
+    expect_setequal(unlist(lapply(y$get_labels(), as.character)), c("KO", "WT"))
+    marker <- Filter(function(l) inherits(l$geom, "GeomPoint") && identical(l$aes_params$shape, 16), p$layers)
+    expect_length(unique(marker[[1]]$aes_params$colour), 2)
     # Scaling needs two groups
     expect_message(DotPlot_bioToolkit(so, features = "Cd3e", group.by = "ct", cells = colnames(so)[1:40]),
                    "Only one group")

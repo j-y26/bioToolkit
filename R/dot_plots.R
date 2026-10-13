@@ -6,6 +6,13 @@
 # SCpubr::do_DotPlot(): mean and scaled (z-scored) mean expression, gene
 # groups from a named list, `split.by`, clustering of genes and groups,
 # `flip`. It is drawn by the dot-grid engine (G0, R/dot_grid.R).
+# * `group.by` and `split.by` (user decision 2026-10-13, package-wide):
+#   `group.by` is the lower level, whose levels are compared (one row each,
+#   marked by its colour); `split.by` is the higher level, like a facet (one
+#   labelled block of rows each). E.g. group.by = "condition", split.by =
+#   "cell_type" gives, for each cell type, one row per condition. This is the
+#   opposite of Seurat::DotPlot()'s `split.by`, and matches the panels of
+#   DimPlot / FeaturePlot and the blocks of DoHeatmap_bioToolkit().
 #
 # * Assay: read explicitly and reported (R/seurat_data.R). Seurat and SCpubr
 #   both read the default assay; with "RNA" and "SCT" in one object the same
@@ -64,12 +71,16 @@
 #'                 left out with a warning. A gene in two groups is drawn in
 #'                 both
 #'
-#' @param group.by Metadata column to group cells by. If NULL (default), the
-#'                 active identities
+#' @param group.by Metadata column to group cells by: one row per group,
+#'                 marked by the group's colour (see `group.marker`). If NULL
+#'                 (default), the active identities
 #'
-#' @param split.by Metadata column to split each group by (e.g. condition),
-#'                 giving one row per group and split, with the rows of a group
-#'                 together. Default is NULL
+#' @param split.by Metadata column of a higher-level grouping, drawn like
+#'                 facets: one labelled block of rows per level, each with one
+#'                 row per group. E.g. `group.by = "condition", split.by =
+#'                 "cell_type"` compares conditions within each cell type.
+#'                 Default is NULL. (Seurat's `split.by` is the other way
+#'                 round: it splits each group)
 #'
 #' @param cells Cells to use, as names or indices. If NULL (default), all
 #'
@@ -128,7 +139,8 @@
 #'
 #' @param cluster.groups Whether to order the groups by hierarchical
 #'                       clustering of their colour values, default is FALSE.
-#'                       With `split.by`, the rows of a group stay together
+#'                       With `split.by`, the groups are ordered the same way
+#'                       in every block, by their values in all blocks
 #'
 #' @param cols Colours of the expression scale. If NULL (default),
 #'             "blue-magenta" (diverging) with `scale = TRUE`, else
@@ -279,7 +291,7 @@ DotPlot_bioToolkit <- function(
         if (!is.null(split)) split <- split[keep]
     }
 
-    # One unit (row of the plot by default) per group, or per group and split
+    # One unit (row of the plot by default) per group, or per split and group
     units <- dot_units(group, split)
     expr <- as.matrix(fetch_features(object, genes, cells, slot, assay_info))
     if (any(expr < 0, na.rm = TRUE)) {
@@ -309,14 +321,16 @@ DotPlot_bioToolkit <- function(
     }
     group_lv <- levels(droplevels(units$table$group))
     if (cluster.groups) {
-        # One profile per group: its values for every gene (and split)
+        # One profile per group: its values for every gene (in every block)
         key <- if (is.null(df$split)) df$id else paste(df$id, df$split)
         m <- tapply(df$fill, list(as.character(df$group), key), mean)
         group_lv <- cluster_order(m[group_lv, , drop = FALSE])
     }
     unit_tab <- units$table
     unit_tab$group <- factor(as.character(unit_tab$group), levels = group_lv)
-    ord <- if (is.null(unit_tab$split)) order(unit_tab$group) else order(unit_tab$group, unit_tab$split)
+    # Blocks (splits) in their level order, the groups in each block in the
+    # order above
+    ord <- if (is.null(unit_tab$split)) order(unit_tab$group) else order(unit_tab$split, unit_tab$group)
     unit_tab <- unit_tab[ord, , drop = FALSE]
     unit_lv <- as.character(unit_tab$unit)
 
@@ -344,11 +358,10 @@ DotPlot_bioToolkit <- function(
     feat <- factor(plot_df$id, levels = feat_lv)
     unit <- factor(as.character(plot_df$unit), levels = unit_lv)
     feat_group <- if (!is.null(ft$feature_group)) factor(plot_df$feature_group, levels = levels(ft$feature_group))
-    unit_group <- if (!is.null(split)) factor(as.character(plot_df$group), levels = group_lv)
+    # Blocks of rows are the splits; each row is named by its group
+    unit_group <- if (!is.null(split)) factor(as.character(plot_df$split), levels = levels(droplevels(split)))
     feat_labels <- stats::setNames(ft$feature, ft$id)
-    unit_labels <- stats::setNames(
-        as.character(if (is.null(split)) unit_tab$group else unit_tab$split), unit_lv
-    )
+    unit_labels <- stats::setNames(as.character(unit_tab$group), unit_lv)
     # Dots below `pct.min` are not drawn (NA size), but their rows and
     # columns stay
     eng <- data.frame(size = ifelse(plot_df$drawn, plot_df$pct_expressing, NA), fill = plot_df$fill)
@@ -432,15 +445,15 @@ dot_feature_table <- function(features) {
 }
 
 
-#' Plotting units of a dot plot: groups, or group and split combinations
+#' Plotting units of a dot plot: groups, or split and group combinations
 #'
-#' @param group A factor along the cells
+#' @param group A factor along the cells (the lower level, compared)
 #'
-#' @param split A factor along the cells, or NULL
+#' @param split A factor along the cells (the higher level, blocks), or NULL
 #'
 #' @return A list with `unit`, a factor along the cells, and `table`, one row
 #'         per unit with cells (`unit`, `group` and, when split, `split`), in
-#'         group then split level order
+#'         split then group level order
 #'
 #' @keywords internal
 dot_units <- function(group,
@@ -451,9 +464,10 @@ dot_units <- function(group,
                                                      group = factor(levels(group), levels = levels(group)))))
     }
     split <- droplevels(split)
-    combos <- expand.grid(split = levels(split), group = levels(group), stringsAsFactors = FALSE)
-    combos$unit <- paste(combos$group, combos$split, sep = "\r")
-    unit <- factor(paste(group, split, sep = "\r"), levels = combos$unit)
+    # expand.grid() varies its first column fastest: groups within splits
+    combos <- expand.grid(group = levels(group), split = levels(split), stringsAsFactors = FALSE)
+    combos$unit <- paste(combos$split, combos$group, sep = "\r")
+    unit <- factor(paste(split, group, sep = "\r"), levels = combos$unit)
     present <- combos$unit %in% unit
     combos <- combos[present, , drop = FALSE]
     unit <- droplevels(unit)

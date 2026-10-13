@@ -1,3 +1,75 @@
+# bioToolkit 0.8.0
+
+Phase D of the visualization overhaul: single-cell plots (S1-S4).
+
+## Breaking changes
+
+* `group.by` / `split.by` now mean the same in every plot (user decision
+  2026-10-13): `group.by` is the lower-level grouping whose levels are
+  compared, marked by their colours; `split.by` is the higher-level grouping,
+  drawn like facets (labelled blocks or panels). `DotPlot_bioToolkit()`
+  follows it: with `split.by`, rows are blocks of `split.by` (named on the
+  left), each with one row per `group.by` level marked by its colour. What was
+  `DotPlot_bioToolkit(group.by = "cell_type", split.by = "condition")` is now
+  `DotPlot_bioToolkit(group.by = "condition", split.by = "cell_type")` (and
+  the dots show the condition colours). This is the opposite of
+  `Seurat::DotPlot()` / `VlnPlot()`'s `split.by`, and matches the panels of
+  `DimPlot_bioToolkit()` / `FeaturePlot_bioToolkit()`.
+* `plot_meta_scatter()` is removed; use `plot_composition_scatter()`.
+* `summarize_group_meta()`: `cells.use` is now `cells`; `group.by` is a single
+  column; new `facet.by` and `sample.by`; the result has columns `facet`,
+  `sample` (when given), `condition`, `group`, `count`, `total` and `prop`
+  (was `total_count_condition`). It no longer calls `gc()`.
+
+## New
+
+* `VlnPlot_bioToolkit()`: per-cell violins with a box (quartiles and median)
+  and a random sample of cells as rasterized points, for genes, metadata (QC
+  metrics, module scores) or both, from a Seurat object or a data frame. One
+  panel (and value axis) per feature: `log` and `percent` take TRUE or feature
+  names; `y.max` zooms to a number or a quantile ("q99") without dropping
+  cells; `zeros = "exclude"` / `"annotate"` for sparse genes (violins of the
+  cells above 0, with the % above 0); `flip` (horizontal), `stack` (thin rows
+  sharing the group axis); `split.by` as labelled blocks of violins; fixed
+  violin sizes; source data per cell with the assay and layer.
+* `RidgePlot_bioToolkit()`: density ridges with the same data arguments
+  (needs ggridges, now in Suggests); `overlap` sets the ridge height; one
+  bandwidth per feature.
+* `DoHeatmap_bioToolkit()`: heatmap of genes x cells (`columns = "cells"`,
+  at most `max.cells` per group, seeded) or group means (`columns =
+  "groups"`), z-scored per gene from the "data" layer by default (across all
+  plotted cells, before downsampling, or across the columns), so that any
+  gene can be drawn (Seurat's "scale.data" holds only variable genes).
+  Columns in blocks of `split.by` (named, with gaps) and groups compared
+  within them, marked by a coloured dot (default) or strip with a legend;
+  gene blocks from a named list (e.g. `top_markers()`); extra annotation
+  strips (`annotations`); gene names drawn when rows are tall enough, on the
+  right or left (`label.side`), or a few named with leader lines
+  (`label.features`). No clustering (use ComplexHeatmap).
+* `plot_composition_scatter()`: proportion (or count) of each group in one
+  condition against another, with the y = x line: `split.by` with levels `x`
+  and `y` on the axes, `facet.by` panels (proportions within each), optional
+  per-sample proportions with mean +- SEM (`sample.by`; pooled by default),
+  `log` axes, `fold.lines`, labels for all or selected groups; square panels
+  with the same range on both axes.
+* `DensityDiffPlot_bioToolkit()`: where on an embedding the cells of a
+  condition are enriched or depleted relative to a reference. One kernel
+  density per condition (one bandwidth for all), normalized to sum to 1 so
+  that cell numbers do not matter; optionally one density per sample,
+  averaged per condition (`sample.by`); `measure = "difference"` (relative to
+  the reference's peak) or `"log2ratio"`; sparse regions masked; cells
+  coloured by the value at their position (`draw = "cells"`) or the grid as a
+  raster; one panel per compared condition, one symmetric diverging scale;
+  optional density contours, group labels and dimension arrows.
+* Palette "teal-yellow" (teal - black - yellow, built as Seurat's
+  PurpleAndYellow), the default of `DoHeatmap_bioToolkit()` for z-scores of
+  cells; heatmaps of group means default to "blue-magenta" (light centre).
+* Genomic regions (e.g. peaks "chr1-100-200") are no longer set in italics as
+  gene names.
+* Internal: the kernel smoothing of `FeaturePlot_bioToolkit(geom = "density")`
+  is split into `kde_grid()` and `grid_interpolate()`, shared with
+  `DensityDiffPlot_bioToolkit()` (results unchanged).
+
 # bioToolkit 0.7.0
 
 Phase C of the visualization overhaul: the dot-grid family and DE summaries.

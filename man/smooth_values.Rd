@@ -24,9 +24,8 @@ kernel density weighted by `w`, per cell}
 A numeric vector, one value per cell
 }
 \description{
-Cells are binned onto a regular grid over the axis limits; the binned
-values (and, for "smooth", the binned counts) are convolved with a Gaussian
-kernel, applied along x and along y as two matrix products, and read back at
-every cell by bilinear interpolation.
+The cells' values (and, for "smooth", their counts) are smoothed on a grid
+(\code{kde_grid()}) and read back at every cell by bilinear interpolation
+(\code{grid_interpolate()}).
 }
 \keyword{internal}

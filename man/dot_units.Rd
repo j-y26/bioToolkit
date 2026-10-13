@@ -2,21 +2,21 @@
 % Please edit documentation in R/dot_plots.R
 \name{dot_units}
 \alias{dot_units}
-\title{Plotting units of a dot plot: groups, or group and split combinations}
+\title{Plotting units of a dot plot: groups, or split and group combinations}
 \usage{
 dot_units(group, split)
 }
 \arguments{
-\item{group}{A factor along the cells}
+\item{group}{A factor along the cells (the lower level, compared)}
 
-\item{split}{A factor along the cells, or NULL}
+\item{split}{A factor along the cells (the higher level, blocks), or NULL}
 }
 \value{
 A list with `unit`, a factor along the cells, and `table`, one row
         per unit with cells (`unit`, `group` and, when split, `split`), in
-        group then split level order
+        split then group level order
 }
 \description{
-Plotting units of a dot plot: groups, or group and split combinations
+Plotting units of a dot plot: groups, or split and group combinations
 }
 \keyword{internal}
