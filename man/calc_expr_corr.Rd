@@ -16,7 +16,7 @@ calc_expr_corr(
   corr_method = "pearson",
   p_adjust_method = "BH",
   file_type = "png",
-  dpi = 300,
+  dpi = 1000,
   plot_group_var = NULL,
   switch_axes = FALSE,
   alpha = 0.05,
@@ -111,10 +111,9 @@ for more details.}
 plots. The available file types include "png", "jpeg",
 "tiff", "pdf", "svg". The default file type is "png".}
 
-\item{dpi}{An integer specifying the resolution of the model plots in dots
-per inch (DPI). The default value is 300. The higher the DPI,
-the better the quality of the plots. The DPI value should be
-greater than 0.}
+\item{dpi}{An integer specifying the resolution of raster plots (e.g. png)
+in dots per inch (DPI). The default value is 1000. The DPI value
+should be greater than 0.}
 
 \item{plot_group_var}{A character string specifying the variable in the
 metadata data frame to group the samples in the plot.}

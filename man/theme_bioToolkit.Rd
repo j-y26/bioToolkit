@@ -6,7 +6,6 @@
 \usage{
 theme_bioToolkit(
   type = c("axis", "grid", "embedding"),
-  preset = getOption("bioToolkit.preset", "default"),
   base.size = NULL,
   base.family = NULL,
   bg = "transparent"
@@ -16,16 +15,8 @@ theme_bioToolkit(
 \item{type}{Layout of the theme, one of "axis" (default), "grid" or
 "embedding"}
 
-\item{preset}{Size preset: "default" (11 pt text, 0.5 pt lines; screen and
-exploration), "nature" (7 / 6 pt text, 0.25 pt lines),
-"cell" (8 / 7 pt text, 0.35 pt lines) or "slides" (16 / 14 pt
-text, 0.75 pt lines). Defaults to the option
-`bioToolkit.preset`, so `options(bioToolkit.preset = "nature")`
-switches every plot of the package at once}
-
-\item{base.size}{Base font size in points. If NULL (default), taken from the
-preset; otherwise the preset's other text sizes are scaled
-with it}
+\item{base.size}{Base font size in points. If NULL (default), 11; otherwise
+the other text sizes are scaled with it}
 
 \item{base.family}{Font family. If NULL (default), the device default
 (Helvetica in PDF, which journals accept as Arial's
@@ -39,15 +30,16 @@ Use e.g. "white" for an opaque background}
 A ggplot2 theme
 }
 \description{
-The theme shared by all plots of the package, with text sizes
-             and line widths set for the size the figure is printed at.
-             Three layouts are provided:
+The theme shared by all plots of the package: 11 pt text
+             (9 pt tick labels and legend text, 12 pt titles), 1 pt axis
+             lines and 0.5 pt other lines. Three layouts are provided:
              \describe{
                \item{"axis"}{Classic axes: axis lines and black ticks, no
                      grid. For scatter, volcano, MA, bar and PCA plots.}
-               \item{"grid"}{No axis lines, short light ticks and x labels
-                     rotated by 45 degrees. For dot plots and heatmaps,
-                     whose rows and columns are categories.}
+               \item{"grid"}{The axes of "axis", plus light grid lines,
+                     no axis titles and x labels rotated by 45 degrees. For
+                     dot plots and heatmaps, whose rows and columns are
+                     categories.}
                \item{"embedding"}{No axes at all, with extra room at the
                      bottom left for the dimension arrows. For UMAP / tSNE
                      plots.}
@@ -60,7 +52,7 @@ The theme shared by all plots of the package, with text sizes
 library(ggplot2)
 p <- ggplot(mtcars, aes(wt, mpg)) + geom_point()
 p + theme_bioToolkit()
-p + theme_bioToolkit(preset = "nature")
+p + theme_bioToolkit(base.size = 8)
 
 }
 \seealso{

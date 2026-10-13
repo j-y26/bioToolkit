@@ -15,7 +15,8 @@ save_plot(
 )
 }
 \arguments{
-\item{plot}{A ggplot or patchwork object}
+\item{plot}{A ggplot or patchwork object, or a legend from
+\code{\link{extract_legend}}}
 
 \item{filename}{File to save to; the format is inferred from the extension
 (".pdf", ".png", ".svg", ".tiff", ...)}
@@ -50,6 +51,9 @@ Saves a ggplot or patchwork to PDF (vector), PNG or any format
 
              Plots without fixed panel sizes are saved at `width` by
              `height` inches, as with \code{ggsave()}.
+
+             A legend from \code{\link{extract_legend}} is saved on its own,
+             sized to fit, with a small margin.
 }
 \examples{
 library(ggplot2)
@@ -60,5 +64,6 @@ save_plot(p, f)
 
 }
 \seealso{
-\code{\link{panel_size_theme}}, \code{\link{export_source_data}}
+\code{\link{panel_size_theme}}, \code{\link{export_source_data}},
+         \code{\link{extract_legend}}
 }

@@ -7,7 +7,9 @@
 bt_palette(name, n = NULL, reverse = FALSE)
 }
 \arguments{
-\item{name}{Palette name (case is ignored), see \code{\link{list_palettes}}}
+\item{name}{Palette name (case is ignored), see \code{\link{list_palettes}}.
+Add "_r" to any name for the palette reversed, e.g.
+"viridis_r" (yellow to dark purple) or "npg_r"}
 
 \item{n}{Number of colours. If NULL (default), all colours of the palette.
 Qualitative palettes return their first `n` colours and are never

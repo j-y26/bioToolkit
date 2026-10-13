@@ -11,8 +11,7 @@ fixed_gtable_size(gt, patchwork = FALSE, margin = 0.1)
 
 \item{patchwork}{Whether `gt` is the gtable of a patchwork}
 
-\item{margin}{Smallest gap between a legend and the device edge in a
-patchwork, in inches}
+\item{margin}{Smallest gap between a legend and the device edge, in inches}
 }
 \value{
 Named numeric vector with width and height in inches
@@ -21,13 +20,12 @@ Named numeric vector with width and height in inches
 A legend taller than a fixed-height panel (right/left) or wider than a
 fixed-width panel (top/bottom) spills outside its cell and is not reflected
 in the gtable's widths/heights. The legend is centred on its cell and the
-gtable is centred on the device, so the device is enlarged to the legend size
-plus twice the larger of the spaces before and after its cell, which keeps at
-least the plot margin on both sides of the legend.
-}
-\details{
-In a patchwork, the space before and after a legend's cell holds the other
-plots rather than margins, so the device is instead enlarged just enough for
-the legend to keep `margin` inches from the device edge.
+gtable is centred on the device, so the device is enlarged just enough for
+the legend to keep `margin` inches from the device edge
+(\code{overflow_fit()}); a legend that spills into the strips or titles
+above or below its cell, but stays within the gtable, needs no more room.
+(Before bioToolkit 0.7.0, single plots were enlarged to the legend size
+plus twice the larger of the spaces before and after its cell, which added
+up to several inches of blank space to grid plots with tall strips.)
 }
 \keyword{internal}

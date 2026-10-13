@@ -2,123 +2,192 @@
 % Please edit documentation in R/plot_rnaseq.R
 \name{plot_volcano}
 \alias{plot_volcano}
-\title{Volcano plot for gene expression analysis}
+\title{Volcano plot of differential expression results}
 \usage{
 plot_volcano(
   data,
-  de_method = "edgeR",
-  x = NULL,
-  y = NULL,
-  label = "row.names",
-  selected_labels = rownames(data),
-  draw_connectors = TRUE,
-  p_cutoff = 0.05,
-  fc_cutoff = 0,
-  up_color = "firebrick4",
-  down_color = "midnightblue",
-  non_de_color = "grey",
-  up_label = "Up-regulated",
-  down_label = "Down-regulated",
-  non_de_label = "Non-DE",
-  number_label = TRUE,
-  num_label_vjust = 0,
-  num_label_size = 4.5,
-  alpha = 0.5,
-  pt_size = 2,
-  x_lim = NULL,
-  y_lim = NULL,
-  x_lab = bquote(~log[2] ~ "fold change"),
-  y_lab = bquote(~-log[10] ~ adj.P),
-  axis_lab_size = 12,
-  lab_size = 3.5,
-  legend_lab_size = 12,
-  legend_lab_position = "top",
-  legend_icon_size = 4,
-  max_overlaps = 10,
-  bold_text = TRUE,
-  ...
+  method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+  feature.col = NULL,
+  logfc.col = NULL,
+  p.col = NULL,
+  padj.col = NULL,
+  padj.cutoff = 0.05,
+  logfc.cutoff = 0,
+  label = c("top", "selected", "none"),
+  label.n = 10,
+  label.features = NULL,
+  label.rank = c("padj", "logfc", "product"),
+  label.size = NULL,
+  italic.genes = TRUE,
+  annotate.counts = c("corner", "arrow", "none"),
+  symmetric = TRUE,
+  cols = NULL,
+  up.label = "Up-regulated",
+  down.label = "Down-regulated",
+  ns.label = "Not significant",
+  pt.size = 1,
+  alpha = 0.6,
+  raster = NULL,
+  raster.dpi = 1000,
+  panel.width = 3,
+  panel.height = panel.width,
+  legend.position = NULL,
+  bg = "transparent",
+  seed = 42
 )
 }
 \arguments{
-\item{data}{A data frame containing the gene expression data}
+\item{data}{DE results of one comparison: a data frame (or a DESeq2
+`DESeqResults` / edgeR `TopTags`), with feature names as row
+names or in `feature.col`}
 
-\item{de_method}{The method used for differential expression analysis.
-Must be one of "edgeR", "DESeq2", "limma", or "seurat". Default is "edgeR".
-Use this argument to automatically set the column names
-for log2 fold change and adjusted P-value. If provided value
-is not "edgeR", "DESeq2", "limma", or "seurat", the user must provide both the
-column names for log2 fold change and P-value using the
-\code{x} and \code{y} arguments, respectively.}
+\item{method}{The tool that produced the results: "auto" (default) detects
+it from the column names; or one of "edgeR", "DESeq2",
+"limma" and "seurat"}
 
-\item{x}{The column name of the log2 fold change. If not \code{NULL},
-overrides the value obtained from de_method.}
+\item{feature.col}{Column of feature (gene) names. If NULL (default), the
+row names (or the `gene` column of Seurat results)}
 
-\item{y}{The column name of the P-value for use. If not \code{NULL},
-overrides the value obtained from de_method.}
+\item{logfc.col}{Column of the log2 fold change. If NULL (default), taken
+from `method`. To plot a shrunken log fold change (DESeq2
+\code{lfcShrink()}, e.g. with apeglm), which is less noisy
+for lowly expressed genes, give its column here}
 
-\item{label}{The column name of the gene names}
+\item{p.col}{Column of the raw p-value. If NULL (default), taken from
+`method`. Only used to compute adjusted p-values
+(Benjamini-Hochberg) when the table has none}
 
-\item{selected_labels}{A vector of gene names to be highlighted in the plot}
+\item{padj.col}{Column of the adjusted p-value. If NULL (default), taken
+from `method`. It is both plotted on the y-axis and used to
+decide significance}
 
-\item{draw_connectors}{A logical value indicating whether to draw connectors}
+\item{padj.cutoff}{Adjusted p-value below which a feature is significant,
+default is 0.05. Drawn as a dashed horizontal line}
 
-\item{p_cutoff}{The p-value cutoff for significance}
+\item{logfc.cutoff}{Absolute log2 fold change a significant feature must
+exceed, default is 0 (any change). When above 0, drawn
+as dashed vertical lines}
 
-\item{fc_cutoff}{The log2 fold change cutoff for significance}
+\item{label}{Which features to label:
+\describe{
+  \item{"top"}{(default) the `label.n` most significant
+        features of each direction, ranked by `label.rank`,
+        plus any `label.features`}
+  \item{"selected"}{only `label.features`, whether or not
+        they are significant}
+  \item{"none"}{no labels}
+}}
 
-\item{up_color}{The color for up-regulated genes}
+\item{label.n}{Number of features to label per direction with
+`label = "top"`, default is 10. Every requested label is
+drawn; when long labels (e.g. Ensembl IDs) crowd the same
+corner they can overlap, so lower `label.n` or widen
+`panel.width`}
 
-\item{down_color}{The color for down-regulated genes}
+\item{label.features}{Features to label. Always labelled with
+`label = "selected"`, and in addition to the top
+features with `label = "top"`. Matched exactly, so
+the case of gene symbols matters (e.g. "CD3E" in
+human, "Cd3e" in mouse and rat)}
 
-\item{non_de_color}{The color for non-differentially expressed genes}
+\item{label.rank}{How the top features are ranked with `label = "top"`:
+"padj" (default; smallest adjusted p-value, ties broken
+by the largest absolute log2 fold change), "logfc"
+(largest absolute log2 fold change) or "product"
+(-log10 adjusted p-value x absolute log2 fold change,
+which favours features that are both)}
 
-\item{up_label}{The label for up-regulated genes}
+\item{label.size}{Size of the labels in mm. If NULL (default), the small
+small text size of the theme (9 pt)}
 
-\item{down_label}{The label for down-regulated genes}
+\item{italic.genes}{Whether labels are gene names, set in italics. Default
+is TRUE; set FALSE for features that are not genes
+(e.g. peaks or pathways). Labels are bold either way}
 
-\item{non_de_label}{The label for non-differentially expressed genes}
+\item{annotate.counts}{How to show the numbers of up- and down-regulated
+features: "corner" (default; in the bottom corners),
+"arrow" (arrows naming the direction at the top of
+the panel, with the counts below them) or "none"}
 
-\item{number_label}{A logical value indicating whether to display the number
-of up and down-regulated genes}
+\item{symmetric}{Whether the x-axis is symmetric around 0, default is TRUE}
 
-\item{num_label_vjust}{The vertical justification for the number labels}
+\item{cols}{Colours of the up-regulated, down-regulated and not significant
+features: a vector named `up`, `down` and `ns` (any of them;
+the others keep their default), or three colours in that
+order. NULL (default) is
+`c(up = "firebrick4", down = "midnightblue", ns = "grey75")`}
 
-\item{num_label_size}{The size of the number labels}
+\item{up.label, down.label, ns.label}{Names of the three classes in the
+legend (and next to the arrows with `annotate.counts = "arrow"`).
+Default "Up-regulated", "Down-regulated" and "Not significant"}
 
-\item{alpha}{The transparency level of the points in the plot}
+\item{pt.size}{Point size, default is 1}
 
-\item{pt_size}{The size of the points in the plot}
+\item{alpha}{Point opacity, default is 0.6}
 
-\item{x_lim}{The limits for the x-axis}
+\item{raster}{Whether to rasterize the points while keeping labels, lines
+and text as vectors: NULL (default) rasterizes when more than
+5,000 features are drawn, or TRUE / FALSE}
 
-\item{y_lim}{The limits for the y-axis}
+\item{raster.dpi}{Resolution of the rasterized points, default is 1000.
+Match the `dpi` used when saving raster (e.g. png) output}
 
-\item{x_lab}{The label for the x-axis}
+\item{panel.width}{Width of the panel in inches, default is 3}
 
-\item{y_lab}{The label for the y-axis}
+\item{panel.height}{Height of the panel in inches. Default is
+`panel.width`, a square panel, so that setting
+`panel.width` alone resizes the plot}
 
-\item{axis_lab_size}{The size of the axis labels}
+\item{legend.position}{Position of the legend. If NULL (default), "right",
+or "none" with `annotate.counts = "arrow"` (the
+arrows already name the directions). A legend at the
+"top" is usually wider than the panel, which widens
+the saved figure}
 
-\item{lab_size}{The size of the gene labels}
+\item{bg}{Background colour, default is "transparent"}
 
-\item{legend_lab_size}{The size of the legend labels}
-
-\item{legend_lab_position}{The position of the legend labels}
-
-\item{legend_icon_size}{The size of the legend icons}
-
-\item{max_overlaps}{The maximum number of overlaps for the gene labels}
-
-\item{bold_text}{A logical value indicating whether axis titles, axis text,
-legend text, and plot labels should be bold. Default is TRUE.}
+\item{seed}{Random seed for the placement of labels, default is 42}
 }
 \value{
-A volcano plot
+A ggplot object
 }
 \description{
-Generate a volcano plot for gene expression analysis based on
-             the log2 fold change and the -log10 p-value.
+Plots the log2 fold change of each feature against its
+             -log10 adjusted p-value, colouring features that are
+             significantly up- or down-regulated, with optional labels and
+             counts of DE features. Reads edgeR, DESeq2, limma and Seurat
+             results directly (see \code{\link{standardize_de}}).
 }
 \details{
-This function generates a volcano plot for gene expression analysis.
+A feature is up-regulated when its adjusted p-value is below `padj.cutoff`
+and its log2 fold change is above `logfc.cutoff`, down-regulated when below
+`-logfc.cutoff`, and not significant otherwise. Features without a log fold
+change or an adjusted p-value are not drawn.
+
+The plot has a fixed panel size; save it with \code{\link{save_plot}},
+which sizes the file to fit. Its data (one row per drawn feature, with
+columns `direction`, `neg_log10_padj` and `labelled` added to the
+standardized DE table) can be written with
+\code{\link{export_source_data}}.
+}
+\examples{
+set.seed(1)
+de <- data.frame(
+    logFC = rnorm(2000, sd = 1.5),
+    logCPM = runif(2000, 0, 10),
+    PValue = runif(2000)^4,
+    row.names = paste0("Gene", 1:2000)
+)
+de$FDR <- p.adjust(de$PValue, "BH")
+plot_volcano(de)
+plot_volcano(de, label = "selected", label.features = c("Gene1", "Gene2"))
+plot_volcano(de, annotate.counts = "arrow", logfc.cutoff = 1)
+\dontrun{
+save_plot(plot_volcano(de), "volcano.pdf")
+}
+
+}
+\seealso{
+\code{\link{standardize_de}}, \code{\link{save_plot}},
+         \code{\link{export_source_data}}
 }

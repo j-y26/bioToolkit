@@ -22,7 +22,9 @@
 #'
 #' @references https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
 #'
-ggplotColours <- function(n = 6, h = c(0, 360) + 15, showColor = FALSE) {
+ggplotColours <- function(n = 6,
+                          h = c(0, 360) + 15,
+                          showColor = FALSE) {
   if ((diff(h) %% 360) < 1) h[2] <- h[2] - 360/n
   colors <- hcl(h = (seq(h[1], h[2], length = n)), c = 100, l = 65)
 
@@ -50,7 +52,8 @@ ggplotColours <- function(n = 6, h = c(0, 360) + 15, showColor = FALSE) {
 #'
 #' @export
 #'
-mix_colors <- function(colors, weights = rep(1, length(colors))) {
+mix_colors <- function(colors,
+                       weights = rep(1, length(colors))) {
   # Check if the length of colors and weights are the same
   if (length(colors) != length(weights)) {
     stop("The length of colors and weights must be the same")

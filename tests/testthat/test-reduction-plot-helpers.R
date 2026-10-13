@@ -64,7 +64,8 @@ test_that("resolve_na_cutoff separates zeros only for non-negative data", {
 })
 
 test_that("resolve_continuous_palette resolves every kind of palette", {
-    expect_equal(resolve_continuous_palette(NULL, FALSE), bt_palette("bioToolkit"))
+    expect_equal(resolve_continuous_palette(NULL, FALSE), bt_palette("plasma_r"))
+    expect_equal(resolve_continuous_palette(NULL, FALSE, default = "viridis_r"), bt_palette("viridis_r"))
     expect_equal(resolve_continuous_palette(NULL, TRUE), bt_palette("blue-magenta"))
     expect_equal(resolve_continuous_palette("blue-purple", TRUE), bt_palette("blue-purple"))
     expect_length(resolve_continuous_palette("mako", FALSE), 256)
@@ -80,7 +81,7 @@ test_that("resolve_continuous_palette resolves every kind of palette", {
 })
 
 test_that("default palette starts light and coloured, not grey", {
-    pal <- bt_palette("bioToolkit")
+    pal <- bt_palette("plasma_r")
     low <- grDevices::col2rgb(pal[1])[, 1]
     high <- grDevices::col2rgb(pal[256])[, 1]
     expect_gt(max(low) - min(low), 100)

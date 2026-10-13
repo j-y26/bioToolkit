@@ -16,9 +16,13 @@
 #                 a vector of colours (named by group, or in level order)
 #                 replaces it. Default: "scanpy-20" up to 20 groups,
 #                 "scanpy-102" beyond.
-#     continuous  `cols = NULL` gives "bioToolkit" (sequential) or
-#                 "blue-magenta" (diverging); a palette name, or colours from
-#                 low to high, e.g. c(low, high) or c(low, mid, high).
+#     continuous  `cols = NULL` gives the plot's default: "plasma_r" for
+#                 expression on embeddings, "viridis_r" for unscaled dot
+#                 plots, "seq-purple" (etc.) for significance, "blue-magenta"
+#                 for diverging values; a palette name, or colours from low
+#                 to high, e.g. c(low, high) or c(low, mid, high).
+# * Any palette name with "_r" appended is that palette reversed
+#   (find_palette()); reversed palettes are not stored separately.
 #
 # Adding a palette
 # ----------------
@@ -136,11 +140,18 @@ palette_list <- function() {
         paired = pal(grDevices::palette.colors(palette = "Paired"), "qualitative",
                      "ColorBrewer 'Paired' (C. Brewer), as in grDevices::palette.colors(); light / dark pairs"),
         # Sequential: low to high values -------------------------------------------
-        # Reversed plasma, trimmed at its pale yellow end so that low values stay
-        # visible on white: low values are light and coloured, never grey, so
-        # they are not mistaken for cells drawn in `na.value`
-        bioToolkit = pal(viridisLite::plasma(256, begin = 0, end = 0.92, direction = -1), "sequential",
-                         paste("Trimmed reversed plasma from", viridis, "Default for expression", sep = "; ")),
+        # Single-hue ramps (pale tint to deep colour) for any continuous,
+        # one-directional value: significance, expression, scores. All are
+        # trimmed to the same lightness range (see hcl_single_hue()), so that
+        # the same lightness means the same value whatever the hue: panels of
+        # one figure drawn in different hues stay comparable
+        `seq-purple` = pal(hcl_single_hue("Purples 3"), "sequential", hcl_source("Purples 3")),
+        `seq-blue` = pal(hcl_single_hue("Blues 3"), "sequential", hcl_source("Blues 3")),
+        `seq-teal` = pal(hcl_single_hue("Mint"), "sequential", hcl_source("Mint")),
+        `seq-green` = pal(hcl_single_hue("Greens 3"), "sequential", hcl_source("Greens 3")),
+        `seq-orange` = pal(hcl_single_hue("Oranges"), "sequential", hcl_source("Oranges")),
+        `seq-red` = pal(hcl_single_hue("Reds 3"), "sequential", hcl_source("Reds 3")),
+        `seq-magenta` = pal(hcl_single_hue("Magenta"), "sequential", hcl_source("Magenta")),
         viridis = pal(viridisLite::viridis(256), "sequential", viridis),
         magma = pal(viridisLite::magma(256), "sequential", viridis),
         inferno = pal(viridisLite::inferno(256), "sequential", viridis),
@@ -178,18 +189,74 @@ palette_list <- function() {
 }
 
 
+#' A single-hue sequential palette, trimmed to a lightness range
+#'
+#' Takes one of base R's HCL sequential palettes (\code{grDevices::hcl.colors()},
+#' Zeileis et al. 2020) and keeps the part between lightness `light` and
+#' `dark` (CIE L*, 0 = black, 100 = white). The untrimmed palettes run from
+#' near white, which vanishes on a white or transparent background, to near
+#' black, which hides the hue; L* 80 is a clear tint (dots of the lowest
+#' values stay visible on white) and L* 30 still clearly
+#' coloured. Every palette trimmed this way spans the same lightness, so that
+#' different hues encode the same value with the same lightness.
+#'
+#' @param name Name of an \code{hcl.colors()} sequential palette
+#'
+#' @param n Number of colours, default is 9
+#'
+#' @param light,dark Lightness (L*) of the light and dark ends, default 80
+#'                   and 30
+#'
+#' @return `n` colours from light to dark, taken from the palette (not
+#'         interpolated)
+#'
+#' @keywords internal
+hcl_single_hue <- function(name,
+                           n = 9,
+                           light = 80,
+                           dark = 30) {
+    # Light to dark, finely sampled; lightness L* of each colour (CIELUV L*,
+    # the L of HCL)
+    full <- grDevices::hcl.colors(501, name, rev = TRUE)
+    lum <- grDevices::convertColor(t(grDevices::col2rgb(full)) / 255, from = "sRGB", to = "Luv")[, 1]
+    keep <- full[lum <= light & lum >= dark]
+    keep[round(seq(1, length(keep), length.out = n))]
+}
+
+
+#' Source text of a palette trimmed by hcl_single_hue()
+#'
+#' @param name Name of the \code{hcl.colors()} palette
+#'
+#' @keywords internal
+hcl_source <- function(name) {
+    paste0("grDevices::hcl.colors(\"", name, "\") (Zeileis et al. 2020, J Stat Softw 96(1)), ",
+           "trimmed to lightness L* 80 to 30")
+}
+
+
 #' Look up a palette by name, ignoring case
+#'
+#' A name ending in "_r" (matplotlib's convention) is the palette of the
+#' name without it, reversed: "viridis_r", "plasma_r", "npg_r"... Reversed
+#' palettes are not stored, so every palette has one.
 #'
 #' @param name Palette name
 #'
-#' @return The palette entry, or NULL when there is none
+#' @return The palette entry (colours reversed for an "_r" name), or NULL
+#'         when there is none
 #'
 #' @keywords internal
 find_palette <- function(name) {
     if (!(is.character(name) && length(name) == 1 && !is.na(name))) return(NULL)
     pals <- palette_list()
-    i <- match(tolower(name), tolower(names(pals)))
-    if (is.na(i)) NULL else pals[[i]]
+    reverse <- grepl("_r$", name, ignore.case = TRUE)
+    base <- if (reverse) sub("_r$", "", name, ignore.case = TRUE) else name
+    i <- match(tolower(base), tolower(names(pals)))
+    if (is.na(i)) return(NULL)
+    entry <- pals[[i]]
+    if (reverse) entry$colours <- rev(entry$colours)
+    entry
 }
 
 
@@ -216,7 +283,9 @@ is_colour <- function(x) {
 #'              Use \code{\link{show_palettes}} to see the colours with their
 #'              index.
 #'
-#' @param name Palette name (case is ignored), see \code{\link{list_palettes}}
+#' @param name Palette name (case is ignored), see \code{\link{list_palettes}}.
+#'             Add "_r" to any name for the palette reversed, e.g.
+#'             "viridis_r" (yellow to dark purple) or "npg_r"
 #'
 #' @param n Number of colours. If NULL (default), all colours of the palette.
 #'          Qualitative palettes return their first `n` colours and are never
@@ -243,7 +312,9 @@ is_colour <- function(x) {
 #'
 #' @export
 #'
-bt_palette <- function(name, n = NULL, reverse = FALSE) {
+bt_palette <- function(name,
+                       n = NULL,
+                       reverse = FALSE) {
     entry <- find_palette(name)
     if (is.null(entry)) {
         stop("Unknown palette '", paste(name, collapse = " "), "'. Available: ",
@@ -303,8 +374,9 @@ list_palettes <- function(type = NULL) {
 #' @description Draws each palette as a row of swatches numbered by their
 #'              index, so that colours can be picked and reordered with
 #'              `bt_palette(name)[indices]`. Long palettes wrap onto several
-#'              rows. Palettes defined by many colours (the viridis family and
-#'              "bioToolkit") are drawn as a smooth ramp instead. The plot
+#'              rows. Palettes defined by many colours (the viridis family)
+#'              are drawn as a smooth ramp instead. Names ending in "_r" show
+#'              a palette reversed. The plot
 #'              fills the plotting window; it is meant for browsing, not for
 #'              publication.
 #'
@@ -323,7 +395,9 @@ list_palettes <- function(type = NULL) {
 #'
 #' @export
 #'
-show_palettes <- function(names = NULL, type = NULL, ncol = 20) {
+show_palettes <- function(names = NULL,
+                          type = NULL,
+                          ncol = 20) {
     if (is.null(names)) names <- list_palettes(type)$name
     rows <- lapply(names, function(nm) {
         cols <- bt_palette(nm)
@@ -392,7 +466,9 @@ show_palettes <- function(names = NULL, type = NULL, ncol = 20) {
 #'
 #' @export
 #'
-check_palette <- function(cols, min.distance = 10, cvd = c("deutan", "protan")) {
+check_palette <- function(cols,
+                          min.distance = 10,
+                          cvd = c("deutan", "protan")) {
     check_installed("colorspace", reason = "to simulate colour vision deficiency")
     cvd <- match.arg(cvd, c("deutan", "protan", "tritan"), several.ok = TRUE)
     if (length(cols) == 1 && !is.null(find_palette(cols))) cols <- bt_palette(cols)
@@ -462,7 +538,9 @@ default_colours <- function(n) {
 #' @return A list with `group` and `cols`, named by group
 #'
 #' @keywords internal
-group_colours <- function(cols, group, arg = "cols") {
+group_colours <- function(cols,
+                          group,
+                          arg = "cols") {
     lv <- levels(group)
     if (length(cols) == 1 && !is.null(entry <- find_palette(cols))) {
         if (entry$type != "qualitative") {
@@ -491,7 +569,7 @@ group_colours <- function(cols, group, arg = "cols") {
 #' Shared by every continuous scale of the package (feature plots, dot plots,
 #' heatmaps, density differences), so that they all accept the same values.
 #'
-#' @param cols NULL for the default ("bioToolkit", or "blue-magenta" for a
+#' @param cols NULL for the default (`default`, or "blue-magenta" for a
 #'             diverging scale); a sequential or diverging palette name of the
 #'             package, or an RColorBrewer palette name; or two or more
 #'             colours from low to high, e.g. `c(low, high)` or
@@ -499,11 +577,16 @@ group_colours <- function(cols, group, arg = "cols") {
 #'
 #' @param diverging Whether the scale is diverging, which sets the default
 #'
+#' @param default Default sequential palette, "plasma_r" unless the plot
+#'                sets another
+#'
 #' @return A vector of colours, from low to high
 #'
 #' @keywords internal
-resolve_continuous_palette <- function(cols, diverging) {
-    if (is.null(cols)) cols <- if (diverging) "blue-magenta" else "bioToolkit"
+resolve_continuous_palette <- function(cols,
+                                       diverging,
+                                       default = "plasma_r") {
+    if (is.null(cols)) cols <- if (diverging) "blue-magenta" else default
     if (length(cols) == 1) {
         entry <- find_palette(cols)
         if (!is.null(entry)) {
@@ -513,10 +596,13 @@ resolve_continuous_palette <- function(cols, diverging) {
             }
             return(entry$colours)
         }
+        # RColorBrewer names, also with "_r" for reversed (e.g. "BuPu_r")
+        brewer <- sub("_r$", "", cols)
         if (requireNamespace("RColorBrewer", quietly = TRUE) &&
-            cols %in% rownames(RColorBrewer::brewer.pal.info)) {
-            n <- RColorBrewer::brewer.pal.info[cols, "maxcolors"]
-            return(RColorBrewer::brewer.pal(n, cols))
+            brewer %in% rownames(RColorBrewer::brewer.pal.info)) {
+            n <- RColorBrewer::brewer.pal.info[brewer, "maxcolors"]
+            out <- RColorBrewer::brewer.pal(n, brewer)
+            return(if (brewer != cols) rev(out) else out)
         }
         stop("Unknown palette '", cols, "'; give a palette name (see list_palettes()), ",
              "an RColorBrewer palette name, or two or more colours from low to high", call. = FALSE)

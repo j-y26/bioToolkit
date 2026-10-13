@@ -3,7 +3,8 @@
 
 # Helper function for log normalization of expression data for calc_module_scores
 # and calc_module_scores_ssgsea functions
-log_normalize <- function(data, normalized = TRUE) {
+log_normalize <- function(data,
+                          normalized = TRUE) {
   if (!normalized) {
     # Assume using raw counts
     check_installed("edgeR", reason = "for normalization of raw counts")

@@ -1,15 +1,11 @@
 # Shared theme (F3), fixed-size engine (F2) and source data (F6)
 
-test_that("presets resolve, scale and validate", {
-    expect_equal(preset_sizes("default")$base, 11)
-    expect_equal(preset_sizes("nature")[c("base", "small", "line")], list(base = 7, small = 6, line = 0.25))
-    scaled <- preset_sizes("default", base.size = 22)
+test_that("theme sizes are fixed and scale with a custom base size", {
+    expect_equal(theme_sizes(), list(base = 11, small = 9, large = 12, line = 0.5, axis = 1))
+    scaled <- theme_sizes(base.size = 22)
     expect_equal(scaled[c("base", "small", "large")], list(base = 22, small = 18, large = 24))
-    expect_error(preset_sizes("science"), "must be one of")
-    op <- options(bioToolkit.preset = "nature")
-    on.exit(options(op))
-    expect_equal(preset_sizes()$base, 7)
-    expect_equal(preset_scale(), 7 / 11)
+    # Line widths do not scale with the text
+    expect_equal(scaled[c("line", "axis")], list(line = 0.5, axis = 1))
 })
 
 test_that("line widths in points convert to ggplot2 units", {
@@ -18,13 +14,18 @@ test_that("line widths in points convert to ggplot2 units", {
     expect_equal(pt_to_size(ggplot2::.pt), 1)
 })
 
-test_that("theme_bioToolkit applies the preset sizes", {
-    th <- theme_bioToolkit("axis", preset = "nature")
-    expect_equal(th$axis.text$size, 6)
-    expect_equal(th$axis.title$size, 7)
-    expect_equal(th$axis.line$linewidth, pt_to_linewidth(0.25))
+test_that("theme_bioToolkit applies the theme sizes", {
+    th <- theme_bioToolkit("axis")
+    expect_equal(th$axis.text$size, 9)
+    expect_equal(th$axis.title$size, 11)
+    # 1 pt axes, while the thin lines (grid plots) stay at 0.5 pt
+    expect_equal(th$axis.line$linewidth, pt_to_linewidth(1))
+    expect_equal(th$axis.ticks$linewidth, pt_to_linewidth(1))
+    expect_equal(theme_bioToolkit("axis", base.size = 8)$axis.text$size, 9 * 8 / 11)
     grid <- theme_bioToolkit("grid")
-    expect_s3_class(grid$axis.line, "ggplot2::element_blank")
+    # Grid plots have the same 1 pt axes
+    expect_equal(grid$axis.line$linewidth, pt_to_linewidth(1))
+    expect_equal(grid$axis.ticks$linewidth, pt_to_linewidth(1))
     expect_equal(grid$axis.text.x$angle, 45)
     emb <- theme_bioToolkit("embedding")
     expect_equal(emb$legend.text$size, 11)
@@ -66,15 +67,16 @@ test_that("a dot grid with 10 rows of 0.2 in measures 2 in tall", {
         scale_y_discrete(expand = grid_expansion()) +
         theme_bioToolkit("grid") +
         panel_size_theme(grid_panel_size(4, 0.2), grid_panel_size(10, 0.2))
+    # A null device, so that building the grob writes no Rplots.pdf
+    grDevices::pdf(NULL)
+    on.exit(grDevices::dev.off(), add = TRUE)
     gt <- ggplotGrob(p)
     panel <- gt$layout[gt$layout$name == "panel", ]
     expect_equal(grid::convertHeight(gt$heights[panel$t], "in", valueOnly = TRUE), 2)
     expect_equal(grid::convertWidth(gt$widths[panel$l], "in", valueOnly = TRUE), 0.8)
     # Each category spans exactly one cell: the y range is 10 units
     expect_equal(diff(ggplot_build(p)$layout$panel_params[[1]]$y$continuous_range), 10)
-    grDevices::pdf(NULL)
     size <- fixed_gtable_size(gt)
-    grDevices::dev.off()
     expect_gt(size[["height"]], 2)
 })
 

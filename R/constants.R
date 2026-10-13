@@ -1,6 +1,8 @@
 # Define global constants used in the package
 
-# Column names in the DE result data frame from edgeR and DESeq2
+# Column names in the DE result data frame from edgeR and DESeq2, used by
+# rank_de_genes() and filter_de_genes(). Plots read DE tables with
+# standardize_de() and DE_COLUMN_PRESETS below instead
 PVAL_COL_EDGER <- "FDR"
 FC_COL_EDGER <- "logFC"
 PVAL_COL_DESEQ2 <- "padj"

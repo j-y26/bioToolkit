@@ -38,7 +38,8 @@
 #'
 #' @export
 #'
-export_source_data <- function(plot, file = NULL) {
+export_source_data <- function(plot,
+                               file = NULL) {
     tables <- source_tables(plot)
     if (length(tables) == 0) stop("The plot holds no data to export", call. = FALSE)
     if (is.null(file)) return(invisible(tables))
@@ -72,7 +73,8 @@ export_source_data <- function(plot, file = NULL) {
 #' @return A named list of data frames
 #'
 #' @keywords internal
-source_tables <- function(plot, prefix = NULL) {
+source_tables <- function(plot,
+                          prefix = NULL) {
     if (inherits(plot, "patchwork")) {
         plots <- patchwork_parts(plot)$plots
         nm <- names(plots)

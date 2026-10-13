@@ -1,4 +1,8 @@
 # Package infrastructure helpers
+#
+# `@import rlang` below keeps rlang's helpers (e.g. `%||%`, which base R only
+# has from 4.4) available package-wide; it was on de_dot_plot(), removed in
+# 0.7.0. The package's own check_installed() takes precedence over rlang's.
 
 #' Check if a package is installed, with informative error message
 #'
@@ -7,8 +11,11 @@
 #'
 #' @return Invisible TRUE if package is available; otherwise stops with an error.
 #'
+#' @import rlang
+#'
 #' @keywords internal
-check_installed <- function(pkg, reason = NULL) {
+check_installed <- function(pkg,
+                            reason = NULL) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
     msg <- paste0("Package '", pkg, "' is required")
     if (!is.null(reason)) {
@@ -74,7 +81,9 @@ check_fixed_panel_support <- function() {
 #' @return A vector with one value per cell in `cells`
 #'
 #' @keywords internal
-fetch_meta <- function(object, var, cells) {
+fetch_meta <- function(object,
+                       var,
+                       cells) {
     data <- withCallingHandlers(
         Seurat::FetchData(object, vars = var, cells = cells),
         warning = function(w) {
@@ -100,7 +109,9 @@ fetch_meta <- function(object, var, cells) {
 #' @return A factor along `cells`
 #'
 #' @keywords internal
-fetch_group <- function(object, group.by, cells) {
+fetch_group <- function(object,
+                        group.by,
+                        cells) {
     if (is.null(group.by)) return(Seurat::Idents(object)[cells])
     values <- fetch_meta(object, group.by, colnames(object))
     group <- if (is.factor(values)) values else factor(values)
@@ -117,7 +128,8 @@ fetch_group <- function(object, group.by, cells) {
 #' @return NULL, TRUE or FALSE
 #'
 #' @keywords internal
-resolve_raster_arg <- function(raster, dots) {
+resolve_raster_arg <- function(raster,
+                               dots) {
     if (!is.null(dots$rasterize)) {
         warning("`rasterize` is deprecated, use `raster` instead", call. = FALSE)
         raster <- if (identical(dots$rasterize, "auto")) NULL else dots$rasterize
@@ -143,7 +155,8 @@ resolve_raster_arg <- function(raster, dots) {
 #' @return A list with the integer `dims` and their arrow `labels`
 #'
 #' @keywords internal
-resolve_dims <- function(dims, reduction) {
+resolve_dims <- function(dims,
+                         reduction) {
     if (is.character(dims)) return(list(dims = c(1L, 2L), labels = dims))
     if (length(dims) != 2 || anyNA(dims)) stop("`dims` must be two dimension indices", call. = FALSE)
     dims <- as.integer(dims)
@@ -164,7 +177,9 @@ resolve_dims <- function(dims, reduction) {
 #'         order of `all_cells`
 #'
 #' @keywords internal
-resolve_cells <- function(cells, all_cells, arg = "cells") {
+resolve_cells <- function(cells,
+                          all_cells,
+                          arg = "cells") {
     if (is.null(cells)) return(all_cells)
     if (is.list(cells)) cells <- unlist(cells, use.names = FALSE)
     if (is.numeric(cells)) cells <- all_cells[cells[cells >= 1 & cells <= length(all_cells)]]
@@ -189,7 +204,9 @@ resolve_cells <- function(cells, all_cells, arg = "cells") {
 #' @return A logical vector, one value per cell in `cells`
 #'
 #' @keywords internal
-highlight_flags <- function(object, cells, cells.highlight) {
+highlight_flags <- function(object,
+                            cells,
+                            cells.highlight) {
     if (is.null(cells.highlight)) return(rep(TRUE, length(cells)))
     highlight <- resolve_cells(cells.highlight, colnames(object), arg = "cells.highlight")
     flags <- cells %in% highlight
@@ -219,7 +236,12 @@ highlight_flags <- function(object, cells, cells.highlight) {
 #'         `split_plot` and the number of panels `n_panels`
 #'
 #' @keywords internal
-reduction_data <- function(object, reduction, dims, cells, split.by, full.extent) {
+reduction_data <- function(object,
+                           reduction,
+                           dims,
+                           cells,
+                           split.by,
+                           full.extent) {
     emb <- Seurat::Embeddings(object, reduction = reduction)
     if (ncol(emb) < max(dims)) {
         stop("Reduction '", reduction, "' has fewer than ", max(dims), " dimensions", call. = FALSE)
@@ -273,7 +295,10 @@ reduction_data <- function(object, reduction, dims, cells, split.by, full.extent
 #'         index of the bottom left panel, `bottom_left`
 #'
 #' @keywords internal
-panel_layout <- function(n, ncol, by.row, default_ncol) {
+panel_layout <- function(n,
+                         ncol,
+                         by.row,
+                         default_ncol) {
     ncol <- if (is.null(ncol)) default_ncol else as.integer(ncol)
     ncol <- min(max(ncol, 1L), n)
     nrow <- as.integer(ceiling(n / ncol))
@@ -297,7 +322,8 @@ panel_layout <- function(n, ncol, by.row, default_ncol) {
 #' @return The value of `code`
 #'
 #' @keywords internal
-with_seed <- function(seed, code) {
+with_seed <- function(seed,
+                      code) {
     if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
         old_seed <- get(".Random.seed", envir = globalenv(), inherits = FALSE)
         on.exit(assign(".Random.seed", old_seed, envir = globalenv()), add = TRUE)
@@ -322,7 +348,10 @@ with_seed <- function(seed, code) {
 #' @return A function taking and returning a layer
 #'
 #' @keywords internal
-points_layer_fun <- function(raster, n_cells, threshold, dpi) {
+points_layer_fun <- function(raster,
+                             n_cells,
+                             threshold,
+                             dpi) {
     do_raster <- if (is.null(raster)) n_cells > threshold else raster
     if (do_raster) check_installed("ggrastr", reason = "to rasterize points")
     function(layer) {
@@ -363,7 +392,12 @@ halo_colour <- function(bg) {
 #' @return A list of two layers
 #'
 #' @keywords internal
-outline_layers <- function(df, pt.size, outline.size, outline.color, halo.color, layer_fun) {
+outline_layers <- function(df,
+                           pt.size,
+                           outline.size,
+                           outline.color,
+                           halo.color,
+                           layer_fun) {
     outline <- if (length(outline.color) == 1) {
         geom_point(data = df, size = pt.size + outline.size, colour = outline.color, stroke = 0)
     } else {
@@ -398,8 +432,15 @@ outline_layers <- function(df, pt.size, outline.size, outline.color, halo.color,
 #'         when `by_panel`, panel columns
 #'
 #' @keywords internal
-mark_paths <- function(df, by_panel, xlim, ylim, panel.width, panel.height,
-                       expand, smooth, coverage) {
+mark_paths <- function(df,
+                       by_panel,
+                       xlim,
+                       ylim,
+                       panel.width,
+                       panel.height,
+                       expand,
+                       smooth,
+                       coverage) {
     df <- df[!is.na(df$mark), , drop = FALSE]
     x_per_in <- diff(xlim) / panel.width
     y_per_in <- diff(ylim) / panel.height
@@ -449,7 +490,12 @@ mark_paths <- function(df, by_panel, xlim, ylim, panel.width, panel.height,
 #'         separate part of the cloud
 #'
 #' @keywords internal
-cloud_outline <- function(u, v, expand, smooth, coverage, resolution = 0.01) {
+cloud_outline <- function(u,
+                          v,
+                          expand,
+                          smooth,
+                          coverage,
+                          resolution = 0.01) {
     # Blurring with an sd of at least half the distance keeps the cut level
     # at no less than 2.3% of the blurred cloud, well clear of numerical noise
     blur <- max(smooth, expand / 2)
@@ -513,7 +559,9 @@ fill_holes <- function(mask) {
 #' @return A polygon layer, drawn in vector form
 #'
 #' @keywords internal
-mark_layer <- function(paths, linetype, linewidth) {
+mark_layer <- function(paths,
+                       linetype,
+                       linewidth) {
     geom_polygon(
         aes(x = x, y = y, group = ring, colour = I(colour)), data = paths,
         fill = NA, linetype = linetype, linewidth = linewidth, inherit.aes = FALSE,
@@ -541,7 +589,7 @@ extent_scales <- function(rd) {
 #'
 #' The embedding layout of \code{\link{theme_bioToolkit}}, fixed panel sizes
 #' from \code{\link{panel_size_theme}}, and the legend and strip settings of
-#' the reduction plots. Sizes given as NULL keep the preset's.
+#' the reduction plots. Text sizes given as NULL keep the theme's.
 #'
 #' @param panel.width,panel.height Size of a single panel in inches
 #'
@@ -560,15 +608,22 @@ extent_scales <- function(rd) {
 #' @return A ggplot2 theme
 #'
 #' @keywords internal
-embedding_theme <- function(panel.width, panel.height, ncol, nrow, panel.spacing,
-                            legend.position, legend.text.size, strip.text.size,
-                            strip.text.face, bg) {
+embedding_theme <- function(panel.width,
+                            panel.height,
+                            ncol,
+                            nrow,
+                            panel.spacing,
+                            legend.position,
+                            legend.text.size,
+                            strip.text.size,
+                            strip.text.face,
+                            bg) {
     theme_bioToolkit("embedding", bg = bg) +
         panel_size_theme(panel.width, panel.height, ncol = ncol, nrow = nrow,
                          panel.spacing = panel.spacing) +
         theme(
             legend.position = legend.position,
-            # Properties left NULL inherit the preset's
+            # Properties left NULL inherit the theme's
             legend.text = element_text(size = legend.text.size),
             strip.text = element_text(size = strip.text.size, face = strip.text.face)
         )
@@ -592,7 +647,12 @@ embedding_theme <- function(panel.width, panel.height, ncol, nrow, panel.spacing
 #' @return A ggrepel text layer
 #'
 #' @keywords internal
-group_label_layer <- function(df, by_panel, label.size, label.color, halo.color, seed) {
+group_label_layer <- function(df,
+                              by_panel,
+                              label.size,
+                              label.color,
+                              halo.color,
+                              seed) {
     check_installed("ggrepel", reason = "to label groups")
     by <- if (by_panel) cbind(x, y) ~ group + panel else cbind(x, y) ~ group
     centers <- stats::aggregate(by, data = df, FUN = stats::median)
@@ -627,17 +687,14 @@ group_label_layer <- function(df, by_panel, label.size, label.color, halo.color,
 #' @return a ggplot object
 #'
 #' @keywords internal
-add_reduction_arrows <- function(p, reduction, labels, arrow_args, panel = NULL) {
-    # Arrow labels follow the size preset unless given, and so does the
-    # geometry of the arrows, scaled from its defaults (in cm) so that the
-    # arrows keep their proportions to the text
-    if (is.null(arrow_args$text_font_size)) arrow_args$text_font_size <- preset_sizes()$large
-    k <- preset_scale()
-    geometry <- c(arrow_length = 2, x_coord_adjust = 0.25, arrow_size = 0.25,
-                  arrow_width = 0.2, arrow_line_width = 3, text_dst = 0.3)
-    for (arg in names(geometry)) {
-        if (is.null(arrow_args[[arg]])) arrow_args[[arg]] <- geometry[[arg]] * k
-    }
+add_reduction_arrows <- function(p,
+                                 reduction,
+                                 labels,
+                                 arrow_args,
+                                 panel = NULL) {
+    # Arrow labels take the theme's large text size unless given; the arrow
+    # geometry keeps the defaults of dimension_arrow_grob()
+    if (is.null(arrow_args$text_font_size)) arrow_args$text_font_size <- theme_sizes()$large
     # y_coord_adjust defaults to x_coord_adjust in dimension_arrow_grob()
     grob <- do.call(dimension_arrow_grob, c(list(reduction = reduction, dims = labels), arrow_args))
     if (is.null(panel)) {

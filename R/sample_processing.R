@@ -26,7 +26,9 @@
 #' # Extracting the stage info
 #' keywords_to_info(sample, keywords, info)
 #'
-keywords_to_info <- function(sample, keywords, info) {
+keywords_to_info <- function(sample,
+                             keywords,
+                             info) {
   # Check if the length of keywords and info are the same
   if (length(keywords) != length(info)) {
     stop("The length of keywords and info must be the same")

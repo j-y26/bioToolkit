@@ -21,8 +21,9 @@ A ggplot object
 Draws each palette as a row of swatches numbered by their
              index, so that colours can be picked and reordered with
              `bt_palette(name)[indices]`. Long palettes wrap onto several
-             rows. Palettes defined by many colours (the viridis family and
-             "bioToolkit") are drawn as a smooth ramp instead. The plot
+             rows. Palettes defined by many colours (the viridis family)
+             are drawn as a smooth ramp instead. Names ending in "_r" show
+             a palette reversed. The plot
              fills the plotting window; it is meant for browsing, not for
              publication.
 }

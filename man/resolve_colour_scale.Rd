@@ -32,7 +32,7 @@ the scale extend equally far in colour from the centre, so
 that a side with a smaller range does not reach its darkest
 colour}
 
-\item{cols}{The colours of the scale. If NULL (default), "bioToolkit" or,
+\item{cols}{The colours of the scale. If NULL (default), "plasma_r" or,
 for a diverging scale, "blue-magenta". Otherwise two or more
 colours from low to high values, e.g. `c("grey90", "darkred")`
 (low, high) or, for a diverging scale, `c("#2166AC", "white",

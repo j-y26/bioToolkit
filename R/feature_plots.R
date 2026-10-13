@@ -8,8 +8,8 @@
 #'              has a fixed absolute size set by `panel.width` and
 #'              `panel.height`, so that panels are identical across figures; use
 #'              \code{\link{save_plot}} to save the plot, or a patchwork
-#'              combination of plots, sized to fit. Text sizes follow the
-#'              size preset of \code{\link{theme_bioToolkit}}, and the values
+#'              combination of plots, sized to fit. Text sizes follow
+#'              \code{\link{theme_bioToolkit}}, and the values
 #'              behind each panel can be written out with
 #'              \code{\link{export_source_data}}.
 #'
@@ -62,6 +62,15 @@
 #'
 #' @param dims The two dimensions of the reduction to plot, default is 1 and 2
 #'
+#' @param assay Assay that genes are read from. If NULL (default), the
+#'              default assay of the object (\code{SeuratObject::DefaultAssay()}),
+#'              as in Seurat. The assay and layer used are reported in a
+#'              message. Genes are fetched from this assay only: a gene that
+#'              is only in another assay is an error rather than being read
+#'              from it silently. Objects holding both "RNA" and "SCT" assays
+#'              give different values for the same gene, so set it explicitly
+#'              for reproducible figures
+#'
 #' @param slot Layer to fetch expression from, default is "data"
 #'
 #' @param geom How values are drawn: "point" (default) colours each cell; "hex"
@@ -69,7 +78,7 @@
 #'             `hex.fun`); "density" colours each cell by values smoothed over
 #'             neighbouring cells (see `density.method`)
 #'
-#' @param cols The colours of the scale. If NULL (default), "bioToolkit" or,
+#' @param cols The colours of the scale. If NULL (default), "plasma_r" or,
 #'             for a diverging scale, "blue-magenta". Otherwise two or more
 #'             colours from low to high values, e.g. `c("grey90", "darkred")`
 #'             (low, high) or, for a diverging scale, `c("#2166AC", "white",
@@ -129,8 +138,7 @@
 #' @param label.by Metadata column whose groups are labelled when
 #'                 `label = TRUE`. If NULL (default), the active identities
 #'
-#' @param label.size Size of the group labels in mm. If NULL (default), 3.5
-#'                   at the default preset, scaled with the preset's text size
+#' @param label.size Size of the group labels in mm, default is 3.5
 #'
 #' @param label.color Colour of the group labels, default is "black"
 #'
@@ -175,17 +183,12 @@
 #' @param legend.title.face Font face of the legend title. "auto" (default)
 #'                          sets gene names in italics
 #'
-#' @param legend.length Length of the colour bar in inches. If NULL (default),
-#'                      1.5 at the default preset, scaled with the preset's
-#'                      text size
+#' @param legend.length Length of the colour bar in inches, default is 1.5
 #'
-#' @param legend.width Thickness of the colour bar in inches. If NULL
-#'                     (default), 0.15 at the default preset, scaled with the
-#'                     preset's text size
+#' @param legend.width Thickness of the colour bar in inches, default is 0.15
 #'
 #' @param legend.text.size Font size of the legend text and title in points.
-#'                         If NULL (default), the base size of the preset (11
-#'                         at the default preset)
+#'                         If NULL (default), the theme's base size (11)
 #'
 #' @param ncol Number of panel columns. If NULL (default), split panels are
 #'             laid out in a single row, and several features in up to four
@@ -206,8 +209,7 @@
 #' @param panel.spacing Gap between panels in inches, default is 0.1
 #'
 #' @param strip.text.size Font size of the panel labels in points. If NULL
-#'                        (default), the large size of the preset (12 at the
-#'                        default preset)
+#'                        (default), the theme's large size (12)
 #'
 #' @param strip.text.face Font face of the panel labels, default is "bold".
 #'                        Gene names are additionally set in italics
@@ -250,6 +252,7 @@ FeaturePlot_bioToolkit <- function(
     keep.scale = "feature",
     reduction = "umap",
     dims = c(1, 2),
+    assay = NULL,
     slot = "data",
     geom = c("point", "hex", "density"),
     cols = NULL,
@@ -267,7 +270,7 @@ FeaturePlot_bioToolkit <- function(
     outline.size = 0.6,
     label = FALSE,
     label.by = NULL,
-    label.size = NULL,
+    label.size = 3.5,
     label.color = "black",
     hex.bins = 60,
     hex.fun = c("mean", "pct"),
@@ -278,8 +281,8 @@ FeaturePlot_bioToolkit <- function(
     legend.direction = NULL,
     legend.title = "auto",
     legend.title.face = "auto",
-    legend.length = NULL,
-    legend.width = NULL,
+    legend.length = 1.5,
+    legend.width = 0.15,
     legend.text.size = NULL,
     ncol = NULL,
     by.row = TRUE,
@@ -317,14 +320,10 @@ FeaturePlot_bioToolkit <- function(
     raster <- resolve_raster_arg(raster, arrow_args)
     arrow_args$rasterize <- NULL
     dims <- resolve_dims(dims, reduction)
-    # Sizes not given are taken from the preset of theme_bioToolkit()
-    sizes <- preset_sizes()
+    # Text sizes not given are taken from theme_sizes(), as in theme_bioToolkit()
+    sizes <- theme_sizes()
     if (is.null(legend.text.size)) legend.text.size <- sizes$base
     if (is.null(strip.text.size)) strip.text.size <- sizes$large
-    k <- preset_scale()
-    if (is.null(label.size)) label.size <- 3.5 * k
-    if (is.null(legend.length)) legend.length <- 1.5 * k
-    if (is.null(legend.width)) legend.width <- 0.15 * k
 
     features <- unique(features)
     n_features <- length(features)
@@ -340,8 +339,11 @@ FeaturePlot_bioToolkit <- function(
     rd <- reduction_data(object, reduction, dims$dims, cells, split.by, full.extent)
     df <- rd$df
     df$highlight <- highlight_flags(object, rownames(df), cells.highlight)
-    values <- fetch_features(object, features, rownames(df), slot)
     is_gene <- feature_is_gene(object, features)
+    # The assay is resolved, and reported, only when genes are plotted:
+    # metadata columns such as module scores do not come from an assay
+    assay_info <- if (any(is_gene)) resolve_assay(object, assay, slot) else NULL
+    values <- fetch_features(object, features, rownames(df), slot, assay_info)
     if (label) {
         group <- if (is.null(label.by)) {
             Seurat::Idents(object)[rownames(df)]
@@ -422,7 +424,7 @@ FeaturePlot_bioToolkit <- function(
     # when split); otherwise one ggplot per panel, combined with patchwork
     halo.color <- halo_colour(bg)
     build <- function(members, facet_ncol, facet_nrow, facet_dir, strip) {
-        feature_ggplot(
+        p <- feature_ggplot(
             members = members, colour_scale = colour_scales[[members[[1]]$scale]],
             strip = strip, strip.face = strip_face(strip.text.face, is_gene[[members[[1]]$feature]], rd$split_plot),
             facet_ncol = facet_ncol, facet_nrow = facet_nrow, facet_dir = facet_dir,
@@ -437,6 +439,15 @@ FeaturePlot_bioToolkit <- function(
             raster = raster, raster.threshold = raster.threshold, raster.dpi = raster.dpi,
             bg = bg, halo.color = halo.color, seed = seed
         )
+        # The source data of a gene names the assay and layer it was read from
+        f <- members[[1]]$feature
+        if (!is.null(assay_info) && is_gene[[f]]) {
+            sd <- attr(p, "source_data")
+            sd$assay <- assay_info$assay
+            sd$layer <- assay_info$layer
+            attr(p, "source_data") <- sd
+        }
+        p
     }
     arrows <- function(p, panel = NULL) {
         add_reduction_arrows(p, reduction = reduction, labels = dims$labels,
@@ -504,15 +515,41 @@ FeaturePlot_bioToolkit <- function(
 #' @return a ggplot object
 #'
 #' @keywords internal
-feature_ggplot <- function(members, colour_scale, strip, strip.face,
-                           facet_ncol, facet_nrow, facet_dir, geom, order, center,
-                           pt.size, alpha, outline, outline.color, outline.size,
-                           label, label.size, label.color,
-                           legend.position, legend.direction, legend.length,
-                           legend.width, legend.text.size, legend.title.face,
-                           panel.width, panel.height, panel.spacing,
-                           strip.text.size, rd, raster, raster.threshold,
-                           raster.dpi, bg, halo.color, seed) {
+feature_ggplot <- function(members,
+                           colour_scale,
+                           strip,
+                           strip.face,
+                           facet_ncol,
+                           facet_nrow,
+                           facet_dir,
+                           geom,
+                           order,
+                           center,
+                           pt.size,
+                           alpha,
+                           outline,
+                           outline.color,
+                           outline.size,
+                           label,
+                           label.size,
+                           label.color,
+                           legend.position,
+                           legend.direction,
+                           legend.length,
+                           legend.width,
+                           legend.text.size,
+                           legend.title.face,
+                           panel.width,
+                           panel.height,
+                           panel.spacing,
+                           strip.text.size,
+                           rd,
+                           raster,
+                           raster.threshold,
+                           raster.dpi,
+                           bg,
+                           halo.color,
+                           seed) {
     lv <- vapply(members, `[[`, "", "label")
     with_panel <- function(d, i) {
         d$panel <- factor(rep(lv[i], nrow(d)), levels = lv)
@@ -626,7 +663,8 @@ feature_ggplot <- function(members, colour_scale, strip, strip.face,
 #'         columns; for hexagons, one row per tile with its centre
 #'
 #' @keywords internal
-feature_source_data <- function(marks, hex) {
+feature_source_data <- function(marks,
+                                hex) {
     if (!hex) return(marks[, c("cell", "panel", "x", "y", "value", "coloured")])
     key <- paste(marks$panel, marks$tile)
     first <- !duplicated(key)
@@ -650,7 +688,8 @@ feature_source_data <- function(marks, hex) {
 #' @return A function of the limits returning the breaks
 #'
 #' @keywords internal
-fitted_breaks <- function(length, text_size) {
+fitted_breaks <- function(length,
+                          text_size) {
     function(limits) {
         breaks <- scales::breaks_extended(5)(limits)
         breaks <- breaks[breaks >= limits[1] - 1e-9 & breaks <= limits[2] + 1e-9]
@@ -662,63 +701,6 @@ fitted_breaks <- function(length, text_size) {
         while (length(breaks) > max_n) breaks <- breaks[seq(1, length(breaks), by = 2)]
         breaks
     }
-}
-
-
-#' Fetch features for a fixed set of cells
-#'
-#' @param object A Seurat object
-#'
-#' @param features Features to fetch
-#'
-#' @param cells Cell names, in the order they are wanted
-#'
-#' @param slot Layer to fetch expression from
-#'
-#' @return A data frame with one column per feature and one row per cell
-#'
-#' @keywords internal
-fetch_features <- function(object, features, cells, slot) {
-    data <- withCallingHandlers(
-        Seurat::FetchData(object, vars = features, cells = cells, layer = slot),
-        warning = function(w) {
-            msg <- conditionMessage(w)
-            if (grepl("missing data|were not found", msg)) invokeRestart("muffleWarning")
-        }
-    )
-    missing <- setdiff(features, colnames(data))
-    if (length(missing)) {
-        stop("Feature(s) not found: ", paste(missing, collapse = ", "), call. = FALSE)
-    }
-    data <- data[match(cells, rownames(data)), features, drop = FALSE]
-    for (f in features) {
-        if (!is.numeric(data[[f]])) stop("Feature '", f, "' is not numeric", call. = FALSE)
-    }
-    data
-}
-
-
-#' Whether features are genes, to set their names in italics
-#'
-#' @param object A Seurat object
-#'
-#' @param features Feature names, possibly prefixed by an assay key
-#'
-#' @return A logical vector named by feature
-#'
-#' @keywords internal
-feature_is_gene <- function(object, features) {
-    assays <- Seurat::Assays(object)
-    genes <- unique(unlist(lapply(assays, function(a) rownames(object[[a]]))))
-    keys <- vapply(assays, function(a) SeuratObject::Key(object[[a]]), character(1))
-    meta <- colnames(object[[]])
-    is_gene <- vapply(features, function(f) {
-        if (f %in% meta) return(FALSE)
-        if (f %in% genes) return(TRUE)
-        key <- keys[startsWith(f, keys)]
-        length(key) > 0 && any(substring(f, nchar(key) + 1) %in% genes)
-    }, logical(1))
-    stats::setNames(is_gene, features)
 }
 
 
@@ -741,7 +723,9 @@ seurat_feature_ncol <- function(n) {
 #' @param split_plot Whether strips name split levels rather than features
 #'
 #' @keywords internal
-strip_face <- function(face, is_gene, split_plot) {
+strip_face <- function(face,
+                       is_gene,
+                       split_plot) {
     if (split_plot || !is_gene) return(face)
     switch(face, plain = "italic", bold = "bold.italic", face)
 }
@@ -758,7 +742,9 @@ strip_face <- function(face, is_gene, split_plot) {
 #' @return NULL or a number
 #'
 #' @keywords internal
-resolve_na_cutoff <- function(na.cutoff, v, geom) {
+resolve_na_cutoff <- function(na.cutoff,
+                              v,
+                              geom) {
     if (is.null(na.cutoff)) return(NULL)
     if (identical(na.cutoff, "auto")) {
         if (geom == "density" || any(v < 0, na.rm = TRUE)) return(NULL)
@@ -774,7 +760,8 @@ resolve_na_cutoff <- function(na.cutoff, v, geom) {
 #' Whether values are above a cutoff (all are when there is none)
 #'
 #' @keywords internal
-above_cutoff <- function(v, cut) {
+above_cutoff <- function(v,
+                         cut) {
     if (is.null(cut)) rep(TRUE, length(v)) else !is.na(v) & v > cut
 }
 
@@ -790,7 +777,9 @@ above_cutoff <- function(v, cut) {
 #' @return A data frame with cell, x, y, value and coloured columns
 #'
 #' @keywords internal
-point_marks <- function(cells, v, cut) {
+point_marks <- function(cells,
+                        v,
+                        cut) {
     data.frame(
         cell = rownames(cells), x = cells$x, y = cells$y, value = v,
         coloured = cells$highlight & !is.na(v) & above_cutoff(v, cut)
@@ -812,7 +801,12 @@ point_marks <- function(cells, v, cut) {
 #' @param method "smooth" or "wkde"
 #'
 #' @keywords internal
-density_marks <- function(cells, v, cut, rd, bandwidth, method) {
+density_marks <- function(cells,
+                          v,
+                          cut,
+                          rd,
+                          bandwidth,
+                          method) {
     use <- cells$highlight & !is.na(v)
     if (method == "wkde" && any(v[use] < 0)) {
         stop("`density.method = \"wkde\"` needs non-negative values; use \"smooth\"", call. = FALSE)
@@ -840,7 +834,9 @@ density_marks <- function(cells, v, cut, rd, bandwidth, method) {
 #' @return Kernel standard deviations along x and y
 #'
 #' @keywords internal
-density_bandwidth <- function(x, y, adjust) {
+density_bandwidth <- function(x,
+                              y,
+                              adjust) {
     n <- length(x)
     bw <- function(z) {
         s <- min(stats::sd(z), stats::IQR(z) / 1.349)
@@ -875,7 +871,14 @@ density_bandwidth <- function(x, y, adjust) {
 #' @return A numeric vector, one value per cell
 #'
 #' @keywords internal
-smooth_values <- function(x, y, w, xlim, ylim, bandwidth, method, n_grid = 256L) {
+smooth_values <- function(x,
+                          y,
+                          w,
+                          xlim,
+                          ylim,
+                          bandwidth,
+                          method,
+                          n_grid = 256L) {
     gx <- seq(xlim[1], xlim[2], length.out = n_grid)
     gy <- seq(ylim[1], ylim[2], length.out = n_grid)
     to_bin <- function(z, lim) {
@@ -929,7 +932,14 @@ smooth_values <- function(x, y, w, xlim, ylim, bandwidth, method, n_grid = 256L)
 #'         x, y, value and coloured columns
 #'
 #' @keywords internal
-hex_marks <- function(cells, v, cut, rd, bins, shape, fun, min_cells) {
+hex_marks <- function(cells,
+                      v,
+                      cut,
+                      rd,
+                      bins,
+                      shape,
+                      fun,
+                      min_cells) {
     hb <- hexbin::hexbin(cells$x, cells$y, xbins = bins, shape = shape,
                          xbnds = rd$xlim, ybnds = rd$ylim, IDs = TRUE)
     tile <- hb@cID
@@ -983,8 +993,15 @@ hex_marks <- function(cells, v, cut, rd, bins, shape, fun, min_cells) {
 #'         `na.value` and whether it is `diverging`
 #'
 #' @keywords internal
-resolve_colour_scale <- function(members, scale_features, min.cutoff, max.cutoff,
-                                 diverging, center, cols, na.value, key) {
+resolve_colour_scale <- function(members,
+                                 scale_features,
+                                 min.cutoff,
+                                 max.cutoff,
+                                 diverging,
+                                 center,
+                                 cols,
+                                 na.value,
+                                 key) {
     feature_values <- lapply(scale_features, function(f) {
         unlist(lapply(Filter(function(pn) pn$feature == f, members), function(pn) {
             m <- pn$marks
@@ -1040,7 +1057,9 @@ resolve_colour_scale <- function(members, scale_features, min.cutoff, max.cutoff
 #' @return A number, NA when `v` is empty
 #'
 #' @keywords internal
-cutoff_value <- function(cutoff, v, default) {
+cutoff_value <- function(cutoff,
+                         v,
+                         default) {
     if (length(v) == 0) return(NA_real_)
     if (is.null(cutoff) || (length(cutoff) == 1 && is.na(cutoff))) return(default(v))
     if (is.numeric(cutoff)) return(cutoff)
@@ -1069,8 +1088,12 @@ cutoff_value <- function(cutoff, v, default) {
 #' @return NULL, a string, or a plotmath expression with gene names in italics
 #'
 #' @keywords internal
-legend_title_label <- function(legend.title, legend.title.face, scale_features,
-                               features, is_gene, suffix) {
+legend_title_label <- function(legend.title,
+                               legend.title.face,
+                               scale_features,
+                               features,
+                               is_gene,
+                               suffix) {
     if (is.null(legend.title)) return(NULL)
     if (!identical(legend.title, "auto")) {
         if (length(legend.title) == 1) return(legend.title)

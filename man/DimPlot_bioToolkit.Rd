@@ -23,7 +23,7 @@ DimPlot_bioToolkit(
   outline.size = 0.6,
   outline.darken = 0.4,
   label = FALSE,
-  label.size = NULL,
+  label.size = 3.5,
   mark = FALSE,
   mark.by = NULL,
   mark.cols = NULL,
@@ -34,7 +34,7 @@ DimPlot_bioToolkit(
   mark.coverage = 0.98,
   legend.position = c("right", "left", "top", "bottom", "inside", "none"),
   legend.ncol = NULL,
-  legend.pt.size = NULL,
+  legend.pt.size = 3.5,
   legend.text.size = NULL,
   ncol = NULL,
   by.row = TRUE,
@@ -113,8 +113,7 @@ is 0.4}
 \item{label}{Whether to label groups at their median position, default is
 FALSE. When split, groups are labelled within each panel}
 
-\item{label.size}{Size of the group labels in mm. If NULL (default), 3.5
-at the default preset, scaled with the preset's text size}
+\item{label.size}{Size of the group labels in mm, default is 3.5}
 
 \item{mark}{Whether to draw a dashed line around the cell cloud of each
 group of `mark.by`, kept a fixed distance away from the cells,
@@ -156,12 +155,10 @@ outside the line}
 \item{legend.ncol}{Number of legend columns. If NULL (default), ggplot2
 chooses based on the number of groups and the position}
 
-\item{legend.pt.size}{Size of the legend keys. If NULL (default), 3.5 at the
-default preset, scaled with the preset's text size}
+\item{legend.pt.size}{Size of the legend keys, default is 3.5}
 
 \item{legend.text.size}{Font size of the legend text in points. If NULL
-(default), the base size of the preset (11 at the
-default preset)}
+(default), the theme's base size (11)}
 
 \item{ncol}{Number of panel columns when `split.by` is given. If NULL
 (default), all panels are laid out in a single row}
@@ -177,8 +174,7 @@ column by column (FALSE)}
 \item{panel.spacing}{Gap between panels in inches, default is 0.1}
 
 \item{strip.text.size}{Font size of the panel (split) labels in points. If
-NULL (default), the large size of the preset (12 at
-the default preset)}
+NULL (default), the theme's large size (12)}
 
 \item{strip.text.face}{Font face of the panel labels, default is "bold"}
 
@@ -215,6 +211,6 @@ Plots cells on a 2D reduction (UMAP, tSNE, PCA, ...) coloured by
              single legend covering all groups, even when a panel contains
              only some of them. Use \code{\link{save_plot}} to save it: the
              output file is sized to fit the panels, strips, legend and
-             margins exactly. Text sizes follow the size preset of
-             \code{\link{theme_bioToolkit}} (option `bioToolkit.preset`).
+             margins exactly. Text sizes follow
+             \code{\link{theme_bioToolkit}}.
 }

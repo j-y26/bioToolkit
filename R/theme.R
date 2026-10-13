@@ -1,61 +1,39 @@
-# Shared theme, journal presets and text helpers (roadmap item F3)
+# Shared theme and text helpers (roadmap item F3)
 #
 # Design
 # ------
 # * One theme, `theme_bioToolkit()`, for every plot in the package, so that
 #   text sizes, line widths and fonts are consistent across figures.
-# * Sizes come from a *preset* chosen for the size a figure is printed at,
-#   rather than from per-function defaults. `options(bioToolkit.preset =
-#   "nature")` therefore switches every plot at once, while each function still
-#   accepts its own `*.size` arguments, which win over the preset.
-# * A preset holds four numbers, all in points (1/72 inch):
+# * One fixed set of sizes, `theme_sizes()`, used everywhere. (Journal and
+#   slide presets existed briefly and were removed on 2026-10-13 to keep the
+#   package simple.) Each plot function still accepts its own `*.size`
+#   arguments, whose NULL default means "from `theme_sizes()`".
+# * The sizes, all in points (1/72 inch):
 #     base  - axis titles, legend titles and, in embeddings, the legend text
 #             (cluster names are the content of an embedding legend, so they
 #             are not demoted to "small" text)
 #     small - tick labels and legend text of axis / grid plots
 #     large - plot titles and facet strips
-#     line  - axis lines, ticks and the legend frame
+#     line  - thin lines: reference lines (e.g. cutoffs), label leader
+#             segments and grid lines
+#     axis  - axis lines and ticks of "axis" and "grid" plots, firmer than the lines
+#             drawn inside the panel (user decision 2026-10-13)
 # * ggplot2 measures `linewidth` in its own units, so line widths given in
 #   points are converted with `pt_to_linewidth()`; `geom_text()` sizes are in
 #   mm and converted with `pt_to_size()`.
 
 
-#' Size presets of `theme_bioToolkit()`
-#'
-#' Text sizes and line widths, in points, for the size a figure is printed at.
-#' Nature asks for 5-7 pt text and lines of at least 0.25 pt; Cell Press for
-#' 6-8 pt text. "default" reproduces the package's existing on-screen look.
-#'
-#' @return A named list of presets, each a list with `base`, `small`, `large`
-#'         and `line`
-#'
-#' @keywords internal
-theme_presets <- function() {
-    list(
-        default = list(base = 11, small = 9, large = 12, line = 0.5),
-        nature  = list(base = 7, small = 6, large = 7, line = 0.25),
-        cell    = list(base = 8, small = 7, large = 8, line = 0.35),
-        slides  = list(base = 16, small = 14, large = 18, line = 0.75)
-    )
-}
-
-
-#' Resolve a preset into text sizes and a line width
-#'
-#' @param preset Name of a preset, see \code{\link{theme_bioToolkit}}
+#' Text sizes and line widths of `theme_bioToolkit()`
 #'
 #' @param base.size If not NULL, the base text size; the small and large sizes
 #'                  are scaled with it so that their ratios are kept
 #'
-#' @return A list with `base`, `small`, `large` and `line`, in points
+#' @return A list with `base` (11), `small` (9), `large` (12), `line` (0.5;
+#'         thin lines) and `axis` (1; axis lines and ticks), in points
 #'
 #' @keywords internal
-preset_sizes <- function(preset = getOption("bioToolkit.preset", "default"), base.size = NULL) {
-    presets <- theme_presets()
-    if (!(is.character(preset) && length(preset) == 1 && preset %in% names(presets))) {
-        stop("`preset` must be one of: ", paste(names(presets), collapse = ", "), call. = FALSE)
-    }
-    sizes <- presets[[preset]]
+theme_sizes <- function(base.size = NULL) {
+    sizes <- list(base = 11, small = 9, large = 12, line = 0.5, axis = 1)
     if (!is.null(base.size)) {
         ratio <- base.size / sizes$base
         sizes$small <- sizes$small * ratio
@@ -81,6 +59,21 @@ pt_to_linewidth <- function(pt) {
 }
 
 
+#' Convert a line width in points to the `stroke` of ggplot2 points
+#'
+#' ggplot2 draws the outline of a point `stroke * ggplot2::.stroke / 2`
+#' device line widths wide, each 1/96 inch, i.e. 0.75 pt.
+#'
+#' @param pt Outline width in points
+#'
+#' @return The `stroke` giving that width
+#'
+#' @keywords internal
+pt_to_stroke <- function(pt) {
+    pt * 96 / 72 * 2 / ggplot2::.stroke
+}
+
+
 #' Convert a font size in points to the mm used by `geom_text()` `size`
 #'
 #' @param pt Font size in points
@@ -91,34 +84,18 @@ pt_to_size <- function(pt) {
 }
 
 
-#' Scale of the current preset relative to the default
-#'
-#' Sizes that are not text or lines (legend keys, colour bars, the dimension
-#' arrows, margins) are multiplied by the ratio of the preset's base text size
-#' to the default's 11 pt, so that they shrink with the text. At the default
-#' preset this is 1, and nothing changes.
-#'
-#' @param base.size Base text size, or NULL for the current preset's
-#'
-#' @return A number
-#'
-#' @keywords internal
-preset_scale <- function(base.size = NULL) {
-    preset_sizes(base.size = base.size)$base / theme_presets()$default$base
-}
-
-
 #' @title The bioToolkit ggplot2 theme
 #'
-#' @description The theme shared by all plots of the package, with text sizes
-#'              and line widths set for the size the figure is printed at.
-#'              Three layouts are provided:
+#' @description The theme shared by all plots of the package: 11 pt text
+#'              (9 pt tick labels and legend text, 12 pt titles), 1 pt axis
+#'              lines and 0.5 pt other lines. Three layouts are provided:
 #'              \describe{
 #'                \item{"axis"}{Classic axes: axis lines and black ticks, no
 #'                      grid. For scatter, volcano, MA, bar and PCA plots.}
-#'                \item{"grid"}{No axis lines, short light ticks and x labels
-#'                      rotated by 45 degrees. For dot plots and heatmaps,
-#'                      whose rows and columns are categories.}
+#'                \item{"grid"}{The axes of "axis", plus light grid lines,
+#'                      no axis titles and x labels rotated by 45 degrees. For
+#'                      dot plots and heatmaps, whose rows and columns are
+#'                      categories.}
 #'                \item{"embedding"}{No axes at all, with extra room at the
 #'                      bottom left for the dimension arrows. For UMAP / tSNE
 #'                      plots.}
@@ -130,16 +107,8 @@ preset_scale <- function(base.size = NULL) {
 #' @param type Layout of the theme, one of "axis" (default), "grid" or
 #'             "embedding"
 #'
-#' @param preset Size preset: "default" (11 pt text, 0.5 pt lines; screen and
-#'               exploration), "nature" (7 / 6 pt text, 0.25 pt lines),
-#'               "cell" (8 / 7 pt text, 0.35 pt lines) or "slides" (16 / 14 pt
-#'               text, 0.75 pt lines). Defaults to the option
-#'               `bioToolkit.preset`, so `options(bioToolkit.preset = "nature")`
-#'               switches every plot of the package at once
-#'
-#' @param base.size Base font size in points. If NULL (default), taken from the
-#'                  preset; otherwise the preset's other text sizes are scaled
-#'                  with it
+#' @param base.size Base font size in points. If NULL (default), 11; otherwise
+#'                  the other text sizes are scaled with it
 #'
 #' @param base.family Font family. If NULL (default), the device default
 #'                    (Helvetica in PDF, which journals accept as Arial's
@@ -155,7 +124,7 @@ preset_scale <- function(base.size = NULL) {
 #' library(ggplot2)
 #' p <- ggplot(mtcars, aes(wt, mpg)) + geom_point()
 #' p + theme_bioToolkit()
-#' p + theme_bioToolkit(preset = "nature")
+#' p + theme_bioToolkit(base.size = 8)
 #'
 #' @seealso \code{\link{panel_size_theme}}, \code{\link{save_plot}},
 #'          \code{\link{italic_labels}}
@@ -164,12 +133,11 @@ preset_scale <- function(base.size = NULL) {
 #' @export
 #'
 theme_bioToolkit <- function(type = c("axis", "grid", "embedding"),
-                             preset = getOption("bioToolkit.preset", "default"),
                              base.size = NULL,
                              base.family = NULL,
                              bg = "transparent") {
     type <- match.arg(type)
-    sz <- preset_sizes(preset, base.size)
+    sz <- theme_sizes(base.size)
     family <- if (is.null(base.family)) "" else base.family
     lw <- pt_to_linewidth(sz$line)
     transparent_bg <- is.na(bg) || identical(bg, "transparent")
@@ -192,7 +160,8 @@ theme_bioToolkit <- function(type = c("axis", "grid", "embedding"),
     )
 
     if (type == "embedding") {
-        k <- sz$base / theme_presets()$default$base
+        # Margins scale with a custom base size (1 at the default 11 pt)
+        k <- sz$base / theme_sizes()$base
         # The look of the reduction plots: nothing but the cells, the legend
         # and the strips. The legend text is the base size because it names the
         # groups, which are the content of the plot
@@ -205,7 +174,7 @@ theme_bioToolkit <- function(type = c("axis", "grid", "embedding"),
                     strip.text = element_text(size = sz$large, face = "bold",
                                               margin = margin(b = 0.15, unit = "cm")),
                     # Extra bottom / left margin makes room for the arrow labels;
-                    # it shrinks with the arrows, which follow the preset
+                    # it scales with a custom base size
                     plot.margin = margin(0.2 * k, 0.2 * k, 0.6 * k, 0.6 * k, "cm")
                 )
         )
@@ -217,10 +186,11 @@ theme_bioToolkit <- function(type = c("axis", "grid", "embedding"),
         theme(
             axis.title = element_text(size = sz$base, colour = "black"),
             axis.text = element_text(size = sz$small, colour = "black"),
-            axis.line = element_line(colour = "black", linewidth = lw),
-            axis.ticks = element_line(colour = "black", linewidth = lw),
-            # Ticks scale with the text so that they stay in proportion when
-            # the preset shrinks the figure
+            # Axes use their own, firmer width (`axis`)
+            axis.line = element_line(colour = "black", linewidth = pt_to_linewidth(sz$axis)),
+            axis.ticks = element_line(colour = "black", linewidth = pt_to_linewidth(sz$axis)),
+            # Ticks scale with the text, so they stay in proportion with a
+            # custom base size
             axis.ticks.length = unit(sz$small / 3, "pt"),
             legend.title = element_text(size = sz$base),
             legend.text = element_text(size = sz$small),
@@ -230,13 +200,11 @@ theme_bioToolkit <- function(type = c("axis", "grid", "embedding"),
         )
 
     if (type == "grid") {
-        # Rows and columns are categories: axis lines would only frame the
-        # grid, so they are dropped, and ticks are kept short and light so
-        # that they lead the eye to the labels without competing with marks
+        # Rows and columns are categories: the 1 pt axes of "axis" plots
+        # (user decision 2026-10-13; they were dropped before), light grid
+        # lines to follow a row or column, no axis titles (the labels name
+        # the categories) and rotated x labels
         th <- th + theme(
-            axis.line = element_blank(),
-            axis.ticks = element_line(colour = "grey60", linewidth = lw),
-            axis.ticks.length = unit(sz$small / 4, "pt"),
             axis.title = element_blank(),
             axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
             panel.grid.major = element_line(colour = "grey92", linewidth = lw)
@@ -272,7 +240,8 @@ theme_bioToolkit <- function(type = c("axis", "grid", "embedding"),
 #'
 #' @export
 #'
-italic_labels <- function(x, is.gene = TRUE) {
+italic_labels <- function(x,
+                          is.gene = TRUE) {
     x <- as.character(x)
     if (!is.null(names(is.gene))) {
         flag <- is.gene[x]

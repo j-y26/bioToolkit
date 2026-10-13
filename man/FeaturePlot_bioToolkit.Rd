@@ -14,6 +14,7 @@ FeaturePlot_bioToolkit(
   keep.scale = "feature",
   reduction = "umap",
   dims = c(1, 2),
+  assay = NULL,
   slot = "data",
   geom = c("point", "hex", "density"),
   cols = NULL,
@@ -31,7 +32,7 @@ FeaturePlot_bioToolkit(
   outline.size = 0.6,
   label = FALSE,
   label.by = NULL,
-  label.size = NULL,
+  label.size = 3.5,
   label.color = "black",
   hex.bins = 60,
   hex.fun = c("mean", "pct"),
@@ -42,8 +43,8 @@ FeaturePlot_bioToolkit(
   legend.direction = NULL,
   legend.title = "auto",
   legend.title.face = "auto",
-  legend.length = NULL,
-  legend.width = NULL,
+  legend.length = 1.5,
+  legend.width = 0.15,
   legend.text.size = NULL,
   ncol = NULL,
   by.row = TRUE,
@@ -94,6 +95,15 @@ panel its own scale and legend}
 
 \item{dims}{The two dimensions of the reduction to plot, default is 1 and 2}
 
+\item{assay}{Assay that genes are read from. If NULL (default), the
+default assay of the object (\code{SeuratObject::DefaultAssay()}),
+as in Seurat. The assay and layer used are reported in a
+message. Genes are fetched from this assay only: a gene that
+is only in another assay is an error rather than being read
+from it silently. Objects holding both "RNA" and "SCT" assays
+give different values for the same gene, so set it explicitly
+for reproducible figures}
+
 \item{slot}{Layer to fetch expression from, default is "data"}
 
 \item{geom}{How values are drawn: "point" (default) colours each cell; "hex"
@@ -101,7 +111,7 @@ colours hexagonal tiles by a summary of the cells in them (see
 `hex.fun`); "density" colours each cell by values smoothed over
 neighbouring cells (see `density.method`)}
 
-\item{cols}{The colours of the scale. If NULL (default), "bioToolkit" or,
+\item{cols}{The colours of the scale. If NULL (default), "plasma_r" or,
 for a diverging scale, "blue-magenta". Otherwise two or more
 colours from low to high values, e.g. `c("grey90", "darkred")`
 (low, high) or, for a diverging scale, `c("#2166AC", "white",
@@ -161,8 +171,7 @@ given}
 \item{label.by}{Metadata column whose groups are labelled when
 `label = TRUE`. If NULL (default), the active identities}
 
-\item{label.size}{Size of the group labels in mm. If NULL (default), 3.5
-at the default preset, scaled with the preset's text size}
+\item{label.size}{Size of the group labels in mm, default is 3.5}
 
 \item{label.color}{Colour of the group labels, default is "black"}
 
@@ -207,17 +216,12 @@ feature)}
 \item{legend.title.face}{Font face of the legend title. "auto" (default)
 sets gene names in italics}
 
-\item{legend.length}{Length of the colour bar in inches. If NULL (default),
-1.5 at the default preset, scaled with the preset's
-text size}
+\item{legend.length}{Length of the colour bar in inches, default is 1.5}
 
-\item{legend.width}{Thickness of the colour bar in inches. If NULL
-(default), 0.15 at the default preset, scaled with the
-preset's text size}
+\item{legend.width}{Thickness of the colour bar in inches, default is 0.15}
 
 \item{legend.text.size}{Font size of the legend text and title in points.
-If NULL (default), the base size of the preset (11
-at the default preset)}
+If NULL (default), the theme's base size (11)}
 
 \item{ncol}{Number of panel columns. If NULL (default), split panels are
 laid out in a single row, and several features in up to four
@@ -238,8 +242,7 @@ by the caller}
 \item{panel.spacing}{Gap between panels in inches, default is 0.1}
 
 \item{strip.text.size}{Font size of the panel labels in points. If NULL
-(default), the large size of the preset (12 at the
-default preset)}
+(default), the theme's large size (12)}
 
 \item{strip.text.face}{Font face of the panel labels, default is "bold".
 Gene names are additionally set in italics}
@@ -277,8 +280,8 @@ Colours cells on a 2D reduction (UMAP, tSNE, PCA, ...) by the
              has a fixed absolute size set by `panel.width` and
              `panel.height`, so that panels are identical across figures; use
              \code{\link{save_plot}} to save the plot, or a patchwork
-             combination of plots, sized to fit. Text sizes follow the
-             size preset of \code{\link{theme_bioToolkit}}, and the values
+             combination of plots, sized to fit. Text sizes follow
+             \code{\link{theme_bioToolkit}}, and the values
              behind each panel can be written out with
              \code{\link{export_source_data}}.
 

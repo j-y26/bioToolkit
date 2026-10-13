@@ -61,7 +61,10 @@
 #'
 #' @export
 #'
-panel_size_theme <- function(panel.width, panel.height = panel.width, ncol = 1, nrow = 1,
+panel_size_theme <- function(panel.width,
+                             panel.height = panel.width,
+                             ncol = 1,
+                             nrow = 1,
                              panel.spacing = NULL) {
     check_fixed_panel_support()
     check_size <- function(x, arg) {
@@ -98,7 +101,8 @@ panel_size_theme <- function(panel.width, panel.height = panel.width, ncol = 1, 
 #' @return Panel sizes in inches, one per element of `n`
 #'
 #' @keywords internal
-grid_panel_size <- function(n, cell) {
+grid_panel_size <- function(n,
+                            cell) {
     if (!is.numeric(cell) || length(cell) != 1 || is.na(cell) || cell <= 0) {
         stop("Cell sizes must be a single positive number (inches)", call. = FALSE)
     }
@@ -152,7 +156,11 @@ has_fixed_size <- function(gt) {
 #'              Plots without fixed panel sizes are saved at `width` by
 #'              `height` inches, as with \code{ggsave()}.
 #'
-#' @param plot A ggplot or patchwork object
+#'              A legend from \code{\link{extract_legend}} is saved on its own,
+#'              sized to fit, with a small margin.
+#'
+#' @param plot A ggplot or patchwork object, or a legend from
+#'             \code{\link{extract_legend}}
 #'
 #' @param filename File to save to; the format is inferred from the extension
 #'                 (".pdf", ".png", ".svg", ".tiff", ...)
@@ -178,13 +186,21 @@ has_fixed_size <- function(gt) {
 #' f <- tempfile(fileext = ".pdf")
 #' save_plot(p, f)
 #'
-#' @seealso \code{\link{panel_size_theme}}, \code{\link{export_source_data}}
+#' @seealso \code{\link{panel_size_theme}}, \code{\link{export_source_data}},
+#'          \code{\link{extract_legend}}
 #'
 #' @export
 #'
-save_plot <- function(plot, filename, width = NULL, height = NULL, dpi = 1000, bg = NULL, ...) {
-    if (!(is_ggplot(plot) || inherits(plot, "patchwork"))) {
-        stop("`plot` must be a ggplot or patchwork object", call. = FALSE)
+save_plot <- function(plot,
+                      filename,
+                      width = NULL,
+                      height = NULL,
+                      dpi = 1000,
+                      bg = NULL,
+                      ...) {
+    is_legend <- inherits(plot, "bt_legend")
+    if (!(is_ggplot(plot) || inherits(plot, "patchwork") || is_legend)) {
+        stop("`plot` must be a ggplot, a patchwork or a legend from extract_legend()", call. = FALSE)
     }
     # Build the gtable once, on the same kind of device it will be saved to, and
     # draw that exact gtable so measured and saved layouts cannot differ
@@ -203,10 +219,18 @@ save_plot <- function(plot, filename, width = NULL, height = NULL, dpi = 1000, b
     # The gtable is measured while its device is still open; the device is
     # closed whatever happens, and the caller's device made current again
     measured <- tryCatch({
-        gt <- if (is_patchwork) patchwork::patchworkGrob(fix_nested_patchworks(plot)) else ggplotGrob(plot)
-        fixed <- has_fixed_size(gt)
-        list(gt = gt, fixed = fixed,
-             dims = if (fixed) fixed_gtable_size(gt, patchwork = is_patchwork))
+        if (is_legend) {
+            # The legend is re-built from its plot on this device, so that its
+            # text is measured with the fonts it is written with; the full
+            # plot gives the background
+            built <- legend_gtable(attr(plot, "legend_plot"))
+            list(gt = built$legend, full = built$gt, fixed = TRUE, dims = legend_size(built$legend))
+        } else {
+            gt <- if (is_patchwork) patchwork::patchworkGrob(fix_nested_patchworks(plot)) else ggplotGrob(plot)
+            fixed <- has_fixed_size(gt)
+            list(gt = gt, full = gt, fixed = fixed,
+                 dims = if (fixed) fixed_gtable_size(gt, patchwork = is_patchwork))
+        }
     }, finally = {
         grDevices::dev.off(measure_dev)
         if (old_dev > 1) grDevices::dev.set(old_dev)
@@ -226,7 +250,8 @@ save_plot <- function(plot, filename, width = NULL, height = NULL, dpi = 1000, b
     }
 
     if (is.null(bg)) {
-        background <- gt$grobs[[match("background", gt$layout$name)]]
+        full <- measured$full
+        background <- full$grobs[[match("background", full$layout$name)]]
         bg <- if (is.null(background$gp$fill)) "transparent" else background$gp$fill
     }
     # JPEG and BMP have no alpha channel: a transparent background would be
@@ -342,25 +367,26 @@ fixed_size_figure <- function(plot) {
 #' A legend taller than a fixed-height panel (right/left) or wider than a
 #' fixed-width panel (top/bottom) spills outside its cell and is not reflected
 #' in the gtable's widths/heights. The legend is centred on its cell and the
-#' gtable is centred on the device, so the device is enlarged to the legend size
-#' plus twice the larger of the spaces before and after its cell, which keeps at
-#' least the plot margin on both sides of the legend.
-#'
-#' In a patchwork, the space before and after a legend's cell holds the other
-#' plots rather than margins, so the device is instead enlarged just enough for
-#' the legend to keep `margin` inches from the device edge.
+#' gtable is centred on the device, so the device is enlarged just enough for
+#' the legend to keep `margin` inches from the device edge
+#' (\code{overflow_fit()}); a legend that spills into the strips or titles
+#' above or below its cell, but stays within the gtable, needs no more room.
+#' (Before bioToolkit 0.7.0, single plots were enlarged to the legend size
+#' plus twice the larger of the spaces before and after its cell, which added
+#' up to several inches of blank space to grid plots with tall strips.)
 #'
 #' @param gt A gtable with absolute widths and heights
 #'
 #' @param patchwork Whether `gt` is the gtable of a patchwork
 #'
-#' @param margin Smallest gap between a legend and the device edge in a
-#'               patchwork, in inches
+#' @param margin Smallest gap between a legend and the device edge, in inches
 #'
 #' @return Named numeric vector with width and height in inches
 #'
 #' @keywords internal
-fixed_gtable_size <- function(gt, patchwork = FALSE, margin = 0.1) {
+fixed_gtable_size <- function(gt,
+                              patchwork = FALSE,
+                              margin = 0.1) {
     if (any(grid::unitType(gt$widths) == "null") || any(grid::unitType(gt$heights) == "null")) {
         stop("The plot has no fixed size; set theme(panel.widths, panel.heights)", call. = FALSE)
     }
@@ -376,24 +402,14 @@ fixed_gtable_size <- function(gt, patchwork = FALSE, margin = 0.1) {
         legend_w <- grid::convertWidth(grid::grobWidth(legend), "in", valueOnly = TRUE)
         legend_h <- grid::convertHeight(grid::grobHeight(legend), "in", valueOnly = TRUE)
         before_w <- sum(widths[seq_len(pos$l - 1)])
-        after_w <- sum(widths[-seq_len(pos$r)])
         before_h <- sum(heights[seq_len(pos$t - 1)])
-        after_h <- sum(heights[-seq_len(pos$b)])
         cell_w <- sum(widths[pos$l:pos$r])
         cell_h <- sum(heights[pos$t:pos$b])
         if (legend_w > cell_w + 1e-3) {
-            width <- max(width, if (patchwork) {
-                overflow_fit(legend_w, before_w + cell_w / 2, sum(widths), margin)
-            } else {
-                legend_w + 2 * max(before_w, after_w)
-            })
+            width <- max(width, overflow_fit(legend_w, before_w + cell_w / 2, sum(widths), margin))
         }
         if (legend_h > cell_h + 1e-3) {
-            height <- max(height, if (patchwork) {
-                overflow_fit(legend_h, before_h + cell_h / 2, sum(heights), margin)
-            } else {
-                legend_h + 2 * max(before_h, after_h)
-            })
+            height <- max(height, overflow_fit(legend_h, before_h + cell_h / 2, sum(heights), margin))
         }
     }
     c(width = width, height = height)
@@ -413,7 +429,10 @@ fixed_gtable_size <- function(gt, patchwork = FALSE, margin = 0.1) {
 #' @return The device size
 #'
 #' @keywords internal
-overflow_fit <- function(legend, centre, total, margin) {
+overflow_fit <- function(legend,
+                         centre,
+                         total,
+                         margin) {
     spill <- max(legend / 2 + margin - centre, centre + legend / 2 + margin - total, 0)
     total + 2 * spill
 }

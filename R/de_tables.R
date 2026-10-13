@@ -200,7 +200,11 @@ standardize_de <- function(data,
 #'         `mean_scale`
 #'
 #' @keywords internal
-read_de_table <- function(data, method, cols, label = NULL, comparison.col = NULL) {
+read_de_table <- function(data,
+                          method,
+                          cols,
+                          label = NULL,
+                          comparison.col = NULL) {
     where <- if (is.null(label)) "" else paste0(" in '", label, "'")
     if (inherits(data, "TopTags")) data <- data$table
     if (!is.data.frame(data)) {
@@ -298,7 +302,9 @@ read_de_table <- function(data, method, cols, label = NULL, comparison.col = NUL
 #' @return A method name, or "none" when the columns were all given explicitly
 #'
 #' @keywords internal
-detect_de_method <- function(data, cols, where) {
+detect_de_method <- function(data,
+                             cols,
+                             where) {
     found <- names(Filter(function(p) {
         all(c(p[["logfc"]], p[["pvalue"]], p[["padj"]]) %in% names(data))
     }, DE_COLUMN_PRESETS))
@@ -328,7 +334,8 @@ detect_de_method <- function(data, cols, where) {
 #' @return The p-values
 #'
 #' @keywords internal
-replace_zero_p <- function(p, what) {
+replace_zero_p <- function(p,
+                           what) {
     zero <- !is.na(p) & p == 0
     if (!any(zero)) return(p)
     positive <- p[!is.na(p) & p > 0]
@@ -351,7 +358,8 @@ replace_zero_p <- function(p, what) {
 #'         first appear along the comparisons
 #'
 #' @keywords internal
-add_de_groups <- function(res, groups) {
+add_de_groups <- function(res,
+                          groups) {
     if (is.null(res$comparison)) {
         stop("`groups` needs several comparisons (a list of tables or `comparison.col`)", call. = FALSE)
     }

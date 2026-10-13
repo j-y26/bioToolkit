@@ -104,10 +104,9 @@
 #'                  plots. The available file types include "png", "jpeg",
 #'                  "tiff", "pdf", "svg". The default file type is "png".
 #'
-#' @param dpi An integer specifying the resolution of the model plots in dots
-#'            per inch (DPI). The default value is 300. The higher the DPI,
-#'            the better the quality of the plots. The DPI value should be
-#'            greater than 0.
+#' @param dpi An integer specifying the resolution of raster plots (e.g. png)
+#'            in dots per inch (DPI). The default value is 1000. The DPI value
+#'            should be greater than 0.
 #'
 #' @param plot_group_var A character string specifying the variable in the
 #'                       metadata data frame to group the samples in the plot.
@@ -157,7 +156,7 @@ calc_expr_corr <- function(
   corr_method = "pearson",
   p_adjust_method = "BH",
   file_type = "png",
-  dpi = 300,
+  dpi = 1000,
   plot_group_var = NULL,
   switch_axes = FALSE,
   alpha = 0.05,
@@ -176,11 +175,14 @@ calc_expr_corr <- function(
     stop("Invalid p-value adjustment method. See ?p.adjust for available methods.")
   }
 
+  # The results table and the volcano are always written to base_dir, so it
+  # is created whether or not the model plots are drawn
+  if (!dir.exists(file.path(base_dir))) {
+    dir.create(base_dir, recursive = TRUE)
+  }
+
   # Check if plots too be plotted
   if (plot_model) {
-    if (!dir.exists(file.path(base_dir))) {
-      dir.create(base_dir)
-    }
     if (!dir.exists(file.path(base_dir, "model_plots_positive"))) {
       dir.create(file.path(base_dir, "model_plots_positive"))
     }
@@ -367,23 +369,27 @@ calc_expr_corr <- function(
 
   write.csv(model_results, file.path(base_dir, paste0(query_var, "_correlation_results.csv")), row.names = FALSE)
 
-  # Plot a volcano plot
+  # Plot a volcano plot: correlation coefficient against the -log10 FDR of
+  # the model coefficient, the same FDR that decides `sig` above.
+  # (bioToolkit <= 0.5.0 passed the gene vector as `label`, which failed.)
   p_volcano <- plot_volcano(
     data = model_results,
-    x = "corr",
-    y = "FDR",
-    label = model_results$gene,
-    x_lab = paste0(corr_method, " correlation"),
-    up_label = "Pos. corr.",
-    down_label = "Neg. corr.",
-    non_de_label = "Not corr."
-  )
+    feature.col = "gene",
+    logfc.col = "corr",
+    p.col = "p_value",
+    padj.col = "FDR",
+    padj.cutoff = alpha,
+    # Few labels: many genes sit near r = +/-1 and long IDs would collide
+    label.n = 5,
+    up.label = "Pos. corr.",
+    down.label = "Neg. corr.",
+    ns.label = "Not corr."
+  ) +
+    labs(x = paste0(corr_method, " correlation"))
 
-  # Save the volcano plot
-  # The volcano has no fixed panel size yet (roadmap item R2), so the file size
-  # is given explicitly
+  # The volcano has a fixed panel size, so the file is sized to fit it
   save_plot(p_volcano, file.path(base_dir, paste0(query_var, "_correlation_volcano.", file_type)),
-            width = 5, height = 6, dpi = dpi)
+            dpi = dpi)
 
   results <- list(
     model_list = model_list,

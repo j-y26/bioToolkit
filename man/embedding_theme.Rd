@@ -38,6 +38,6 @@ A ggplot2 theme
 \description{
 The embedding layout of \code{\link{theme_bioToolkit}}, fixed panel sizes
 from \code{\link{panel_size_theme}}, and the legend and strip settings of
-the reduction plots. Sizes given as NULL keep the preset's.
+the reduction plots. Text sizes given as NULL keep the theme's.
 }
 \keyword{internal}

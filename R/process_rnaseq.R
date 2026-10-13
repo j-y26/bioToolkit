@@ -221,7 +221,8 @@ filter_de_genes <- function(
 #'
 #' @return A data frame containing the filtered raw counts
 #'
-filter_low_expression_genes <- function(raw_counts, min_group_size = 4) {
+filter_low_expression_genes <- function(raw_counts,
+                                        min_group_size = 4) {
   check_installed("edgeR", reason = "for CPM-based gene filtering")
 
   # Convert raw counts to DGEList object

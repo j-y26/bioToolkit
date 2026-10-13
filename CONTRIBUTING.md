@@ -31,15 +31,42 @@ meaning has the same name and the same default in every function.
 | `legend.position`, `legend.text.size`, `legend.title` | legend |
 | `panel.width`, `panel.height` (inches) | fixed panel size |
 | `cell.width`, `cell.height` (inches) | fixed size of one row / column of a grid plot |
-| `raster`, `raster.dpi` | rasterize the marks only |
+| `raster`, `raster.dpi` | rasterize the marks only; `raster.dpi` defaults to 1000 everywhere |
 | `bg` | background |
 | `seed` | randomness, without touching the global RNG (`with_seed()`) |
 | `logfc.col`, `p.col`, `padj.col`, `mean.col`, `feature.col` | columns of a DE table |
 
-Sizes that follow the theme preset (`legend.text.size`, `strip.text.size`,
-`label.size`, ...) default to `NULL`, meaning "from the preset of
-`theme_bioToolkit()`", so that `options(bioToolkit.preset = "nature")` changes
-every plot at once.
+Default resolution: every rasterized output (`raster.dpi`, the `dpi` of
+`save_plot()` and of functions that save figures) defaults to 1000 dpi.
+
+There are no size presets: one set of sizes (`theme_sizes()`: 11 / 9 / 12 pt
+text, 1 pt axes, 0.5 pt other lines) applies everywhere. Text-size arguments
+(`legend.text.size`, `strip.text.size`, ...) default to `NULL`, meaning "from
+`theme_sizes()`", so that the text sizes are set in one place; other sizes
+have plain numeric defaults.
+
+## Code style
+
+Function definitions list one parameter per line, never several on a line:
+
+```r
+plot_volcano <- function(
+    data,
+    method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+    feature.col = NULL
+) {
+```
+
+or, aligned with the parenthesis:
+
+```r
+standardize_de <- function(data,
+                           method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+                           feature.col = NULL) {
+```
+
+This applies to all package-level functions, exported or internal. Short
+anonymous functions inside code (`function(x) ...`) are exempt.
 
 ## Every plot
 
@@ -47,7 +74,9 @@ Before a plotting item is marked done in `dev/visualization_roadmap.md`:
 
 - Follows the names above.
 - Fixed geometry: `panel_size_theme()` (continuous axes: `panel.width`,
-  `panel.height`; discrete axes: `cell.width`, `cell.height` with
+  `panel.height`, with `panel.height = panel.width` as the default for
+  scatter-type plots usually drawn square (volcano, PCA, embeddings, quadrant
+  and composition scatter), so that `panel.width` alone resizes them; discrete axes: `cell.width`, `cell.height` with
   `grid_panel_size()` and `grid_expansion()`), and saves correctly with
   `save_plot()`.
 - Uses `theme_bioToolkit()`. Colours: one `cols` argument with a good
@@ -56,12 +85,21 @@ Before a plotting item is marked done in `dev/visualization_roadmap.md`:
   continuous scales (palette name, or colours from low to high, e.g.
   `c(low, mid, high)`).
 - Gene names in italics (`italic_labels()`, `feature_is_gene()`).
+- Expression from Seurat objects: an `assay` argument (NULL = the default
+  assay, as in Seurat) and `slot`; resolve them with `resolve_assay()`, which
+  reports the assay and layer used, and fetch genes with `fetch_features()`
+  (assay-keyed, so values never come from another assay). Write the assay and
+  layer into the source data (`R/seurat_data.R`).
+- Grids of dots (genes x groups, terms x comparisons) use the dot-grid engine
+  `dot_grid_plot()` (`R/dot_grid.R`) rather than drawing their own.
+- Legend extractable with `extract_legend()` (works for any ggplot; nothing
+  to do unless the plot hides its legend in an unusual way).
 - Source data recoverable with `export_source_data()`: the tidy table in
   `plot$data`, or in `attr(plot, "source_data")` when layers use different
   data.
 - roxygen docs with an example; `devtools::document()` re-run.
 - Unit tests for the data logic in `tests/testthat/`.
-- Checked by eye at `preset = "default"` and `"nature"`.
+- Checked by eye on real data.
 - `NEWS.md` entry, including anything removed or renamed.
 
 ## Adding a colour palette

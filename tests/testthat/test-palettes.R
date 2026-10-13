@@ -63,3 +63,29 @@ test_that("check_palette flags colours that are hard to tell apart", {
     expect_warning(res <- check_palette(c("#D62728", "#2CA02C")), "hard to tell apart")
     expect_true(any(res$vision %in% c("deutan", "protan")))
 })
+
+test_that("single-hue palettes span the same lightness, light to dark", {
+    seq_pals <- grep("^seq-", list_palettes("sequential")$name, value = TRUE)
+    expect_setequal(seq_pals, paste0("seq-", c("purple", "blue", "teal", "green", "orange", "red", "magenta")))
+    lum <- function(x) grDevices::convertColor(t(grDevices::col2rgb(x)) / 255, from = "sRGB", to = "Luv")[, 1]
+    for (nm in seq_pals) {
+        l <- lum(bt_palette(nm))
+        expect_true(all(diff(l) < 0), info = nm)
+        # Tinted, never white, at the light end; coloured, never black, at the dark end
+        expect_true(l[1] <= 80.5 && l[1] > 75, info = nm)
+        expect_true(l[length(l)] >= 29.5 && l[length(l)] < 36, info = nm)
+    }
+})
+
+test_that("any palette name with \"_r\" is that palette reversed, without being stored", {
+    expect_equal(bt_palette("viridis_r"), rev(bt_palette("viridis")))
+    expect_equal(bt_palette("plasma_r"), rev(bt_palette("plasma")))
+    expect_equal(bt_palette("NPG_R"), rev(bt_palette("npg")))
+    expect_equal(bt_palette("seq-blue_r", 3), rev(bt_palette("seq-blue", 3)))
+    expect_false(any(grepl("_r$", list_palettes()$name)))
+    expect_null(find_palette("bioToolkit"))
+    expect_null(find_palette("nope_r"))
+    expect_error(bt_palette("nope_r"), "Unknown palette")
+    skip_if_not_installed("RColorBrewer")
+    expect_equal(resolve_continuous_palette("BuPu_r", FALSE), rev(RColorBrewer::brewer.pal(9, "BuPu")))
+})

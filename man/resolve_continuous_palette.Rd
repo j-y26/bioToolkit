@@ -4,16 +4,19 @@
 \alias{resolve_continuous_palette}
 \title{Resolve the `cols` argument of a continuous colour scale into colours}
 \usage{
-resolve_continuous_palette(cols, diverging)
+resolve_continuous_palette(cols, diverging, default = "plasma_r")
 }
 \arguments{
-\item{cols}{NULL for the default ("bioToolkit", or "blue-magenta" for a
+\item{cols}{NULL for the default (`default`, or "blue-magenta" for a
 diverging scale); a sequential or diverging palette name of the
 package, or an RColorBrewer palette name; or two or more
 colours from low to high, e.g. `c(low, high)` or
 `c(low, mid, high)`}
 
 \item{diverging}{Whether the scale is diverging, which sets the default}
+
+\item{default}{Default sequential palette, "plasma_r" unless the plot
+sets another}
 }
 \value{
 A vector of colours, from low to high

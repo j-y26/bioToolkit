@@ -84,8 +84,7 @@ is 0.6}
 FALSE. Groups are the active identities unless `label.by` is
 given}
 
-\item{label.size}{Size of the group labels in mm. If NULL (default), 3.5
-at the default preset, scaled with the preset's text size}
+\item{label.size}{Size of the group labels in mm, default is 3.5}
 
 \item{label.color}{Colour of the group labels, default is "black"}
 
@@ -96,17 +95,12 @@ at the default preset, scaled with the preset's text size}
 "horizontal". If NULL (default), horizontal for top
 and bottom legends and vertical otherwise}
 
-\item{legend.length}{Length of the colour bar in inches. If NULL (default),
-1.5 at the default preset, scaled with the preset's
-text size}
+\item{legend.length}{Length of the colour bar in inches, default is 1.5}
 
-\item{legend.width}{Thickness of the colour bar in inches. If NULL
-(default), 0.15 at the default preset, scaled with the
-preset's text size}
+\item{legend.width}{Thickness of the colour bar in inches, default is 0.15}
 
 \item{legend.text.size}{Font size of the legend text and title in points.
-If NULL (default), the base size of the preset (11
-at the default preset)}
+If NULL (default), the theme's base size (11)}
 
 \item{legend.title.face}{Font face of the legend title. "auto" (default)
 sets gene names in italics}
@@ -119,8 +113,7 @@ sets gene names in italics}
 \item{panel.spacing}{Gap between panels in inches, default is 0.1}
 
 \item{strip.text.size}{Font size of the panel labels in points. If NULL
-(default), the large size of the preset (12 at the
-default preset)}
+(default), the theme's large size (12)}
 
 \item{rd}{Output of \code{\link{reduction_data}}}
 
