@@ -1,3 +1,45 @@
+# bioToolkit 0.9.0
+
+Phase E of the visualization overhaul: bulk plots (B1, B2, B4, B5). The
+planned sample-to-sample heatmap (B3) was dropped; use corrplot or
+ComplexHeatmap.
+
+## New
+
+* `plot_ma()`: MA plot (log2 fold change against mean expression) with the
+  classes, colours, labels and arguments of `plot_volcano()`. Mean expression
+  as the DE tool reports it: log2 values (edgeR logCPM, limma AveExpr) as
+  they are, linear ones (DESeq2 baseMean) on a log10 axis (`mean.scale`);
+  optional robust trend line (`trend`, lowess); counts of up / down features
+  in the right corners. Shrunken fold changes (DESeq2 `lfcShrink()`) are the
+  recommended input (`logfc.col`).
+* `plot_pca()`: PCA score plot of samples from a `prcomp` result or a
+  normalized matrix (top `n.top` = 500 most variable features), coloured
+  (discrete or continuous), shaped and labelled by sample covariates, % of
+  variance in the axis titles, optional ellipses (groups of at least 4
+  samples) and scree panel; warns on raw counts; square panel; scores and
+  covariates as source data.
+* `plot_variance_explained()`: variance explained by sample covariates.
+  View "genes": per-gene fractions as violins (ordered by median, Residuals
+  last), or stacked bars for selected `features`; read from a
+  variancePartition result, or computed with linear models (R-squared split
+  between covariates by the LMG method, so fractions sum to 1 and do not
+  depend on the order of the covariates). View "pcs": R-squared of each top
+  PC on each covariate as tiles, under bars of each PC's % variance.
+* `plot_fc_quadrant()`: log2 fold change in one comparison against another
+  (two time points, two tissues, RNA vs ATAC / ChIP), coloured by where each
+  feature is significant (both, same or opposite direction; one only;
+  neither), with counts per quadrant, the Spearman (or Pearson) correlation,
+  a y = x diagonal and labels of the top features per quadrant. The two
+  tables may come from different tools; peaks are mapped to genes with
+  `map.y` (one peak per gene: the most significant by default).
+
+## Internal
+
+* `plot_volcano()` uses the shared `check_de_cutoffs()` and the new
+  `de_direction()`, also used by `plot_ma()` and `plot_fc_quadrant()`.
+  Output unchanged.
+
 # bioToolkit 0.8.0
 
 Phase D of the visualization overhaul: single-cell plots (S1-S4).

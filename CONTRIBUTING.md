@@ -10,7 +10,7 @@ functions are renamed when their roadmap item is worked on.
 | Kind | Scheme | Examples |
 |---|---|---|
 | Plots of a Seurat object, per cell | `<SeuratName>_bioToolkit` (drop-in replacements users recognise) | `DimPlot_bioToolkit`, `FeaturePlot_bioToolkit`, `DotPlot_bioToolkit`, `VlnPlot_bioToolkit`, `DoHeatmap_bioToolkit`, `DensityDiffPlot_bioToolkit` |
-| Plots of tables / matrices (DE, enrichment, bulk) | `plot_<thing>()` | `plot_volcano`, `plot_ma`, `plot_pca`, `plot_sample_heatmap`, `plot_variance_explained`, `plot_fc_quadrant`, `plot_de_dots`, `plot_enrichment_dots`, `plot_enrichment_bars`, `plot_composition_scatter` |
+| Plots of tables / matrices (DE, enrichment, bulk) | `plot_<thing>()` | `plot_volcano`, `plot_ma`, `plot_pca`, `plot_variance_explained`, `plot_fc_quadrant`, `plot_de_dots`, `plot_enrichment_dots`, `plot_enrichment_bars`, `plot_composition_scatter` |
 | Data helpers | verb first | `standardize_de()`, `standardize_enrichment()`, `top_markers()`, `export_source_data()` |
 | Palettes | `bt_palette()`; verb first for the rest | `bt_palette()`, `list_palettes()`, `show_palettes()`, `check_palette()` |
 | ggplot2 extensions | ggplot2's own scheme, with `bioToolkit` | `theme_bioToolkit()` |

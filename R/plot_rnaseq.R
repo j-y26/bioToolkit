@@ -1,4 +1,4 @@
-# Volcano plot of differential expression results (roadmap item R2)
+# Volcano and MA plots of differential expression results (roadmap items R2, B1)
 #
 # Design
 # ------
@@ -19,6 +19,12 @@
 #   p-values (decided 2026-10-12).
 # * Labels are bold (bold italic for genes), to stay legible over the points
 #   and at print sizes (decided 2026-10-13).
+# * `plot_ma()` (B1) shares the classes, colours, labels and point drawing
+#   of the volcano (`de_direction()`, `volcano_colours()`,
+#   `volcano_label_flags()`); only the axes differ. The mean is drawn as the
+#   DE tool reports it: log2 values (edgeR logCPM, limma AveExpr) as they are,
+#   linear ones (DESeq2 baseMean) on a log10 axis. Its counts sit in the
+#   right corners, up above and down below 0. No capping, as in the volcano.
 # * Labels are chosen explicitly (`label` = "top", "selected" or "none"). The
 #   old functions silently replaced the requested genes by the top 10 per
 #   direction when many were requested; that behaviour is gone.
@@ -218,12 +224,7 @@ plot_volcano <- function(
     label <- match.arg(label)
     label.rank <- match.arg(label.rank)
     annotate.counts <- match.arg(annotate.counts)
-    if (!(is.numeric(padj.cutoff) && length(padj.cutoff) == 1 && padj.cutoff > 0 && padj.cutoff <= 1)) {
-        stop("`padj.cutoff` must be a single number in (0, 1]", call. = FALSE)
-    }
-    if (!(is.numeric(logfc.cutoff) && length(logfc.cutoff) == 1 && logfc.cutoff >= 0)) {
-        stop("`logfc.cutoff` must be a single number >= 0", call. = FALSE)
-    }
+    check_de_cutoffs(padj.cutoff, logfc.cutoff)
     class_labels <- c(up = up.label, down = down.label, ns = ns.label)
     if (anyDuplicated(class_labels)) {
         stop("`up.label`, `down.label` and `ns.label` must be different", call. = FALSE)
@@ -256,9 +257,7 @@ plot_volcano <- function(
 
     # Direction of change: significance is decided by the adjusted p-value,
     # the same quantity as on the y-axis
-    sig <- df$padj < padj.cutoff
-    direction <- ifelse(sig & df$logfc > logfc.cutoff, "up",
-                        ifelse(sig & df$logfc < -logfc.cutoff, "down", "ns"))
+    direction <- de_direction(df$logfc, df$padj, padj.cutoff, logfc.cutoff)
     df$direction <- factor(class_labels[direction], levels = class_labels)
     df$neg_log10_padj <- -log10(df$padj)
     df$labelled <- volcano_label_flags(df, direction, label, label.n, label.features, label.rank)
@@ -357,6 +356,318 @@ plot_volcano <- function(
         )
     }
     p
+}
+
+
+#' @title MA plot of differential expression results
+#'
+#' @description Plots the log2 fold change of each feature (M) against its
+#'              mean expression (A), colouring features that are
+#'              significantly up- or down-regulated, with optional labels,
+#'              counts of DE features and a trend line. The MA plot shows how
+#'              fold changes and significance depend on expression: lowly
+#'              expressed features have noisy fold changes, and a trend away
+#'              from 0 points to an expression-dependent bias (e.g. a
+#'              normalization problem). Same colours, labels and arguments as
+#'              \code{\link{plot_volcano}}; reads edgeR, DESeq2, limma and
+#'              other results with \code{\link{standardize_de}}.
+#'
+#' @inheritParams plot_volcano
+#'
+#' @param logfc.col Column of the log2 fold change. If NULL (default), taken
+#'                  from `method`. A shrunken log fold change (DESeq2
+#'                  \code{lfcShrink()} with apeglm or ashr) is the
+#'                  recommended input: without shrinkage, lowly expressed
+#'                  features spread into a wide fan at the left of the plot,
+#'                  which hides the features that are reliably changed
+#'
+#' @param mean.col Column of the mean expression. If NULL (default), taken
+#'                 from `method`: edgeR `logCPM`, DESeq2 `baseMean`, limma
+#'                 `AveExpr`. Seurat results have none (use
+#'                 \code{\link{plot_volcano}})
+#'
+#' @param mean.scale Scale of the mean expression column: "log2" (values
+#'                   already on a log2 scale, such as edgeR logCPM or limma
+#'                   AveExpr; drawn as they are) or "linear" (such as DESeq2
+#'                   baseMean; drawn on a log10 axis). If NULL (default),
+#'                   taken from `method`; it must be given with `mean.col`
+#'
+#' @param trend Whether to draw a trend line of the log fold change along the
+#'              mean expression, through all features (robust locally
+#'              weighted regression, \code{stats::lowess()}), to spot an
+#'              expression-dependent bias. Default is FALSE
+#'
+#' @param label.rank How the top features are ranked with `label = "top"`:
+#'                   "padj" (default), "logfc" or "product", as in
+#'                   \code{\link{plot_volcano}}
+#'
+#' @param annotate.counts How to show the numbers of up- and down-regulated
+#'                        features: "corner" (default; up-regulated at the top
+#'                        right, down-regulated at the bottom right) or "none"
+#'
+#' @param symmetric Whether the y-axis (log fold change) is symmetric around
+#'                  0, default is TRUE
+#'
+#' @param panel.width Width of the panel in inches, default is 3.5
+#'
+#' @param panel.height Height of the panel in inches, default is 2.5
+#'
+#' @details
+#' Features are classed as in \code{\link{plot_volcano}}: up-regulated when
+#' the adjusted p-value is below `padj.cutoff` and the log2 fold change above
+#' `logfc.cutoff`, down-regulated when below `-logfc.cutoff`, not significant
+#' otherwise. Features without a log fold change, an adjusted p-value or a
+#' mean expression (or, on a log10 axis, with a mean of 0) are not drawn.
+#' Every point is drawn at its own value; nothing is capped.
+#'
+#' The plot has a fixed panel size; save it with \code{\link{save_plot}}. Its
+#' data (one row per drawn feature, with columns `direction`, `mean_plot`,
+#' the value on the x-axis, and `labelled` added to the standardized DE
+#' table) can be written with \code{\link{export_source_data}}.
+#'
+#' @return A ggplot object
+#'
+#' @examples
+#' set.seed(1)
+#' de <- data.frame(
+#'     logFC = rnorm(2000, sd = 1),
+#'     logCPM = runif(2000, 0, 12),
+#'     PValue = runif(2000)^4,
+#'     row.names = paste0("Gene", 1:2000)
+#' )
+#' de$FDR <- p.adjust(de$PValue, "BH")
+#' plot_ma(de)
+#' plot_ma(de, trend = TRUE, label = "none", logfc.cutoff = 1)
+#' \dontrun{
+#' # DESeq2: shrunken fold changes, baseMean on a log10 axis
+#' res <- DESeq2::lfcShrink(dds, coef = "condition_KO_vs_WT", type = "apeglm")
+#' save_plot(plot_ma(res), "ma.pdf")
+#' }
+#'
+#' @seealso \code{\link{plot_volcano}}, \code{\link{standardize_de}},
+#'          \code{\link{save_plot}}
+#'
+#' @import ggplot2
+#' @export
+#'
+plot_ma <- function(
+    data,
+    method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+    feature.col = NULL,
+    logfc.col = NULL,
+    p.col = NULL,
+    padj.col = NULL,
+    mean.col = NULL,
+    mean.scale = NULL,
+    padj.cutoff = 0.05,
+    logfc.cutoff = 0,
+    trend = FALSE,
+    label = c("top", "selected", "none"),
+    label.n = 10,
+    label.features = NULL,
+    label.rank = c("padj", "logfc", "product"),
+    label.size = NULL,
+    italic.genes = TRUE,
+    annotate.counts = c("corner", "none"),
+    symmetric = TRUE,
+    cols = NULL,
+    up.label = "Up-regulated",
+    down.label = "Down-regulated",
+    ns.label = "Not significant",
+    pt.size = 1,
+    alpha = 0.6,
+    raster = NULL,
+    raster.dpi = 1000,
+    panel.width = 3.5,
+    panel.height = 2.5,
+    legend.position = "right",
+    bg = "transparent",
+    seed = 42
+) {
+    method <- match.arg(method)
+    label <- match.arg(label)
+    label.rank <- match.arg(label.rank)
+    annotate.counts <- match.arg(annotate.counts)
+    check_de_cutoffs(padj.cutoff, logfc.cutoff)
+    if (!is.null(mean.scale)) mean.scale <- match.arg(mean.scale, c("log2", "linear"))
+    class_labels <- c(up = up.label, down = down.label, ns = ns.label)
+    if (anyDuplicated(class_labels)) {
+        stop("`up.label`, `down.label` and `ns.label` must be different", call. = FALSE)
+    }
+    cols <- volcano_colours(cols)
+
+    df <- standardize_de(
+        data,
+        method = method,
+        feature.col = feature.col,
+        logfc.col = logfc.col,
+        p.col = p.col,
+        padj.col = padj.col,
+        mean.col = mean.col
+    )
+    if (!is.null(df$comparison)) {
+        stop("`plot_ma()` draws one comparison; give a single DE table", call. = FALSE)
+    }
+    if (is.null(df$mean_expr)) {
+        stop("The DE table has no mean expression (Seurat results have none); set `mean.col`, ",
+             "or use plot_volcano()", call. = FALSE)
+    }
+    # The scale of the mean decides the axis: log2 values (logCPM, AveExpr)
+    # are drawn as they are; linear ones (baseMean) on a log10 axis, where
+    # their skewed distribution spreads out
+    if (is.null(mean.scale)) {
+        mean.scale <- attr(df, "mean.scale")
+        if (is.na(mean.scale)) {
+            stop("The scale of `mean.col` is not known; set `mean.scale` to \"log2\" or \"linear\"",
+                 call. = FALSE)
+        }
+    }
+    log_axis <- mean.scale == "linear"
+
+    drawable <- !is.na(df$logfc) & !is.na(df$padj) & !is.na(df$mean_expr)
+    if (log_axis) drawable <- drawable & df$mean_expr > 0
+    if (!all(drawable)) {
+        message(sum(!drawable), " feature(s) without a log fold change, adjusted p-value or ",
+                if (log_axis) "positive ", "mean expression are not drawn")
+        df <- df[drawable, , drop = FALSE]
+    }
+    if (nrow(df) == 0) stop("No feature can be drawn", call. = FALSE)
+
+    direction <- de_direction(df$logfc, df$padj, padj.cutoff, logfc.cutoff)
+    df$direction <- factor(class_labels[direction], levels = class_labels)
+    df$mean_plot <- df$mean_expr
+    df$labelled <- volcano_label_flags(df, direction, label, label.n, label.features, label.rank)
+    n_up <- sum(direction == "up")
+    n_down <- sum(direction == "down")
+    # Not significant first, so that the grey cloud never hides DE points
+    df <- df[order(match(direction, c("ns", "down", "up"))), , drop = FALSE]
+    rownames(df) <- NULL
+
+    sz <- theme_sizes()
+    lw <- pt_to_linewidth(sz$line)
+    if (is.null(label.size)) label.size <- pt_to_size(sz$small)
+    ylim <- if (symmetric) c(-1, 1) * max(abs(df$logfc)) else range(df$logfc)
+    x_title <- ma_x_title(attr(df, "method"), mean.col, log_axis)
+
+    layer_fun <- points_layer_fun(raster, nrow(df), 5000, raster.dpi)
+    p <- ggplot(df, aes(x = .data$mean_plot, y = .data$logfc)) +
+        # No change at 0, solid and light, under the points
+        geom_hline(yintercept = 0, colour = "grey60", linewidth = lw) +
+        layer_fun(geom_point(aes(colour = .data$direction), size = pt.size, alpha = alpha,
+                             shape = 16, stroke = 0))
+    if (logfc.cutoff > 0) {
+        p <- p + geom_hline(yintercept = c(-1, 1) * logfc.cutoff, linetype = "dashed", colour = "grey40",
+                            linewidth = lw)
+    }
+    if (trend) {
+        # lowess() of the log fold change on the x position (log10 of a
+        # linear mean), so that the trend follows the axis as drawn. Robust
+        # (iterated reweighting), so that DE features do not pull it
+        x_fit <- if (log_axis) log10(df$mean_plot) else df$mean_plot
+        fit <- stats::lowess(x_fit, df$logfc, f = 0.3)
+        tr <- data.frame(x = if (log_axis) 10^fit$x else fit$x, y = fit$y)
+        p <- p + geom_line(data = tr, aes(x = .data$x, y = .data$y), inherit.aes = FALSE,
+                           colour = "black", linewidth = pt_to_linewidth(sz$line * 2))
+    }
+    x_scale <- if (log_axis) {
+        scale_x_log10(labels = scales::label_number(scale_cut = scales::cut_short_scale(), drop0trailing = TRUE),
+                      expand = expansion(mult = 0.03))
+    } else {
+        scale_x_continuous(expand = expansion(mult = 0.03))
+    }
+    p <- p +
+        scale_colour_manual(values = stats::setNames(cols, class_labels), name = NULL) +
+        x_scale +
+        scale_y_continuous(limits = ylim, expand = expansion(mult = 0.05)) +
+        labs(x = x_title, y = quote(log[2] ~ "fold change")) +
+        theme_bioToolkit("axis", bg = bg) +
+        panel_size_theme(panel.width, panel.height) +
+        theme(legend.position = legend.position) +
+        guides(colour = guide_legend(override.aes = list(size = 2, alpha = 1)))
+
+    if (any(df$labelled)) {
+        check_installed("ggrepel", reason = "to label features")
+        p <- p + ggrepel::geom_text_repel(
+            data = df[df$labelled, , drop = FALSE],
+            aes(label = .data$feature),
+            size = label.size,
+            fontface = if (italic.genes) "bold.italic" else "bold",
+            colour = "black",
+            max.overlaps = Inf,
+            min.segment.length = 0,
+            segment.colour = "grey30",
+            segment.size = lw,
+            box.padding = 0.25,
+            max.time = 3,
+            max.iter = 1e5,
+            seed = seed
+        )
+    }
+    if (annotate.counts == "corner") {
+        # Up-regulated features sit above 0, down-regulated below: each count
+        # goes in the corner on its side, at the right where expression is
+        # high and points are fewest
+        count_size <- pt_to_size(sz$base)
+        p <- p +
+            annotate("text", x = Inf, y = Inf, label = n_up, hjust = 1.2, vjust = 1.4,
+                     size = count_size, colour = cols[["up"]]) +
+            annotate("text", x = Inf, y = -Inf, label = n_down, hjust = 1.2, vjust = -0.4,
+                     size = count_size, colour = cols[["down"]])
+    }
+    p
+}
+
+
+#' Direction of change of DE features
+#'
+#' A feature is up-regulated when its adjusted p-value is below
+#' `padj.cutoff` and its log2 fold change above `logfc.cutoff`,
+#' down-regulated when below `-logfc.cutoff`, and not significant otherwise
+#' (also when the adjusted p-value is NA).
+#'
+#' @param logfc Log2 fold changes
+#'
+#' @param padj Adjusted p-values
+#'
+#' @param padj.cutoff Adjusted p-value cutoff
+#'
+#' @param logfc.cutoff Absolute log2 fold change cutoff
+#'
+#' @return "up", "down" or "ns" per feature
+#'
+#' @keywords internal
+de_direction <- function(logfc,
+                         padj,
+                         padj.cutoff,
+                         logfc.cutoff) {
+    sig <- !is.na(padj) & padj < padj.cutoff & !is.na(logfc)
+    ifelse(sig & logfc > logfc.cutoff, "up",
+           ifelse(sig & logfc < -logfc.cutoff, "down", "ns"))
+}
+
+
+#' Title of the x-axis of an MA plot
+#'
+#' @param method Method the table was read with
+#'
+#' @param mean.col Column of the mean given by the user, or NULL
+#'
+#' @param log_axis Whether the axis is log10
+#'
+#' @return A plotmath expression or a string
+#'
+#' @keywords internal
+ma_x_title <- function(method,
+                       mean.col,
+                       log_axis) {
+    # A column given by the user can hold anything: name it
+    if (!is.null(mean.col)) return(mean.col)
+    switch(method,
+        edgeR = quote("Average" ~ log[2] ~ "CPM"),
+        DESeq2 = "Mean of normalized counts",
+        limma = quote("Average" ~ log[2] ~ "expression"),
+        if (log_axis) "Mean expression" else quote("Mean" ~ log[2] ~ "expression")
+    )
 }
 
 
