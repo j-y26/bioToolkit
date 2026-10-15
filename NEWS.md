@@ -91,12 +91,13 @@ beyond the labels. New shared code in `R/group_bars.R`.
   `italic.genes`. The source data add `leading_edge` and `labelled`.
 * `ggplotColours()` is renamed `ggplot_colors()` (`showColor` ->
   `show.colors`); the old name still works, with a deprecation warning.
-* `plot_multi_volcano()`: points are spread on each side of 0, so each
-  comparison is one shape of down- and one of up-regulated genes, significant
-  or not; the cutoffs only colour the points (grey: below the fold-change
-  cutoff or not significant). Non-significant genes used to form a separate
-  shape between the cutoffs. With `layout = "pvalue"`, grey genes now sit at
-  their own significance.
+* `plot_multi_volcano()`: with `layout = "sina"`, non-significant genes are
+  spread uniformly over the column, a grey block centred on 0, instead of
+  forming a third shape between the cutoffs; up- and down-regulated genes keep
+  their own shapes. With `layout = "pvalue"` (suited to bulk data), each side
+  of 0 is scaled as a whole, so grey genes sit at their own significance.
+  Non-significant genes are a lighter grey ("grey88"; `plot_volcano()` keeps
+  "grey75") and always drawn under the significant ones.
 * `plot_gsea_rank()`: leading-edge gene names at the small text size (9 pt,
   8 pt when they need more than two lines; were 11 / 9 pt).
 * `show_palettes()` also draws your own colours: a vector of colours, or a

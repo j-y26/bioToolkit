@@ -97,8 +97,15 @@ test_that("plot_multi_volcano counts, strips, cutoff lines and offsets", {
     expect_true(all(abs(src$x - col) <= 0.4 + 1e-9))
     p2 <- suppressMessages(plot_multi_volcano(de, logfc.cutoff = 1, seed = 1))
     expect_equal(attr(p2, "source_data")$x, src$x)
-    # Non-significant genes are drawn (in grey) by default, not with show.ns = FALSE
+    # Non-significant genes are drawn by default, in light grey and under the
+    # DE genes; not with show.ns = FALSE
     expect_true(any(src$direction == "ns"))
+    pts <- which(vapply(p$layers, function(l) inherits(l$geom, "GeomPoint"), logical(1)))
+    expect_equal(p$layers[[pts[1]]]$aes_params$colour, "grey88")
+    expect_true(all(p$layers[[pts[1]]]$data$direction == "ns"))
+    # The DE genes are the plot's own data, drawn by the later point layer
+    expect_true(all(p$data$direction != "ns"))
+    expect_s3_class(p$layers[[pts[2]]]$data, "waiver")
     p3 <- suppressMessages(plot_multi_volcano(de, logfc.cutoff = 1, show.ns = FALSE))
     expect_true(all(attr(p3, "source_data")$direction != "ns"))
     # band.cols is the deprecated name of comparison.cols
@@ -172,23 +179,22 @@ test_that("multi_volcano_offsets: sina width follows the density", {
     expect_equal(pv[51], 0.4)
 })
 
-test_that("multi_volcano_offsets: one shape per side of 0, whatever the significance", {
+test_that("multi_volcano_offsets: sina shapes for DE genes, a uniform block for ns genes", {
     set.seed(2)
     lfc <- c(stats::rnorm(400, sd = 0.6), stats::rnorm(40, 2.5, 0.5), -stats::rexp(40) - 1)
     df <- data.frame(comparison = "A", logfc = lfc, neg_log10_padj = stats::runif(length(lfc), 0, 5))
     df$direction <- ifelse(abs(df$logfc) > 1 & df$neg_log10_padj > 1.3,
                            ifelse(df$logfc > 0, "up", "down"), "ns")
-    # The direction (the cutoffs) does not change where points go
     off <- with_seed(1, multi_volcano_offsets(df, "sina", 0.4))
-    off_all_ns <- with_seed(1, multi_volcano_offsets(transform(df, direction = "ns"), "sina", 0.4))
-    expect_equal(off, off_all_ns)
     expect_true(all(abs(off) <= 0.4))
-    # Each side fills the column at its widest, near 0 (no pinch at 0: the
-    # density is reflected at the boundary)
-    near0 <- abs(df$logfc) < 0.2
-    expect_gt(max(abs(off[near0 & df$logfc > 0])), 0.3)
-    expect_gt(max(abs(off[near0 & df$logfc < 0])), 0.3)
-    # pvalue: grey genes are placed on the scale of their side
+    # ns genes fill the column at any fold change, not only where they are
+    # dense
+    ns <- df$direction == "ns"
+    expect_gt(max(abs(off[ns & abs(df$logfc) > 0.8])), 0.3)
+    expect_gt(max(abs(off[ns & abs(df$logfc) < 0.2])), 0.3)
+    # Each direction's own shape fills the column at its widest
+    for (d in c("up", "down")) expect_gt(max(abs(off[df$direction == d])), 0.3)
+    # pvalue: one scale per side of 0, grey genes included
     pv <- multi_volcano_offsets(df, "pvalue", 0.4)
     up_side <- df$logfc >= 0
     expect_equal(pv[up_side], -0.4 + 0.8 * df$neg_log10_padj[up_side] / max(df$neg_log10_padj[up_side]))

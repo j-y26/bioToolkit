@@ -64,19 +64,21 @@ below `padj.cutoff` (default 0.05) and its
 absolute log2 fold change above
 `logfc.cutoff` (default 1)}
 
-\item{show.ns}{Whether to draw non-significant genes too, in grey under
-the DE genes as in \code{\link{plot_volcano}}, default is
-TRUE}
+\item{show.ns}{Whether to draw non-significant genes too, in light grey
+("grey88", or `cols["ns"]` with `color.by = "direction"`)
+under the DE genes, default is TRUE}
 
-\item{layout}{How points spread across their column, separately below
-and above 0, significant or not (the cutoffs only colour
-the points): "sina" (default; as wide as the density of
-genes at that fold change, so that each column shows one
-shape of down- and one of up-regulated genes), "pvalue" (x
-within the column = -log10 adjusted p-value relative to the
-most significant gene of the side, from the left, making
-each column a sideways volcano) or "jitter" (uniform, the
-classic look)}
+\item{layout}{How points spread across their column: "sina" (default;
+the up- and down-regulated genes each as wide as their
+density at that fold change, so that the shape of each
+distribution shows, and the non-significant genes spread
+uniformly, a grey block around 0; suited to single-cell
+pseudobulk results), "pvalue" (x within the column = -log10
+adjusted p-value relative to the most significant gene on
+its side of 0, from the left, making each column a sideways
+volcano; suited to bulk results, where non-significant genes
+far outnumber the others) or "jitter" (uniform, the classic
+look)}
 
 \item{color.by}{What the colour of a point shows: "padj" (default; -log10
 adjusted p-value on two ramps, warm for up and cool for

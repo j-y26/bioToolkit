@@ -4,11 +4,14 @@
 \alias{volcano_colours}
 \title{Colours of the three classes of a volcano plot}
 \usage{
-volcano_colours(cols)
+volcano_colours(cols, ns = "grey75")
 }
 \arguments{
 \item{cols}{NULL, colours named `up`, `down` and / or `ns` (the others keep
 their default), or three unnamed colours in that order}
+
+\item{ns}{Default colour of the non-significant genes, "grey75" unless the
+plot sets another}
 }
 \value{
 A vector of three colours named `up`, `down`, `ns`

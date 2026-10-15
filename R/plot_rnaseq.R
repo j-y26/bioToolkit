@@ -676,11 +676,15 @@ ma_x_title <- function(method,
 #' @param cols NULL, colours named `up`, `down` and / or `ns` (the others keep
 #'             their default), or three unnamed colours in that order
 #'
+#' @param ns Default colour of the non-significant genes, "grey75" unless the
+#'           plot sets another
+#'
 #' @return A vector of three colours named `up`, `down`, `ns`
 #'
 #' @keywords internal
-volcano_colours <- function(cols) {
-    out <- c(up = "firebrick4", down = "midnightblue", ns = "grey75")
+volcano_colours <- function(cols,
+                            ns = "grey75") {
+    out <- c(up = "firebrick4", down = "midnightblue", ns = ns)
     if (is.null(cols)) return(out)
     if (!all(is_colour(cols))) stop("`cols` must be colours", call. = FALSE)
     if (is.null(names(cols))) {
