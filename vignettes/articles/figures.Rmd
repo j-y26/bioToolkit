@@ -336,8 +336,11 @@ FeaturePlot_bioToolkit(
 
 ### Browsing palettes
 
-`list_palettes()` lists the palettes with their type and source;
-`show_palettes()` draws them with the index of each colour, and
+Every palette, with the index and hex code of each colour, its source and
+the plots that use it by default, is on the
+[Colour palettes](palettes.html) page. In R, `list_palettes()` lists the
+palettes with their type and source; `show_palettes()` draws them with the
+index of each colour (also your own colours, or a list of both), and
 `bt_palette()` returns the colours. Add `_r` to any name to reverse it.
 
 ```{r list-palettes}
@@ -346,6 +349,10 @@ head(list_palettes("qualitative"))
 
 ```{r show-palettes, fig.width = 7, fig.height = 2.2}
 show_palettes(c("scanpy-20", "okabe-ito", "npg"))
+```
+
+```{r show-own-colours, fig.width = 7, fig.height = 1.2}
+show_palettes(list(mine = cell_cols, "okabe-ito"))
 ```
 
 ```{r bt-palette}
@@ -376,5 +383,5 @@ ggplot_colors(4)
 
 `ggplot_colors()` reproduces ggplot2's default colours for `n` groups, e.g.
 to keep the colours of plots made with Seurat's defaults. (It was called
-`ggplotColours()` before 0.11.0; the old name still works, with a
+`ggplotColours()` before 1.0.0; the old name still works, with a
 deprecation warning.)

@@ -116,7 +116,8 @@ renamed_args <- function(dots,
 #' \code{DensityDiffPlot_bioToolkit()} pass `...` to the dimension arrows. The
 #' arguments take the dot.case names of \code{\link{add_dimension_arrows}}
 #' (since 0.10.0); the old snake_case names are accepted with a deprecation
-#' warning. They are returned under the snake_case names of the internal
+#' warning. `arrow.scale` (new in 1.0.0) has no old name. They are returned
+#' under the snake_case names of the internal
 #' \code{\link{dimension_arrow_grob}}.
 #'
 #' @param dots `list(...)` of the plot, without `rasterize`
@@ -131,12 +132,15 @@ resolve_arrow_args <- function(dots,
     if (length(dots) == 0) return(list())
     old <- names(dots) %in% names(ARROW_ARG_RENAMES)
     new_dots <- c(dots[!old], renamed_args(dots[old], ARROW_ARG_RENAMES, fn, names(dots)[!old]))
-    unknown <- setdiff(names(new_dots), ARROW_ARG_RENAMES)
+    # Internal (snake_case) name of each accepted argument
+    known <- c(ARROW_ARG_RENAMES, arrow_scale = "arrow.scale")
+    unknown <- setdiff(names(new_dots), known)
     if (length(unknown) || is.null(names(new_dots))) {
         stop("unused argument in `", fn, "()`: ", paste0("`", unknown, "`", collapse = ", "),
              call. = FALSE)
     }
-    stats::setNames(new_dots, names(ARROW_ARG_RENAMES)[match(names(new_dots), ARROW_ARG_RENAMES)])
+    if (!is.null(new_dots$arrow.scale)) check_arrow_scale(new_dots$arrow.scale)
+    stats::setNames(new_dots, names(known)[match(names(new_dots), known)])
 }
 
 
@@ -754,6 +758,8 @@ extent_scales <- function(rd) {
 #'
 #' @param bg Background colour
 #'
+#' @param arrow.scale The `arrow.scale` of the dimension arrows, default is 1
+#'
 #' @return A ggplot2 theme
 #'
 #' @keywords internal
@@ -766,7 +772,14 @@ embedding_theme <- function(panel.width,
                             legend.text.size,
                             strip.text.size,
                             strip.text.face,
-                            bg) {
+                            bg,
+                            arrow.scale = 1) {
+    # Room for the arrow labels below and left of the panels: the theme's
+    # 0.2 cm plus 0.4 cm scaled as the arrows are (arrow_scale_factor()),
+    # i.e. the theme's 0.6 cm at a 3.5-inch panel. The same in every plot of
+    # a figure, with or without arrows, so that they line up
+    k <- arrow_scale_factor(panel.width, panel.height, arrow.scale)
+    arrow_room <- 0.2 + 0.4 * k
     theme_bioToolkit("embedding", bg = bg) +
         panel_size_theme(panel.width, panel.height, ncol = ncol, nrow = nrow,
                          panel.spacing = panel.spacing) +
@@ -774,7 +787,8 @@ embedding_theme <- function(panel.width,
             legend.position = legend.position,
             # Properties left NULL inherit the theme's
             legend.text = element_text(size = legend.text.size),
-            strip.text = element_text(size = strip.text.size, face = strip.text.face)
+            strip.text = element_text(size = strip.text.size, face = strip.text.face),
+            plot.margin = margin(0.2, 0.2, arrow_room, arrow_room, "cm")
         )
 }
 

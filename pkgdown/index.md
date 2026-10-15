@@ -29,7 +29,7 @@ functions with real output.
 [**Figure essentials and colours**](articles/figures.html)
 
 Theme, fixed panel sizes, saving to PDF / PNG, legends as files, source data,
-palettes.
+palettes ([all palettes](articles/palettes.html)).
 
 `save_plot()` `theme_bioToolkit()` `extract_legend()` `bt_palette()`
 :::

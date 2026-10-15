@@ -40,6 +40,8 @@ navbar:
       - text: Figures
       - text: Figure essentials and colours
         href: articles/figures.html
+      - text: Colour palettes
+        href: articles/palettes.html
       - text: -------
       - text: Single-cell
       - text: Embeddings
@@ -76,6 +78,7 @@ articles:
   navbar: ~
   contents:
   - articles/figures
+  - articles/palettes
 - title: Single-cell
   contents:
   - articles/sc-embeddings
@@ -107,7 +110,8 @@ reference:
 - title: Colours
   desc: >
     Browse, pick and check palettes; every plot takes one `cols` argument.
-    Guide: [Figure essentials and colours](../articles/figures.html#colours).
+    All palettes: [Colour palettes](../articles/palettes.html). Guide:
+    [Figure essentials and colours](../articles/figures.html#colours).
   contents:
   - bt_palette
   - list_palettes

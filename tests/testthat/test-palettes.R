@@ -55,6 +55,25 @@ test_that("show_palettes numbers each colour, wraps long palettes and ramps cont
     expect_error(show_palettes("nope"), "Unknown palette")
 })
 
+test_that("show_palettes draws colours and lists of palettes and colours", {
+    cell_cols <- c(T = "#1F77B4", B = "steelblue", NK = "red")
+    d <- show_palettes(cell_cols)$data
+    expect_equal(levels(d$palette), "cell_cols")
+    expect_equal(d$fill, c("#1F77B4", "#4682B4", "#FF0000"))
+    expect_equal(d$label, c("1", "2", "3"))
+    expect_equal(levels(show_palettes(c("red", "blue"))$data$palette), "colours")
+    d <- show_palettes(list(mine = cell_cols, "npg", c("gold", "navy"), ramp = viridisLite::mako(200)))$data
+    expect_equal(levels(d$palette), c("mine", "npg", "3", "ramp"))
+    expect_equal(d$fill[d$palette == "npg"], bt_palette("npg"))
+    expect_true(all(d$label[d$palette == "ramp"] == ""))
+    expect_error(show_palettes(c("npg", "red")), "mixes")
+    expect_error(show_palettes(c("npg", "nope")), "nope")
+    expect_error(show_palettes(list(c("red", "zz"))), "Invalid colour")
+    expect_error(show_palettes(list(1:3)), "not a palette name")
+    expect_warning(p <- show_palettes(names = "npg"), class = "deprecatedWarning")
+    expect_equal(levels(p$data$palette), "npg")
+})
+
 test_that("check_palette flags colours that are hard to tell apart", {
     skip_if_not_installed("colorspace")
     expect_silent(res <- check_palette("okabe-ito"))

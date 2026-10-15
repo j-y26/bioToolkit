@@ -164,8 +164,10 @@
 #'             42. The global random number generator state is not changed
 #'
 #' @param ... Arguments of the dimension arrows, as in
-#'            \code{\link{add_dimension_arrows}} (e.g. `arrow.length = 1.5`;
-#'            the snake_case names used before 0.10.0 are deprecated).
+#'            \code{\link{add_dimension_arrows}}: the arrows scale with the
+#'            panel size, and `arrow.scale` makes them larger or smaller
+#'            (e.g. `arrow.scale = 0.8`; default 1, 2 cm arrows on a 3.5-inch
+#'            panel); the snake_case names used before 0.10.0 are deprecated.
 #'            `rasterize` is accepted as a deprecated alias of `raster`
 #'
 #' @return a ggplot object
@@ -325,7 +327,8 @@ DimPlot_bioToolkit <- function(
             ncol = layout$ncol, nrow = layout$nrow,
             panel.spacing = panel.spacing, legend.position = legend.position,
             legend.text.size = legend.text.size, strip.text.size = strip.text.size,
-            strip.text.face = strip.text.face, bg = bg
+            strip.text.face = strip.text.face, bg = bg,
+            arrow.scale = arrow_args$arrow_scale %||% 1
         ) +
         theme(
             legend.title = element_blank(),

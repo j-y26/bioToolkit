@@ -400,7 +400,8 @@ DensityDiffPlot_bioToolkit <- function(
             panel.width = panel.width, panel.height = panel.height,
             ncol = layout$ncol, nrow = layout$nrow, panel.spacing = panel.spacing,
             legend.position = legend.position, legend.text.size = sizes$base,
-            strip.text.size = sizes$large, strip.text.face = "bold", bg = bg
+            strip.text.size = sizes$large, strip.text.face = "bold", bg = bg,
+            arrow.scale = arrow_args$arrow_scale %||% 1
         ) +
         theme(legend.title = element_text(size = sizes$base, hjust = if (vertical) 0 else 0.5,
                                           margin = margin(b = 0.1, unit = "cm"))) +

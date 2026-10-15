@@ -46,9 +46,12 @@ vapply(de, function(t) sum(t$FDR < 0.05), integer(1))
 ## Multi-comparison volcano
 
 One column per comparison, marked by a strip of its colour and its name on
-top: genes at their log2 fold change, spread by their density, the
-non-significant ones in grey; the cutoffs (±`logfc.cutoff`, default 1) as
-dashed lines; counts of up- and down-regulated genes above and below.
+top: genes at their log2 fold change, spread by their density into one shape
+below 0 and one above; the cutoffs (±`logfc.cutoff`, default 1) as dashed
+lines; counts of up- and down-regulated genes above and below. The cutoffs
+only colour the genes: those below the fold-change cutoff or not
+significant are grey, so each shape shows the whole distribution of the
+comparison.
 
 ```{r multi}
 plot_multi_volcano(de)
@@ -99,8 +102,9 @@ plot_multi_volcano(
 
 #### `layout`
 
-`"pvalue"` places genes across their column by −log10 adjusted p-value (each
-column is a sideways volcano); `"jitter"` spreads them uniformly.
+`"pvalue"` places genes across their column by −log10 adjusted p-value,
+relative to the most significant gene on their side of 0 (each column is a
+sideways volcano); `"jitter"` spreads them uniformly.
 
 ```{r multi-layout}
 plot_multi_volcano(de, layout = "pvalue")

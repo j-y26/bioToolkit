@@ -28,6 +28,10 @@
 #   lines, non-significant genes are drawn in grey by default (`show.ns`),
 #   `groups` get bars like split.by, and `flip = TRUE` lists comparisons as
 #   rows (names on the left, down-regulated genes left, up right).
+#   Revision of 2026-10-15 (user): points spread per side of 0 (one shape of
+#   down and one of up genes, ns included), not per direction, so the ns
+#   genes no longer form a third shape between the cutoffs
+#   (multi_volcano_offsets()).
 
 
 #' @title Dot plot of differential expression across comparisons
@@ -431,12 +435,15 @@ check_de_cutoffs <- function(padj.cutoff,
 #'                the DE genes as in \code{\link{plot_volcano}}, default is
 #'                TRUE
 #'
-#' @param layout How points spread across their column: "sina" (default;
-#'               as wide as the density of genes at that fold change, so the
-#'               shape of the distribution shows), "pvalue" (x within the
-#'               column = -log10 adjusted p-value, from the left, making each
-#'               column a sideways volcano) or "jitter" (uniform, the classic
-#'               look)
+#' @param layout How points spread across their column, separately below
+#'               and above 0, significant or not (the cutoffs only colour
+#'               the points): "sina" (default; as wide as the density of
+#'               genes at that fold change, so that each column shows one
+#'               shape of down- and one of up-regulated genes), "pvalue" (x
+#'               within the column = -log10 adjusted p-value relative to the
+#'               most significant gene of the side, from the left, making
+#'               each column a sideways volcano) or "jitter" (uniform, the
+#'               classic look)
 #'
 #' @param color.by What the colour of a point shows: "padj" (default; -log10
 #'                 adjusted p-value on two ramps, warm for up and cool for
@@ -536,7 +543,7 @@ check_de_cutoffs <- function(padj.cutoff,
 #'             default is 42
 #'
 #' @param ... `band.cols` and `band.labels`, the names of `comparison.cols`
-#'            and `comparison.labels` before 0.11.0, accepted with a
+#'            and `comparison.labels` before 1.0.0, accepted with a
 #'            deprecation warning
 #'
 #' @details Comparisons play the part of `group.by` in the single-cell plots
@@ -608,7 +615,7 @@ plot_multi_volcano <- function(
     seed = 42,
     ...
 ) {
-    # `band.cols` / `band.labels` (before 0.11.0, when comparisons were
+    # `band.cols` / `band.labels` (before 1.0.0, when comparisons were
     # coloured bands) are the new `comparison.cols` / `comparison.labels`
     list2env(renamed_args(list(...), c(band.cols = "comparison.cols", band.labels = "comparison.labels"),
                           "plot_multi_volcano", names(match.call())), environment())
@@ -995,8 +1002,14 @@ plot_multi_volcano <- function(
 
 #' Horizontal offsets of points within their column
 #'
-#' @param df Genes with `comparison`, `direction`, `logfc` and
-#'           `neg_log10_padj`
+#' Points are spread separately on each side of 0: each column holds one
+#' shape of down-regulated (log2 fold change < 0) and one of up-regulated
+#' genes, significant or not, so that the cutoffs only change the colour of
+#' the points, not the shape (user decision 2026-10-15; the shapes used to be
+#' drawn per direction, the non-significant genes making a third shape
+#' between the cutoffs).
+#'
+#' @param df Genes with `comparison`, `logfc` and `neg_log10_padj`
 #'
 #' @param layout "sina", "pvalue" or "jitter"
 #'
@@ -1009,7 +1022,9 @@ multi_volcano_offsets <- function(df,
                                   layout,
                                   half) {
     off <- numeric(nrow(df))
-    key <- paste(df$comparison, df$direction)
+    # One shape per comparison and side of 0
+    side <- ifelse(df$logfc < 0, "below", "above")
+    key <- paste(df$comparison, side)
     for (k in unique(key)) {
         i <- which(key == k)
         y <- df$logfc[i]
@@ -1017,19 +1032,26 @@ multi_volcano_offsets <- function(df,
             layout,
             jitter = stats::runif(length(i), -half, half),
             pvalue = {
+                # x = -log10 padj relative to the most significant gene of the
+                # side, so that grey genes sit at their own significance
                 s <- df$neg_log10_padj[i]
                 top <- max(s)
                 if (top > 0) -half + 2 * half * s / top else rep(0, length(i))
             },
             sina = {
                 # Width follows the density of genes at each fold change, the
-                # widest point of each direction filling the column
-                if (length(i) < 3 || stats::sd(y) == 0) {
+                # widest point of each side filling the column. The density
+                # of |log2FC| is estimated with the values mirrored at 0
+                # (reflection): a plain kernel estimate loses half its mass
+                # at the boundary, which would pinch each shape at 0, where
+                # genes are in fact densest
+                a <- abs(y)
+                if (length(i) < 3 || stats::sd(a) == 0) {
                     stats::runif(length(i), -half, half) * 0.3
                 } else {
-                    d <- stats::density(y, n = 256)
-                    w <- stats::approx(d$x, d$y, xout = y)$y
-                    stats::runif(length(i), -1, 1) * half * w / max(d$y)
+                    d <- stats::density(c(a, -a), bw = stats::bw.nrd0(a), n = 512)
+                    w <- stats::approx(d$x, d$y, xout = a)$y
+                    stats::runif(length(i), -1, 1) * half * w / max(d$y[d$x >= 0])
                 }
             }
         )

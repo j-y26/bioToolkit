@@ -19,7 +19,8 @@ A named list of arguments for \code{dimension_arrow_grob()}
 \code{DensityDiffPlot_bioToolkit()} pass `...` to the dimension arrows. The
 arguments take the dot.case names of \code{\link{add_dimension_arrows}}
 (since 0.10.0); the old snake_case names are accepted with a deprecation
-warning. They are returned under the snake_case names of the internal
+warning. `arrow.scale` (new in 1.0.0) has no old name. They are returned
+under the snake_case names of the internal
 \code{\link{dimension_arrow_grob}}.
 }
 \keyword{internal}

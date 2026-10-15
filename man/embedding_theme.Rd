@@ -14,7 +14,8 @@ embedding_theme(
   legend.text.size,
   strip.text.size,
   strip.text.face,
-  bg
+  bg,
+  arrow.scale = 1
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ embedding_theme(
 \item{strip.text.size, strip.text.face}{Font size and face of panel labels}
 
 \item{bg}{Background colour}
+
+\item{arrow.scale}{The `arrow.scale` of the dimension arrows, default is 1}
 }
 \value{
 A ggplot2 theme

@@ -8,6 +8,7 @@ add_dimension_arrows(
   plot,
   reduction = "umap",
   dims = NULL,
+  arrow.scale = 1,
   arrow.length = 2,
   x.coord.adjust = 0.25,
   y.coord.adjust = x.coord.adjust,
@@ -29,26 +30,36 @@ add_dimension_arrows(
 \item{dims}{A vector of dimension names, overwrites the default dimension
 names assumed from reduction method}
 
-\item{arrow.length}{The size of the arrow, default is 2 (cm)}
+\item{arrow.scale}{Size of the arrows relative to the panel, default is
+1: arrows 2 cm long on a panel of 3.5 inches (about
+23\% of its shorter side), scaled with the panel. Use
+e.g. 0.8 for smaller or 1.25 for larger arrows}
 
-\item{x.coord.adjust}{Horizontal adjustment of the arrow origin, default is
-0.25 (cm)}
+\item{arrow.length}{The length of the arrows in cm on a 3.5-inch panel,
+default is 2}
+
+\item{x.coord.adjust}{Horizontal adjustment of the arrow origin in cm on a
+3.5-inch panel, default is 0.25}
 
 \item{y.coord.adjust}{Vertical adjustment of the arrow origin, default is
 the same as `x.coord.adjust`}
 
-\item{arrow.size}{The size of the arrow head, default is 0.25 cm}
+\item{arrow.size}{The length of the arrow head in cm on a 3.5-inch panel,
+default is 0.25}
 
-\item{arrow.width}{The width of the arrow, default is 0.2 cm}
+\item{arrow.width}{The width of the arrow head in cm on a 3.5-inch panel,
+default is 0.2}
 
-\item{arrow.line.width}{The width of the arrow line, default is 3}
+\item{arrow.line.width}{The width of the arrow line on a 3.5-inch panel
+(in R's `lwd` units), default is 3}
 
 \item{arrow.color}{The color of the arrow and label, default is "black"}
 
-\item{text.font.size}{The font size of the text, default is 12}
+\item{text.font.size}{The font size of the labels in points on a 3.5-inch
+panel, default is 12}
 
-\item{text.dst}{The distance of the text from the arrow in cm, default is
-0.3}
+\item{text.dst}{The distance of the labels from the arrows in cm on a
+3.5-inch panel, default is 0.3}
 
 \item{...}{Deprecated snake_case names of the arguments above (e.g.
 `arrow_length`), accepted with a warning; renamed to dot.case
@@ -63,4 +74,12 @@ Adds two short arrows with the dimension names (e.g. "UMAP-1",
              removes its axes, a compact replacement for full axes. Works
              on any ggplot, e.g. from \code{Seurat::DimPlot()}; the
              package's own embedding plots draw these arrows themselves.
+
+             The arrows keep a fixed proportion to the panel they are
+             drawn in: the sizes below are those of a panel 3.5 inches on
+             its shorter side, and everything (lengths, line width, label
+             size) is scaled with the panel's actual size when the plot is
+             drawn. A small panel gets small arrows that stay clear of the
+             cells, a large one arrows that are not lost in it.
+             `arrow.scale` makes them bigger or smaller at any panel size.
 }

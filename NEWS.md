@@ -1,7 +1,24 @@
-# bioToolkit (development version)
+# bioToolkit 1.0.0
 
-Plot revisions after the first round of the documentation website. Argument
-changes refer to the next version, 0.11.0.
+First stable release: plot revisions after the first round of the
+documentation website, scaled dimension arrows, a palette page.
+
+## Dimension arrows scale with the panel
+
+* `DimPlot_bioToolkit()`, `FeaturePlot_bioToolkit()`,
+  `DensityDiffPlot_bioToolkit()`, `format_sc_plots()`,
+  `add_dimension_arrows()`: the dimension arrows keep a fixed proportion to
+  the panel. Their sizes are those of a 3.5-inch panel and are scaled with
+  the panel's shorter side when the plot is drawn: lengths, line width and
+  label size. Small panels get small arrows that stay clear of the cells near
+  the left and bottom edges (they used to run into them); large panels get
+  larger arrows. New `arrow.scale` (default 1; in `...` of the embedding
+  plots) makes them larger or smaller at any size. The geometry arguments
+  (`arrow.length`, `text.font.size`, ...) are now sizes on a 3.5-inch panel.
+  Plots without a fixed panel size (e.g. Seurat plots passed to
+  `format_sc_plots()`) are scaled from the size they are drawn at.
+* The room left below and left of embedding panels for the arrow labels
+  scales with the arrows (0.6 cm at 3.5 inches).
 
 ## Group annotations: bars
 
@@ -74,9 +91,23 @@ beyond the labels. New shared code in `R/group_bars.R`.
   `italic.genes`. The source data add `leading_edge` and `labelled`.
 * `ggplotColours()` is renamed `ggplot_colors()` (`showColor` ->
   `show.colors`); the old name still works, with a deprecation warning.
+* `plot_multi_volcano()`: points are spread on each side of 0, so each
+  comparison is one shape of down- and one of up-regulated genes, significant
+  or not; the cutoffs only colour the points (grey: below the fold-change
+  cutoff or not significant). Non-significant genes used to form a separate
+  shape between the cutoffs. With `layout = "pvalue"`, grey genes now sit at
+  their own significance.
+* `plot_gsea_rank()`: leading-edge gene names at the small text size (9 pt,
+  8 pt when they need more than two lines; were 11 / 9 pt).
+* `show_palettes()` also draws your own colours: a vector of colours, or a
+  list of palette names and colour vectors (one row each, labelled by the
+  list's names). Its first argument is renamed `palettes` (`names` still
+  works, with a deprecation warning).
 
 ## Documentation website
 
+* New "Colour palettes" page: every palette with the index and hex code of
+  each colour, its type and source, and the plots that use it by default.
 * A custom "page not found" page (`.github/404.md`).
 * Home page: a general description of the package; plot conventions moved to
   the conventions table.

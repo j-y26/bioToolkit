@@ -240,8 +240,10 @@
 #'             is 42. The global random number generator state is not changed
 #'
 #' @param ... Arguments of the dimension arrows, as in
-#'            \code{\link{add_dimension_arrows}} (e.g. `arrow.length = 1.5`;
-#'            the snake_case names used before 0.10.0 are deprecated)
+#'            \code{\link{add_dimension_arrows}}: the arrows scale with the
+#'            panel size, and `arrow.scale` makes them larger or smaller
+#'            (e.g. `arrow.scale = 0.8`; default 1, 2 cm arrows on a 3.5-inch
+#'            panel); the snake_case names used before 0.10.0 are deprecated
 #'
 #' @return A ggplot object when there is a single colour scale over one
 #'         feature; otherwise a patchwork object, whose panels keep their
@@ -449,7 +451,8 @@ FeaturePlot_bioToolkit <- function(
             panel.width = panel.width, panel.height = panel.height, panel.spacing = panel.spacing,
             strip.text.size = strip.text.size, rd = rd,
             raster = raster, raster.threshold = raster.threshold, raster.dpi = raster.dpi,
-            bg = bg, halo.color = halo.color, seed = seed
+            bg = bg, halo.color = halo.color, seed = seed,
+            arrow.scale = arrow_args$arrow_scale %||% 1
         )
         # The source data of a gene names the assay and layer it was read from
         f <- members[[1]]$feature
@@ -529,6 +532,9 @@ FeaturePlot_bioToolkit <- function(
 #'
 #' @param halo.color Colour of the gap inside outlines and of label halos
 #'
+#' @param arrow.scale The `arrow.scale` of the dimension arrows, which sets
+#'                    the room left for their labels
+#'
 #' @inheritParams FeaturePlot_bioToolkit
 #'
 #' @return a ggplot object
@@ -568,7 +574,8 @@ feature_ggplot <- function(members,
                            raster.dpi,
                            bg,
                            halo.color,
-                           seed) {
+                           seed,
+                           arrow.scale = 1) {
     lv <- vapply(members, `[[`, "", "label")
     with_panel <- function(d, i) {
         d$panel <- factor(rep(lv[i], nrow(d)), levels = lv)
@@ -646,7 +653,8 @@ feature_ggplot <- function(members,
             panel.width = panel.width, panel.height = panel.height,
             ncol = facet_ncol, nrow = facet_nrow, panel.spacing = panel.spacing,
             legend.position = legend.position, legend.text.size = legend.text.size,
-            strip.text.size = strip.text.size, strip.text.face = strip.face, bg = bg
+            strip.text.size = strip.text.size, strip.text.face = strip.face, bg = bg,
+            arrow.scale = arrow.scale
         ) +
         theme(
             legend.title = element_text(

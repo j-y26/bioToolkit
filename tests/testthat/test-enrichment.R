@@ -176,6 +176,11 @@ test_that("plot_gsea_rank draws a gene set from an fgsea table with its ranked l
     peak <- which.max(src$running_es)
     expect_equal(src$leading_edge, src$in_set & src$rank <= peak)
     expect_equal(src$gene[src$labelled], utils::head(src$gene[src$leading_edge], 5))
+    # Named at the small text size (9 pt), in the metric panel (the last plot
+    # of the patchwork, i.e. `p` itself)
+    texts <- Filter(function(l) inherits(l$geom, "GeomText") && any(grepl("Gene", l$aes_params$label)),
+                    p$layers)
+    expect_equal(texts[[1]]$aes_params$size, pt_to_size(9))
     p_sel <- plot_gsea_rank(res, "SET_UP", stats = stats, gene.sets = sets, label = "selected",
                             label.features = "Gene300")
     expect_equal(attr(p_sel, "source_data")$gene[attr(p_sel, "source_data")$labelled], "Gene300")
@@ -218,7 +223,7 @@ test_that("plot_enrichment_dots lines up panels side by side and collects legend
     expect_s3_class(block, "bt_legend_block")
     expect_length(block$columns, 2)
     expect_no_warning(save_plot(p, tempfile(fileext = ".pdf")))
-    # Stacked: collected by patchwork, as before 0.11.0
+    # Stacked: collected by patchwork, as before 1.0.0
     p_stacked <- plot_enrichment_dots(list(A = ora(6), B = ora(2)), n = 6, nrow = 1, legend.layout = "stacked")
     expect_identical(p_stacked$patches$layout$guides, "collect")
 })

@@ -38,7 +38,8 @@
 # smaller gap between title and subtitle; `band = "none"` leaves the band
 # out; leading-edge genes (the first five by default, or chosen ones) are
 # named in the metric panel with a small arrow to their ticks
-# (`gsea_gene_labels()`), as in the user's own figures.
+# (`gsea_gene_labels()`), as in the user's own figures. Revision of
+# 2026-10-15 (user): the gene names at the small text size (9 pt).
 
 
 #' @title GSEA running enrichment score plot
@@ -488,7 +489,10 @@ gsea_gene_labels <- function(genes,
                              panel.height,
                              italic,
                              sz) {
-    size <- sz$base
+    # The theme's small size (9 pt), so that the names read as annotation
+    # under the NES / FDR text (base size); 0.9 of it when they need more
+    # than two lines (user, 2026-10-15; they were 11 / 9 pt)
+    size <- sz$small
     face <- if (italic) "bold.italic" else "bold"
     # Widths of text as drawn (inches), measured on a PDF device, plus 15%:
     # raster devices often use a wider font than the PDF metrics
@@ -499,7 +503,7 @@ gsea_gene_labels <- function(genes,
         1.15 * grid::convertWidth(grid::grobWidth(g), "in", valueOnly = TRUE)
     }
     # Names on lines of at most 80% of the panel width; at most two lines,
-    # at the small text size if the base size needs more
+    # at a smaller size if the small size needs more
     wrap <- function() {
         lines <- character(0)
         cur <- ""
@@ -516,7 +520,7 @@ gsea_gene_labels <- function(genes,
     }
     lines <- wrap()
     if (length(lines) > 2) {
-        size <- sz$small
+        size <- sz$small * 0.9
         lines <- wrap()
     }
     # Inches to data units

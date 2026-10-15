@@ -274,8 +274,10 @@ halos are then white). Use e.g. "white" for an opaque background}
 is 42. The global random number generator state is not changed}
 
 \item{...}{Arguments of the dimension arrows, as in
-\code{\link{add_dimension_arrows}} (e.g. `arrow.length = 1.5`;
-the snake_case names used before 0.10.0 are deprecated)}
+\code{\link{add_dimension_arrows}}: the arrows scale with the
+panel size, and `arrow.scale` makes them larger or smaller
+(e.g. `arrow.scale = 0.8`; default 1, 2 cm arrows on a 3.5-inch
+panel); the snake_case names used before 0.10.0 are deprecated}
 }
 \value{
 A ggplot object when there is a single colour scale over one

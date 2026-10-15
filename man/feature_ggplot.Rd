@@ -39,7 +39,8 @@ feature_ggplot(
   raster.dpi,
   bg,
   halo.color,
-  seed
+  seed,
+  arrow.scale = 1
 )
 }
 \arguments{
@@ -136,6 +137,9 @@ halos are then white). Use e.g. "white" for an opaque background}
 
 \item{seed}{Random seed used for drawing order and label placement, default
 is 42. The global random number generator state is not changed}
+
+\item{arrow.scale}{The `arrow.scale` of the dimension arrows, which sets
+the room left for their labels}
 }
 \value{
 a ggplot object

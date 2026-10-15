@@ -68,12 +68,15 @@ absolute log2 fold change above
 the DE genes as in \code{\link{plot_volcano}}, default is
 TRUE}
 
-\item{layout}{How points spread across their column: "sina" (default;
-as wide as the density of genes at that fold change, so the
-shape of the distribution shows), "pvalue" (x within the
-column = -log10 adjusted p-value, from the left, making each
-column a sideways volcano) or "jitter" (uniform, the classic
-look)}
+\item{layout}{How points spread across their column, separately below
+and above 0, significant or not (the cutoffs only colour
+the points): "sina" (default; as wide as the density of
+genes at that fold change, so that each column shows one
+shape of down- and one of up-regulated genes), "pvalue" (x
+within the column = -log10 adjusted p-value relative to the
+most significant gene of the side, from the left, making
+each column a sideways volcano) or "jitter" (uniform, the
+classic look)}
 
 \item{color.by}{What the colour of a point shows: "padj" (default; -log10
 adjusted p-value on two ramps, warm for up and cool for
@@ -173,7 +176,7 @@ when flipped, default is `panel.height`}
 default is 42}
 
 \item{...}{`band.cols` and `band.labels`, the names of `comparison.cols`
-and `comparison.labels` before 0.11.0, accepted with a
+and `comparison.labels` before 1.0.0, accepted with a
 deprecation warning}
 }
 \value{

@@ -43,7 +43,7 @@ ggplot_colors <- function(n = 6,
 #' @title Deprecated: use ggplot_colors()
 #'
 #' @description `ggplotColours()` was renamed \code{\link{ggplot_colors}} in
-#'              0.11.0 (snake case, as the other colour helpers); it still
+#'              1.0.0 (snake case, as the other colour helpers); it still
 #'              works, with a deprecation warning.
 #'
 #' @param n,h As in \code{\link{ggplot_colors}}

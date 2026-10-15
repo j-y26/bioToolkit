@@ -1,0 +1,167 @@
+---
+title: "Colour palettes"
+description: >
+  Every palette of bioToolkit with the index and hex code of each colour, its
+  source, and the plots that use it by default.
+---
+
+```{r setup, include = FALSE}
+source("_common.R")
+
+# Palette cards ---------------------------------------------------------------
+# Each palette is drawn in HTML (not as a figure), so that its name and hex
+# codes can be searched and copied: hovering a swatch shows "index: hex".
+
+# Escape text placed in HTML
+html_escape <- function(x) {
+    x <- gsub("&", "&amp;", x, fixed = TRUE)
+    x <- gsub("<", "&lt;", x, fixed = TRUE)
+    gsub(">", "&gt;", x, fixed = TRUE)
+}
+
+# White index numbers on dark colours, black on light ones (as show_palettes())
+text_colour <- function(cols) {
+    rgb <- grDevices::col2rgb(cols)
+    ifelse(colSums(rgb * c(0.299, 0.587, 0.114)) < 140, "#fff", "#000")
+}
+
+# One palette: its name, number of colours, swatches (or a ramp for the
+# palettes defined by 256 colours) and source
+palette_card <- function(name,
+                         n,
+                         source) {
+    cols <- bt_palette(name)
+    body <- if (length(cols) > 102) {
+        # A smooth ramp through 16 of its colours
+        stops <- bt_palette(name, 16)
+        paste0(
+            "<div class=\"bt-ramp\" style=\"background: linear-gradient(to right, ",
+            paste(stops, collapse = ", "),
+            ");\" title=\"", stops[1], " to ", stops[16], "\"></div>"
+        )
+    } else {
+        swatches <- paste0(
+            "<span class=\"bt-swatch\" style=\"background:", cols,
+            "; color:", text_colour(cols), ";\" title=\"", seq_along(cols), ": ", cols, "\">",
+            seq_along(cols), "</span>",
+            collapse = ""
+        )
+        paste0("<div class=\"bt-swatches\">", swatches, "</div>")
+    }
+    paste0(
+        "<div class=\"bt-palette\" id=\"palette-", name, "\">",
+        "<div class=\"bt-palette-head\"><code>", name, "</code>",
+        "<span class=\"bt-palette-n\">", n, " colours</span></div>",
+        body,
+        "<div class=\"bt-palette-source\">", html_escape(source), "</div>",
+        "</div>"
+    )
+}
+
+# All palettes of one type
+palette_cards <- function(type) {
+    pals <- list_palettes(type)
+    cards <- vapply(seq_len(nrow(pals)), function(i) {
+        palette_card(pals$name[i], pals$n[i], pals$source[i])
+    }, "")
+    knitr::asis_output(paste0("<div class=\"bt-palettes\">", paste(cards, collapse = "\n"), "</div>"))
+}
+```
+
+bioToolkit has `r nrow(list_palettes())` palettes, taken from published
+sources and credited below. Every plot has one `cols` argument that takes a
+palette name, so this page is the menu: pick a palette by name, or pick
+colours from it by their index.
+
+| To | Use |
+|---|---|
+| colour a plot with a palette | `cols = "okabe-ito"` |
+| reverse a palette | add `_r` to its name: `cols = "viridis_r"` |
+| take some colours, in your order | `bt_palette("scanpy-20")[c(1, 3, 2)]` (indices as shown below) |
+| get `n` colours | `bt_palette("seq-blue", n = 5)` (qualitative palettes give their first `n`) |
+| see palettes, or your own colours, in R | `show_palettes()` |
+| list names, types and sources | `list_palettes()` |
+| check colours for colour blindness | `check_palette()` |
+
+Hover a swatch to see its index and hex code. Qualitative palettes are for
+groups (cell types, conditions); sequential palettes for values from low to
+high (expression, significance); diverging palettes for values on both sides
+of a centre (fold changes, z-scores, NES).
+
+## Defaults
+
+The plots use these palettes when `cols` is not given:
+
+| Values | Default | Used by |
+|---|---|---|
+| Groups, up to 20 | [`scanpy-20`](#palette-scanpy-20) | every plot coloured by group |
+| Groups, 21 to 102 | [`scanpy-102`](#palette-scanpy-102) | every plot coloured by group |
+| Expression on an embedding | [`plasma_r`](#palette-plasma) | `FeaturePlot_bioToolkit()` |
+| Mean expression, not scaled | [`viridis_r`](#palette-viridis) | `DotPlot_bioToolkit()` |
+| Mean expression, not scaled, heatmap | [`magma`](#palette-magma) | `DoHeatmap_bioToolkit()` |
+| Significance, one-directional values | [`seq-purple`](#palette-seq-purple), [`seq-blue`](#palette-seq-blue), ... | enrichment plots (one hue per panel), `plot_pca()`, `plot_variance_explained()` |
+| Signed values (z-scores, fold changes, NES) | [`blue-magenta`](#palette-blue-magenta) | dot plots, DE plots, enrichment NES, density differences, diverging feature plots |
+| z-scores of single cells | [`teal-yellow`](#palette-teal-yellow) | `DoHeatmap_bioToolkit()` |
+
+## Qualitative
+
+For groups. They are never interpolated: a colour in between two group
+colours would read as an intermediate group, so `bt_palette(name, n)` stops
+when a palette has fewer than `n` colours.
+
+```{r qualitative, echo = FALSE}
+palette_cards("qualitative")
+```
+
+## Sequential
+
+For values from low to high. The `seq-*` palettes are single-hue ramps
+trimmed to the same lightness range (CIE L* 80 to 30): not so pale that low
+values vanish on white, not so dark that the hue is lost, and the same value
+has the same lightness whatever the hue, so that panels in different hues
+stay comparable.
+
+```{r sequential, echo = FALSE}
+palette_cards("sequential")
+```
+
+## Diverging
+
+For values on both sides of a centre, drawn in the middle colour. The plots
+put the centre at 0 and stretch each side to its own end (see
+[Colours](figures.html#colours)). Index 1 is the low end; for a scale of your
+own, the low, middle and high colours are e.g.
+`bt_palette("tol-burd")[c(1, 5, 9)]`.
+
+```{r diverging, echo = FALSE}
+palette_cards("diverging")
+```
+
+## Your own colours
+
+`show_palettes()` draws palettes by name, a vector of your own colours, or a
+list of both, with the index of each colour. For example, colours picked for
+cell types next to the palette they came from:
+
+```{r own-colours, fig.width = 7, fig.height = 1.6}
+cell_cols <- bt_palette("scanpy-20")[c(1, 2, 3, 5, 4)]
+names(cell_cols) <- c("CD4 T", "CD14 Mono", "B", "CD8 T", "NK")
+
+show_palettes(list(
+    "cell types" = cell_cols,
+    "scanpy-20",
+    warm = c("gold", "darkorange", "firebrick")
+))
+```
+
+Name the colours by group and pass them as `cols`, so that each cell type
+keeps its colour in every figure; `check_palette(cell_cols)` flags pairs that
+become hard to tell apart with colour blindness (see
+[Colour vision deficiency](figures.html#colour-vision-deficiency)).
+
+## Adding a palette
+
+New palettes come from a citable source, with hex values copied from it (or
+from a package that reproduces it), never retyped from memory. Each is an
+entry of `palette_list()` in `R/palettes.R`, with its colours, type and
+source; the package tests check every entry.

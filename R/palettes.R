@@ -387,16 +387,26 @@ list_palettes <- function(type = NULL) {
 #'              `bt_palette(name)[indices]`. Long palettes wrap onto several
 #'              rows. Palettes defined by many colours (the viridis family)
 #'              are drawn as a smooth ramp instead. Names ending in "_r" show
-#'              a palette reversed. The plot
-#'              fills the plotting window; it is meant for browsing, not for
-#'              publication.
+#'              a palette reversed. Your own colours can be shown too (e.g.
+#'              the colours picked for cell types), alone or next to the
+#'              palettes of the package. The plot fills the plotting window;
+#'              it is meant for browsing, not for publication. All palettes
+#'              of the package are also shown on the website's palette page.
 #'
-#' @param names Palette names. If NULL (default), all palettes of `type`
+#' @param palettes What to show: NULL (default) for all palettes of `type`;
+#'                 palette names, e.g. `c("scanpy-20", "npg")`; a vector of
+#'                 colours (names or hex codes), shown as one row; or a list
+#'                 whose elements are palette names or vectors of colours,
+#'                 one row each, labelled by the list's names (by the palette
+#'                 name, or the element's position, when unnamed)
 #'
-#' @param type Types to show when `names` is NULL: any of "qualitative",
+#' @param type Types to show when `palettes` is NULL: any of "qualitative",
 #'             "sequential" and "diverging". If NULL (default), all
 #'
 #' @param ncol Number of swatches per row, default is 20
+#'
+#' @param ... `names`, the name of `palettes` before 1.0.0, accepted with a
+#'            deprecation warning
 #'
 #' @return A ggplot object
 #'
@@ -404,26 +414,29 @@ list_palettes <- function(type = NULL) {
 #' show_palettes("scanpy-20")
 #' show_palettes(type = "qualitative")
 #'
+#' # Your own colours, alone or next to palettes of the package
+#' cell_cols <- c(T = "#1f77b4", B = "#ff7f0e", NK = "steelblue", Mono = "#d62728")
+#' show_palettes(cell_cols)
+#' show_palettes(list(mine = cell_cols, "okabe-ito", warm = c("gold", "orange", "red")))
+#'
 #' @export
 #'
-show_palettes <- function(names = NULL,
+show_palettes <- function(palettes = NULL,
                           type = NULL,
-                          ncol = 20) {
-    if (is.null(names)) names <- list_palettes(type)$name
-    rows <- lapply(names, function(nm) {
-        cols <- bt_palette(nm)
-        if (length(cols) > 102) {
-            # A ramp of 100 tiles spanning the width of a row, without indices
-            cols <- bt_palette(nm, 100)
-            return(data.frame(palette = nm, x = 0.5 + (seq_along(cols) - 0.5) * ncol / 100,
-                              y = 1, width = ncol / 100, fill = cols, label = ""))
-        }
-        i <- seq_along(cols)
-        data.frame(palette = nm, x = (i - 1) %% ncol + 1, y = (i - 1) %/% ncol + 1,
-                   width = 1, fill = cols, label = as.character(i))
-    })
-    df <- do.call(rbind, rows)
-    df$palette <- factor(df$palette, levels = unique(df$palette))
+                          ncol = 20,
+                          ...) {
+    list2env(renamed_args(list(...), c(names = "palettes"), "show_palettes",
+                          names(match.call())), environment())
+    # A label for a single vector of colours: its variable name when it is
+    # one (e.g. "cell_cols"), otherwise "colours"
+    arg <- substitute(palettes)
+    single_label <- if (is.symbol(arg)) deparse(arg) else "colours"
+    rows <- palette_rows_input(palettes, type, single_label)
+
+    df <- do.call(rbind, lapply(seq_along(rows), function(i) {
+        palette_swatches(names(rows)[i], rows[[i]], ncol)
+    }))
+    df$palette <- factor(df$palette, levels = names(rows))
     # Index numbers in white on dark colours and in black on light ones
     rgb <- grDevices::col2rgb(df$fill)
     df$text <- ifelse(colSums(rgb * c(0.299, 0.587, 0.114)) < 140, "white", "black")
@@ -442,6 +455,111 @@ show_palettes <- function(names = NULL,
             plot.background = element_rect(fill = "white", colour = NA),
             plot.margin = margin(6, 6, 6, 6)
         )
+}
+
+
+#' The rows of show_palettes(): a label and its colours each
+#'
+#' @param palettes,type As in \code{\link{show_palettes}}
+#'
+#' @param single_label Label of a single vector of colours
+#'
+#' @return A list of colour vectors, named by the label of their row (made
+#'         unique)
+#'
+#' @keywords internal
+palette_rows_input <- function(palettes,
+                               type,
+                               single_label) {
+    is_name <- function(x) length(x) == 1 && !is.null(find_palette(x))
+    if (is.null(palettes)) palettes <- list_palettes(type)$name
+
+    # A list: one row per element, a palette name or a vector of colours
+    if (is.list(palettes)) {
+        if (length(palettes) == 0) stop("`palettes` is an empty list", call. = FALSE)
+        labels <- names(palettes) %||% rep("", length(palettes))
+        rows <- vector("list", length(palettes))
+        for (i in seq_along(palettes)) {
+            el <- palettes[[i]]
+            if (!is.character(el) || length(el) == 0) {
+                stop("Element ", i, " of `palettes` is not a palette name or a vector of colours",
+                     call. = FALSE)
+            }
+            if (is_name(el)) {
+                rows[[i]] <- bt_palette(el)
+                if (!nzchar(labels[i])) labels[i] <- el
+            } else {
+                check_colours(el, paste0("element ", i, " of `palettes`"))
+                rows[[i]] <- unname(el)
+                if (!nzchar(labels[i])) labels[i] <- as.character(i)
+            }
+        }
+        return(stats::setNames(rows, make.unique(labels, sep = " ")))
+    }
+
+    if (!is.character(palettes) || length(palettes) == 0) {
+        stop("`palettes` must be palette names, a vector of colours or a list of them", call. = FALSE)
+    }
+    # Palette names: one row each
+    named <- vapply(palettes, is_name, logical(1))
+    if (all(named)) {
+        return(stats::setNames(lapply(palettes, bt_palette), make.unique(palettes, sep = " ")))
+    }
+    # Colours: one row
+    colour <- is_colour(palettes)
+    if (all(colour)) return(stats::setNames(list(unname(palettes)), single_label))
+    bad <- palettes[!named & !colour]
+    if (length(bad)) {
+        stop("Unknown palette or invalid colour: ", paste(bad, collapse = ", "),
+             " (see list_palettes())", call. = FALSE)
+    }
+    stop("`palettes` mixes palette names and colours; give a list to show both, ",
+         "e.g. list(\"npg\", mine = c(\"red\", \"blue\"))", call. = FALSE)
+}
+
+
+#' Stop when some strings are not valid colours
+#'
+#' @param x A character vector
+#'
+#' @param what What `x` is, for the message
+#'
+#' @return Nothing
+#'
+#' @keywords internal
+check_colours <- function(x,
+                          what) {
+    bad <- !is_colour(x)
+    if (any(bad)) stop("Invalid colour(s) in ", what, ": ", paste(x[bad], collapse = ", "), call. = FALSE)
+}
+
+
+#' Swatches of one row of show_palettes()
+#'
+#' @param label Label of the row
+#'
+#' @param cols Its colours
+#'
+#' @param ncol Number of swatches per row
+#'
+#' @return A data frame with one tile per colour: `palette`, `x`, `y`,
+#'         `width`, `fill` (hex) and `label` (index)
+#'
+#' @keywords internal
+palette_swatches <- function(label,
+                             cols,
+                             ncol) {
+    # Hex codes, so that the text colour can be chosen from them
+    cols <- grDevices::rgb(t(grDevices::col2rgb(cols)), maxColorValue = 255)
+    if (length(cols) > 102) {
+        # A ramp of 100 tiles spanning the width of a row, without indices
+        cols <- scales::gradient_n_pal(cols)(seq(0, 1, length.out = 100))
+        return(data.frame(palette = label, x = 0.5 + (seq_along(cols) - 0.5) * ncol / 100,
+                          y = 1, width = ncol / 100, fill = cols, label = ""))
+    }
+    i <- seq_along(cols)
+    data.frame(palette = label, x = (i - 1) %% ncol + 1, y = (i - 1) %/% ncol + 1,
+               width = 1, fill = cols, label = as.character(i))
 }
 
 

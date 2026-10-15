@@ -244,3 +244,53 @@ test_that("format_sc_plots places arrows by arrow.panels and replaces existing o
     expect_equal(vapply(patchwork_parts(old)$plots, n_arrows, numeric(1)), c(1, 1, 1, 1))
     expect_error(suppressWarnings(format_sc_plots(plots, add.arrow = FALSE, arrow.panels = "all")), "not both")
 })
+
+test_that("dimension arrows scale with the shorter side of the panel", {
+    expect_equal(arrow_scale_factor(3.5, 3.5), 1)
+    expect_equal(arrow_scale_factor(1.75, 7), 0.5)
+    expect_equal(arrow_scale_factor(7, 7, arrow_scale = 0.5), 1)
+    expect_error(check_arrow_scale(0), "positive")
+    expect_error(check_arrow_scale("big"), "positive")
+    # Built when drawn, from the size of the viewport (panel) drawn in
+    g <- dimension_arrow_grob("umap", arrow_scale = 1)
+    expect_s3_class(g, "bt_dimension_arrows")
+    expect_length(g$children, 0)
+    built_in <- function(width, height, grob = g) {
+        grDevices::pdf(NULL)
+        on.exit(grDevices::dev.off())
+        grid::pushViewport(grid::viewport(width = grid::unit(width, "in"), height = grid::unit(height, "in")))
+        grid::makeContent(grob)
+    }
+    ref <- built_in(3.5, 3.5)
+    half <- built_in(1.75, 4)
+    expect_length(ref$children, 6)
+    font <- function(b) b$children[[5]]$gp$fontsize
+    shaft <- function(b) grid::convertUnit(b$children[[1]]$x1, "cm", valueOnly = TRUE)
+    expect_equal(font(ref), 12)
+    expect_equal(font(half), 6)
+    expect_equal(shaft(ref), 0.25 + 2 - 0.25)
+    expect_equal(shaft(half), shaft(ref) / 2)
+    expect_equal(half$children[[1]]$gp$lwd, 1.5)
+    # arrow.scale multiplies every size
+    big <- built_in(3.5, 3.5, dimension_arrow_grob("umap", arrow_scale = 1.5))
+    expect_equal(font(big), 18)
+})
+
+test_that("embedding plots take arrow.scale and leave room for the labels", {
+    expect_identical(resolve_arrow_args(list(arrow.scale = 0.8), "DimPlot_bioToolkit"),
+                     list(arrow_scale = 0.8))
+    expect_error(resolve_arrow_args(list(arrow.scale = -1), "DimPlot_bioToolkit"), "positive")
+    margin_cm <- function(th) as.numeric(grid::convertUnit(th$plot.margin, "cm"))
+    th <- embedding_theme(3.5, 3.5, 1, 1, 0.1, "right", 11, 12, "bold", "transparent")
+    expect_equal(margin_cm(th), c(0.2, 0.2, 0.6, 0.6))
+    th <- embedding_theme(1.75, 1.75, 1, 1, 0.1, "right", 11, 12, "bold", "transparent", arrow.scale = 2)
+    expect_equal(margin_cm(th), c(0.2, 0.2, 0.6, 0.6))
+    th <- embedding_theme(7, 7, 1, 1, 0.1, "right", 11, 12, "bold", "transparent")
+    expect_equal(margin_cm(th), c(0.2, 0.2, 1, 1))
+    # add_dimension_arrows() and format_sc_plots() pass it on
+    p <- ggplot2::ggplot(data.frame(x = 1:3, y = 1:3), ggplot2::aes(x, y)) + ggplot2::geom_point()
+    grob_of <- function(p) Filter(function(l) inherits(l$geom_params$grob, "bt_dimension_arrows"), p$layers)[[1]]$geom_params$grob
+    expect_equal(grob_of(add_dimension_arrows(p, arrow.scale = 0.7))$arrow_scale, 0.7)
+    out <- format_sc_plots(list(p, p), ncol = 2, arrow.scale = 1.3)
+    expect_equal(grob_of(patchwork_parts(out)$plots[[1]])$arrow_scale, 1.3)
+})

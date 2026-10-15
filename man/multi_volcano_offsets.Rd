@@ -7,8 +7,7 @@
 multi_volcano_offsets(df, layout, half)
 }
 \arguments{
-\item{df}{Genes with `comparison`, `direction`, `logfc` and
-`neg_log10_padj`}
+\item{df}{Genes with `comparison`, `logfc` and `neg_log10_padj`}
 
 \item{layout}{"sina", "pvalue" or "jitter"}
 
@@ -18,6 +17,11 @@ multi_volcano_offsets(df, layout, half)
 Offsets in [-half, half], along the rows of `df`
 }
 \description{
-Horizontal offsets of points within their column
+Points are spread separately on each side of 0: each column holds one
+shape of down-regulated (log2 fold change < 0) and one of up-regulated
+genes, significant or not, so that the cutoffs only change the colour of
+the points, not the shape (user decision 2026-10-15; the shapes used to be
+drawn per direction, the non-significant genes making a third shape
+between the cutoffs).
 }
 \keyword{internal}

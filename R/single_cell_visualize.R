@@ -8,6 +8,14 @@
 #'              on any ggplot, e.g. from \code{Seurat::DimPlot()}; the
 #'              package's own embedding plots draw these arrows themselves.
 #'
+#'              The arrows keep a fixed proportion to the panel they are
+#'              drawn in: the sizes below are those of a panel 3.5 inches on
+#'              its shorter side, and everything (lengths, line width, label
+#'              size) is scaled with the panel's actual size when the plot is
+#'              drawn. A small panel gets small arrows that stay clear of the
+#'              cells, a large one arrows that are not lost in it.
+#'              `arrow.scale` makes them bigger or smaller at any panel size.
+#'
 #' @param plot A ggplot object
 #'
 #' @param reduction The reduction method used to generate the plot, default is
@@ -16,26 +24,36 @@
 #' @param dims A vector of dimension names, overwrites the default dimension
 #'             names assumed from reduction method
 #'
-#' @param arrow.length The size of the arrow, default is 2 (cm)
+#' @param arrow.scale Size of the arrows relative to the panel, default is
+#'                    1: arrows 2 cm long on a panel of 3.5 inches (about
+#'                    23\% of its shorter side), scaled with the panel. Use
+#'                    e.g. 0.8 for smaller or 1.25 for larger arrows
 #'
-#' @param x.coord.adjust Horizontal adjustment of the arrow origin, default is
-#'                       0.25 (cm)
+#' @param arrow.length The length of the arrows in cm on a 3.5-inch panel,
+#'                     default is 2
+#'
+#' @param x.coord.adjust Horizontal adjustment of the arrow origin in cm on a
+#'                       3.5-inch panel, default is 0.25
 #'
 #' @param y.coord.adjust Vertical adjustment of the arrow origin, default is
 #'                       the same as `x.coord.adjust`
 #'
-#' @param arrow.size The size of the arrow head, default is 0.25 cm
+#' @param arrow.size The length of the arrow head in cm on a 3.5-inch panel,
+#'                   default is 0.25
 #'
-#' @param arrow.width The width of the arrow, default is 0.2 cm
+#' @param arrow.width The width of the arrow head in cm on a 3.5-inch panel,
+#'                    default is 0.2
 #'
-#' @param arrow.line.width The width of the arrow line, default is 3
+#' @param arrow.line.width The width of the arrow line on a 3.5-inch panel
+#'                         (in R's `lwd` units), default is 3
 #'
 #' @param arrow.color The color of the arrow and label, default is "black"
 #'
-#' @param text.font.size The font size of the text, default is 12
+#' @param text.font.size The font size of the labels in points on a 3.5-inch
+#'                       panel, default is 12
 #'
-#' @param text.dst The distance of the text from the arrow in cm, default is
-#'                 0.3
+#' @param text.dst The distance of the labels from the arrows in cm on a
+#'                 3.5-inch panel, default is 0.3
 #'
 #' @param ... Deprecated snake_case names of the arguments above (e.g.
 #'            `arrow_length`), accepted with a warning; renamed to dot.case
@@ -51,6 +69,7 @@
 add_dimension_arrows <- function(plot,
                                  reduction = "umap",
                                  dims = NULL,
+                                 arrow.scale = 1,
                                  arrow.length = 2,
                                  x.coord.adjust = 0.25,
                                  y.coord.adjust = x.coord.adjust,
@@ -75,6 +94,7 @@ add_dimension_arrows <- function(plot,
   arrow_grob <- dimension_arrow_grob(
     reduction = reduction,
     dims = dims,
+    arrow_scale = arrow.scale,
     arrow_length = arrow.length,
     x_coord_adjust = x.coord.adjust,
     y_coord_adjust = y.coord.adjust,
@@ -105,23 +125,80 @@ ARROW_ARG_RENAMES <- c(
 )
 
 
+# Dimension arrows scaled with the panel (revision of 2026-10-15)
+# ---------------------------------------------------------------
+# The arrows used to have a fixed size in cm: right on a 3.5-4 inch panel,
+# but on a small panel they were too big and their corner, at a fixed 0.25 cm
+# from the panel edge, ran into cells near the left or bottom edge (the
+# panel's 5% expansion is only 0.19 cm on a 1.5-inch panel). User decision
+# (2026-10-15): the arrows keep the proportions they have on a 3.5-inch panel
+# (ARROW_REF_PANEL) at every panel size. All of their geometry (lengths, line
+# width, label size) is multiplied by
+#     arrow.scale * (shorter side of the panel) / 3.5 in
+# (arrow_scale_factor()). On a 3.5-inch panel the corner and arrow heads lie
+# within 4% of the edges, inside the 5% expansion of the axis limits, so
+# they stay clear of the cells at any size. The scaling is done when the
+# grob is drawn (makeContent()), from the size of the panel it is drawn in,
+# so it also works for plots without a fixed panel size (e.g. Seurat plots
+# passed to format_sc_plots()) and follows the window when one is resized.
+
+# Shorter side of the panel (inches) at which the arrows have the sizes given
+# by the arguments of add_dimension_arrows()
+ARROW_REF_PANEL <- 3.5
+
+
+#' Factor by which the dimension arrows are scaled for a panel
+#'
+#' @param width,height Size of the panel in inches
+#'
+#' @param arrow_scale The `arrow.scale` given by the user
+#'
+#' @return `arrow_scale` times the panel's shorter side over
+#'         `ARROW_REF_PANEL` (3.5 inches)
+#'
+#' @keywords internal
+arrow_scale_factor <- function(width,
+                               height,
+                               arrow_scale = 1) {
+  arrow_scale * min(width, height) / ARROW_REF_PANEL
+}
+
+
+#' Check the `arrow.scale` argument
+#'
+#' @param arrow_scale The value given
+#'
+#' @return Nothing; stops when the value is not a single positive number
+#'
+#' @keywords internal
+check_arrow_scale <- function(arrow_scale) {
+  if (!(is.numeric(arrow_scale) && length(arrow_scale) == 1 && !is.na(arrow_scale) && arrow_scale > 0)) {
+    stop("`arrow.scale` must be a single positive number", call. = FALSE)
+  }
+}
+
+
 #' Build the dimension arrow grob
 #'
-#' Draws the two arrows and their labels in absolute units, measured from the
-#' bottom left corner of whichever viewport (i.e. panel) the grob is drawn in.
+#' Returns an empty grob tree of class "bt_dimension_arrows" that holds the
+#' arrow geometry; the arrows and labels themselves are built when it is
+#' drawn (\code{makeContent.bt_dimension_arrows()}), scaled with the size of
+#' the viewport (i.e. panel) it is drawn in, and measured from its bottom left
+#' corner.
 #'
 #' @param reduction,dims As in \code{\link{add_dimension_arrows}}
 #'
-#' @param arrow_length,x_coord_adjust,y_coord_adjust,arrow_size,arrow_width,arrow_line_width,arrow_color,text_font_size,text_dst
+#' @param arrow_scale,arrow_length,x_coord_adjust,y_coord_adjust,arrow_size,arrow_width,arrow_line_width,arrow_color,text_font_size,text_dst
 #'        The arrow geometry, as the dot.case arguments of
 #'        \code{\link{add_dimension_arrows}} (e.g. `arrow_length` is
-#'        `arrow.length`)
+#'        `arrow.length`): sizes on a 3.5-inch panel
 #'
 #' @return A grob tree
 #'
 #' @keywords internal
 dimension_arrow_grob <- function(reduction = "umap",
                                  dims = NULL,
+                                 arrow_scale = 1,
                                  arrow_length = 2,
                                  x_coord_adjust = 0.25,
                                  y_coord_adjust = x_coord_adjust,
@@ -131,74 +208,121 @@ dimension_arrow_grob <- function(reduction = "umap",
                                  arrow_color = "black",
                                  text_font_size = 12,
                                  text_dst = 0.3) {
+  check_arrow_scale(arrow_scale)
   # Get the dimension names if not provided
   if (is.null(dims)) {
     dims <- reduction_dim_labels(reduction)
   }
 
+  # The geometry is kept as given (sizes on a 3.5-inch panel); tagged so that
+  # the arrows of a plot can be found and replaced (remove_dimension_arrows())
+  gTree(
+    dims = dims,
+    arrow_scale = arrow_scale,
+    geometry = list(
+      arrow_length = arrow_length,
+      x_coord_adjust = x_coord_adjust,
+      y_coord_adjust = y_coord_adjust,
+      arrow_size = arrow_size,
+      arrow_width = arrow_width,
+      arrow_line_width = arrow_line_width,
+      text_font_size = text_font_size,
+      text_dst = text_dst
+    ),
+    arrow_color = arrow_color,
+    cl = "bt_dimension_arrows"
+  )
+}
+
+
+#' @importFrom grid makeContent
+#' @export
+makeContent.bt_dimension_arrows <- function(x) {
+  # Size of the panel the arrows are drawn in, and the scale factor for it
+  width <- convertWidth(unit(1, "npc"), "in", valueOnly = TRUE)
+  height <- convertHeight(unit(1, "npc"), "in", valueOnly = TRUE)
+  k <- arrow_scale_factor(width, height, x$arrow_scale)
+  # Every size (cm, lwd, points) is scaled by the same factor
+  g <- lapply(x$geometry, function(v) v * k)
+  setChildren(x, dimension_arrow_children(x$dims, g, x$arrow_color))
+}
+
+
+#' The arrows and labels of the dimension arrow grob
+#'
+#' @param dims The two labels
+#'
+#' @param g The geometry, already scaled for the panel: a list with
+#'          `arrow_length`, `x_coord_adjust`, `y_coord_adjust`, `arrow_size`,
+#'          `arrow_width` and `text_dst` in cm, `arrow_line_width` (lwd) and
+#'          `text_font_size` (points)
+#'
+#' @param arrow_color Colour of the arrows and labels
+#'
+#' @return A gList
+#'
+#' @keywords internal
+dimension_arrow_children <- function(dims,
+                                     g,
+                                     arrow_color) {
+  cm <- function(v) unit(v, "cm")
+  x0 <- g$x_coord_adjust
+  y0 <- g$y_coord_adjust
+  # Where the shafts end and the heads begin
+  x_head <- x0 + g$arrow_length - g$arrow_size
+  y_head <- y0 + g$arrow_length - g$arrow_size
+
   # Arrow shaft grobs (without arrowheads)
   arrow_x <- segmentsGrob(
-    x0 = unit(x_coord_adjust, "cm"), y0 = unit(y_coord_adjust, "cm"),
-    x1 = unit(x_coord_adjust + arrow_length - arrow_size, "cm"), y1 = unit(y_coord_adjust, "cm"),
-    gp = gpar(col = arrow_color, lwd = arrow_line_width)
+    x0 = cm(x0),
+    y0 = cm(y0),
+    x1 = cm(x_head),
+    y1 = cm(y0),
+    gp = gpar(col = arrow_color, lwd = g$arrow_line_width)
   )
 
   arrow_y <- segmentsGrob(
-    x0 = unit(x_coord_adjust, "cm"), y0 = unit(y_coord_adjust, "cm"),
-    x1 = unit(x_coord_adjust, "cm"), y1 = unit(y_coord_adjust + arrow_length - arrow_size, "cm"),
-    gp = gpar(col = arrow_color, lwd = arrow_line_width)
+    x0 = cm(x0),
+    y0 = cm(y0),
+    x1 = cm(x0),
+    y1 = cm(y_head),
+    gp = gpar(col = arrow_color, lwd = g$arrow_line_width)
   )
 
   # Arrowhead polygons (triangles) at end of arrows
   arrowhead_x <- polygonGrob(
-    x = unit.c(
-      unit(x_coord_adjust + arrow_length - arrow_size, "cm"),
-      unit(x_coord_adjust + arrow_length, "cm"),
-      unit(x_coord_adjust + arrow_length - arrow_size, "cm")
-    ),
-    y = unit.c(
-      unit(y_coord_adjust + arrow_width / 2, "cm"),
-      unit(y_coord_adjust, "cm"),
-      unit(y_coord_adjust - arrow_width / 2, "cm")
-    ),
+    x = cm(c(x_head, x0 + g$arrow_length, x_head)),
+    y = cm(c(y0 + g$arrow_width / 2, y0, y0 - g$arrow_width / 2)),
     gp = gpar(fill = arrow_color, col = arrow_color)
   )
 
   arrowhead_y <- polygonGrob(
-    x = unit.c(
-      unit(x_coord_adjust - arrow_width / 2, "cm"),
-      unit(x_coord_adjust, "cm"),
-      unit(x_coord_adjust + arrow_width / 2, "cm")
-    ),
-    y = unit.c(
-      unit(y_coord_adjust + arrow_length - arrow_size, "cm"),
-      unit(y_coord_adjust + arrow_length, "cm"),
-      unit(y_coord_adjust + arrow_length - arrow_size, "cm")
-    ),
+    x = cm(c(x0 - g$arrow_width / 2, x0, x0 + g$arrow_width / 2)),
+    y = cm(c(y_head, y0 + g$arrow_length, y_head)),
     gp = gpar(fill = arrow_color, col = arrow_color)
   )
 
-  # Labels for the arrows
+  # Labels for the arrows, below the horizontal one and left of the vertical
+  # one
+  label_gp <- gpar(col = arrow_color, fontsize = g$text_font_size, fontface = "bold")
   label_x <- textGrob(
     label = dims[1],
-    x = unit(x_coord_adjust + arrow_length / 2, "cm"),
-    y = unit(y_coord_adjust - text_dst, "cm"),
+    x = cm(x0 + g$arrow_length / 2),
+    y = cm(y0 - g$text_dst),
     just = "center",
-    gp = gpar(col = arrow_color, fontsize = text_font_size, fontface = "bold")
+    gp = label_gp
   )
 
   label_y <- textGrob(
     label = dims[2],
-    x = unit(x_coord_adjust - text_dst, "cm"),
-    y = unit(y_coord_adjust + arrow_length / 2, "cm"),
+    x = cm(x0 - g$text_dst),
+    y = cm(y0 + g$arrow_length / 2),
     rot = 90,
     just = "center",
-    gp = gpar(col = arrow_color, fontsize = text_font_size, fontface = "bold")
+    gp = label_gp
   )
 
-  # Combine the grobs into a single grob, tagged so that the arrows of a plot
-  # can be found and replaced (remove_dimension_arrows())
-  grobTree(arrow_x, arrow_y, arrowhead_x, arrowhead_y, label_x, label_y, cl = "bt_dimension_arrows")
+  gList(arrow_x, arrow_y, arrowhead_x, arrowhead_y, label_x, label_y)
 }
 
 
@@ -475,6 +599,7 @@ format_sc_plots <- function(plots,
                             legend.title.bold = TRUE,
                             reduction = "umap",
                             dims = NULL,
+                            arrow.scale = 1,
                             arrow.length = 2,
                             x.coord.adjust = 0.25,
                             y.coord.adjust = x.coord.adjust,
@@ -487,7 +612,7 @@ format_sc_plots <- function(plots,
                             ...) {
   arrow.panels <- match.arg(arrow.panels)
   dots <- list(...)
-  # `add.arrow` and `bottom.left.only` (before 0.11.0; also as add_arrow /
+  # `add.arrow` and `bottom.left.only` (before 1.0.0; also as add_arrow /
   # bottom_left_only) are translated into `arrow.panels`
   old_arrow <- intersect(names(dots), c("add.arrow", "bottom.left.only", "add_arrow", "bottom_left_only"))
   if (length(old_arrow)) {
@@ -551,6 +676,7 @@ format_sc_plots <- function(plots,
       plot = plot,
       reduction = reduction,
       dims = dims,
+      arrow.scale = arrow.scale,
       arrow.length = arrow.length,
       x.coord.adjust = x.coord.adjust,
       y.coord.adjust = y.coord.adjust,
