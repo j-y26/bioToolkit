@@ -4,7 +4,7 @@
 \alias{group_axis_theme}
 \title{Theme of the group axis of a violin plot}
 \usage{
-group_axis_theme(flip, sz)
+group_axis_theme(flip, sz, bar.width = 3.5)
 }
 \arguments{
 \item{flip}{Whether groups are on the y-axis}

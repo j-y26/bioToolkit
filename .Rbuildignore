@@ -6,3 +6,8 @@
 ^dev$
 ^CONTRIBUTING\.md$
 ^CLAUDE\.md$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
+^vignettes/articles$

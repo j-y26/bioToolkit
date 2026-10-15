@@ -1,0 +1,380 @@
+---
+title: "Figure essentials and colours"
+description: >
+  The conventions every bioToolkit plot shares: theme, fixed panel sizes,
+  saving to PDF and PNG, legends, source data, gene names and colours.
+---
+
+```{r setup, include = FALSE}
+source("_common.R")
+```
+
+Every plot of the package follows the same rules, so a figure made from one
+function matches the others:
+
+| | |
+|---|---|
+| **Theme** | `theme_bioToolkit()`: 11 / 9 / 12 pt text, 1 pt axes, bold legend titles, transparent background |
+| **Size** | panels have a fixed size in inches (`panel.width`, `cell.width`, ...), whatever the legend or number of groups |
+| **Saving** | `save_plot()` sizes the file to fit the plot; PDF (vector) or PNG at 1000 dpi |
+| **Colours** | one `cols` argument: a palette name, or colours named by group / from low to high |
+| **Gene names** | in italics, symbols used as given (check the case for the organism) |
+| **Data** | `export_source_data()` writes the table behind any plot |
+
+The examples use PBMCs from [Kang et al. 2018](https://doi.org/10.1038/nbt.4042)
+(control or interferon-β, 8 donors; 8,000 cells), loaded by the guides' data helper;
+any Seurat object works the same way.
+
+```{r data}
+pbmc <- docs_kang()
+p <- DimPlot_bioToolkit(pbmc, group.by = "cell_type", label = TRUE)
+p
+```
+
+## Theme
+
+`theme_bioToolkit()` is used by all plots of the package and can be added to
+any ggplot. Its `type` sets the layout. A small simulated table for the
+examples:
+
+```{r theme-data}
+set.seed(1)
+toy <- data.frame(
+    x = rnorm(60),
+    y = rnorm(60),
+    group = rep(c("A", "B", "C"), 20)
+)
+```
+
+### Layouts {.tabset .tabset-pills}
+
+#### "axis"
+
+Axis lines and ticks, no grid: scatter, volcano, MA, bar and PCA plots.
+
+```{r theme-axis}
+ggplot(toy, aes(x, y, colour = group)) +
+    geom_point() +
+    theme_bioToolkit("axis") +
+    panel_size_theme(2)
+```
+
+#### "grid"
+
+Light grid, rotated x labels, no axis titles: dot plots and heatmaps, whose
+rows and columns are categories.
+
+```{r theme-grid}
+ggplot(toy, aes(group, cut(x, 4), colour = y)) +
+    geom_point(size = 3) +
+    theme_bioToolkit("grid") +
+    panel_size_theme(1.2, 1.6)
+```
+
+#### "embedding"
+
+No axes, room for the dimension arrows: UMAP and t-SNE.
+
+```{r theme-embedding}
+ggplot(toy, aes(x, y, colour = group)) +
+    geom_point() +
+    theme_bioToolkit("embedding") +
+    panel_size_theme(2)
+```
+
+## Fixed panel sizes
+
+A panel has the same size in every figure, whatever the length of the labels
+or the size of the legend, so panels line up when figures are assembled. The
+package's plots take the size in inches, in one of two ways:
+
+| Argument | Plots | What it sets |
+|---|---|---|
+| `panel.width`, `panel.height` | continuous axes: embeddings, volcano, MA, PCA, scatter | the whole panel. Scatter-type panels are square by default, so `panel.width` alone resizes them |
+| `cell.width`, `cell.height` | categories: dot plots, heatmaps, violins, multi-volcano | **one** column or row (one gene, one group). The panel is the number of columns × `cell.width` |
+
+With cell sizes, a dot plot of 8 genes is twice as wide as one of 4, but a
+dot, a gene name and the gap between genes are the same size in both, so
+several dot plots in a figure match each other.
+
+### Sizes {.tabset .tabset-pills}
+
+#### `panel.width`
+
+```{r size-panel}
+DimPlot_bioToolkit(pbmc, group.by = "condition", panel.width = 2.5)
+```
+
+#### `cell.width`: 4 genes
+
+```{r size-cell-4}
+DotPlot_bioToolkit(
+    pbmc,
+    features = c("CD3E", "MS4A1", "CD14", "FCGR3A"),
+    group.by = "cell_type"
+)
+```
+
+#### `cell.width`: 8 genes
+
+The same cells: the panel is twice as wide, every dot the same size.
+
+```{r size-cell-8}
+genes_8 <- c("CD3E", "CD8A", "NKG7", "MS4A1", "CD14", "FCGR3A", "FCER1A", "PPBP")
+DotPlot_bioToolkit(pbmc, features = genes_8, group.by = "cell_type")
+```
+
+#### Larger cells
+
+Larger cells make everything in them larger; dots scale with the cell size:
+
+```{r size-cell-large}
+DotPlot_bioToolkit(
+    pbmc,
+    features = c("CD3E", "MS4A1", "CD14", "FCGR3A"),
+    group.by = "cell_type",
+    cell.width = 0.3,
+    cell.height = 0.25
+)
+```
+
+#### Any ggplot
+
+`panel_size_theme()` gives any ggplot the same behaviour:
+
+```{r size-own}
+ggplot(toy, aes(x, y)) +
+    geom_point() +
+    theme_bioToolkit() +
+    panel_size_theme(panel.width = 3, panel.height = 1.5)
+```
+
+## Saving
+
+`save_plot()` measures the plot and writes a file that fits it, with nothing
+cropped and no white margin. The format comes from the extension.
+
+```{r save, eval = FALSE}
+save_plot(p, "cell_types.pdf")   # vector, for journals and editing
+save_plot(p, "cell_types.png")   # 1000 dpi raster
+save_plot(p, "cell_types.jpg")   # no transparency: saved on white
+```
+
+Backgrounds are transparent by default (`bg = "transparent"` in every plot),
+so figures can be placed on any slide or panel; `bg = "white"` gives an
+opaque one. Patchworks keep the size of every panel:
+
+```{r patchwork}
+p_cond <- DimPlot_bioToolkit(
+    pbmc,
+    group.by = "condition",
+    cols = c("grey60", "#B5338A")
+)
+p | p_cond
+```
+
+Dense layers (cells, genes of a volcano) are rasterized at 1000 dpi once a
+plot has many points (`raster`, `raster.dpi`), so PDFs stay small while
+axes and text stay vector.
+
+## Legends as separate files
+
+`extract_legend()` takes the legend out of a plot, for figures where one
+legend serves several panels. By default the legend is exactly as drawn in
+the plot; its arguments redraw it differently, with ggplot2's own legend
+settings.
+
+### Extracting {.tabset .tabset-pills}
+
+#### As drawn
+
+```{r legend-asis}
+extract_legend(p)
+```
+
+#### `direction`
+
+Keys in a row; several legends side by side:
+
+```{r legend-horizontal}
+extract_legend(p_cond, direction = "horizontal")
+```
+
+#### `title.position`
+
+The titles to the left of the keys, here of a dot plot's two legends:
+
+```{r legend-title}
+p_dot <- DotPlot_bioToolkit(
+    pbmc,
+    features = c("CD3E", "MS4A1", "CD14"),
+    group.by = "cell_type"
+)
+extract_legend(p_dot, title.position = "left")
+```
+
+#### Restyled
+
+Any theme setting of the legend through `...`, e.g. smaller text, more space
+between keys, two columns of keys (a ggplot2 guide):
+
+```{r legend-restyled}
+two_cols <- guide_legend(ncol = 2, override.aes = list(size = 3))
+p_two_cols <- p + guides(colour = two_cols)
+extract_legend(
+    p_two_cols,
+    legend.text = element_text(size = 8),
+    legend.key.spacing.y = unit(2, "pt"),
+    legend.key.spacing.x = unit(8, "pt")
+)
+```
+
+#### Several legends
+
+A plot with a colour bar and a size legend, e.g. a dot plot, gives both,
+stacked or (`direction = "horizontal"`) side by side:
+
+```{r legend-several}
+extract_legend(p_dot, direction = "horizontal")
+```
+
+### Saving
+
+Save the plot without its legend, and the legend on its own:
+
+```{r legend-save, eval = FALSE}
+leg <- extract_legend(p_cond)
+save_plot(p_cond + theme(legend.position = "none"), "umap.pdf")
+save_plot(leg, "umap_legend.pdf")
+```
+
+## Source data
+
+Journals increasingly ask for the data behind each figure.
+`export_source_data()` writes the table a plot is drawn from (to CSV, or one
+sheet per plot of a patchwork to XLSX) and returns it:
+
+```{r source-data}
+src <- export_source_data(p_cond)
+head(src[[1]], 3)
+```
+
+```{r source-data-save, eval = FALSE}
+export_source_data(p | p_cond, "figure_2a.xlsx")
+```
+
+For expression plots of a Seurat object, the table records the assay and
+layer the values came from.
+
+## Gene names in italics
+
+Plots of genes set their names in italics by default (`italic.genes = TRUE`)
+and leave metadata (e.g. `nCount_RNA`) upright. For your own ggplots,
+`italic_labels()` does the same for a discrete scale:
+
+```{r italic}
+df <- data.frame(
+    feature = c("CD3E", "MS4A1", "nCount_RNA"),
+    value = c(3, 2, 1)
+)
+gene_labels <- function(x) italic_labels(x, x != "nCount_RNA")
+ggplot(df, aes(value, feature)) +
+    geom_col(width = 0.6) +
+    scale_y_discrete(labels = gene_labels) +
+    theme_bioToolkit() +
+    panel_size_theme(2, 1)
+```
+
+Symbols are drawn as given: human genes are upper case (`CD3E`), mouse and
+rat genes title case (`Cd3e`). Check the case of your object's gene names
+before passing features.
+
+## Colours {#colours}
+
+Every plot has one `cols` argument with a good default. It takes:
+
+- for **groups** (cell types, conditions): a palette name, or colours named
+  by group, or in the order of the group levels. The default is `"scanpy-20"`
+  (up to 20 groups; `"scanpy-102"` beyond);
+- for **continuous scales** (expression, scores, fold changes): a palette
+  name, or colours from low to high, `c(low, high)` or `c(low, mid, high)`.
+
+Diverging scales (z-scores, fold changes, NES) keep their centre colour at 0
+and stretch each side to its own end: when values run from -1 to 3, -1 gets
+the full low colour and 3 the full high colour, rather than -1 sitting in the
+pale middle of a symmetric -3 to 3 scale. Colour depth is then comparable
+within a side, not between sides; the colour bar shows where 0 is.
+
+### Picking colours {.tabset .tabset-pills}
+
+#### By name
+
+```{r cols-name}
+DimPlot_bioToolkit(pbmc, group.by = "cell_type", cols = "okabe-ito")
+```
+
+#### Named colours
+
+Pick colours by index (see `show_palettes()` below), reorder them and name
+them by group, so that each cell type keeps its colour in every figure:
+
+```{r cols-named}
+cell_cols <- bt_palette("scanpy-20")[c(1, 2, 3, 5, 4, 6, 7, 8)]
+names(cell_cols) <- levels(pbmc$cell_type)
+DimPlot_bioToolkit(pbmc, group.by = "cell_type", cols = cell_cols)
+```
+
+#### Continuous
+
+```{r cols-continuous}
+FeaturePlot_bioToolkit(
+    pbmc,
+    features = "ISG15",
+    cols = c("grey90", "#B5338A")
+)
+```
+
+### Browsing palettes
+
+`list_palettes()` lists the palettes with their type and source;
+`show_palettes()` draws them with the index of each colour, and
+`bt_palette()` returns the colours. Add `_r` to any name to reverse it.
+
+```{r list-palettes}
+head(list_palettes("qualitative"))
+```
+
+```{r show-palettes, fig.width = 7, fig.height = 2.2}
+show_palettes(c("scanpy-20", "okabe-ito", "npg"))
+```
+
+```{r bt-palette}
+bt_palette("scanpy-20")[c(1, 3, 2)]
+bt_palette("viridis", n = 5)
+```
+
+### Colour vision deficiency
+
+About 8% of men have red-green colour blindness. `check_palette()` simulates
+it and warns about pairs of colours that become hard to tell apart:
+
+```{r check-palette, warning = TRUE}
+check_palette(cell_cols)
+```
+
+### Other colour helpers
+
+```{r colour-helpers}
+# Weighted mix of colours
+mix_colors(c("#2C5DA8", "#B5338A"))
+mix_colors(c("#2C5DA8", "#B5338A"), weights = c(3, 1))
+# Order by hue
+sort_colors_by_hue(bt_palette("okabe-ito"))
+# ggplot2's default hues
+ggplot_colors(4)
+```
+
+`ggplot_colors()` reproduces ggplot2's default colours for `n` groups, e.g.
+to keep the colours of plots made with Seurat's defaults. (It was called
+`ggplotColours()` before 0.11.0; the old name still works, with a
+deprecation warning.)

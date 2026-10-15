@@ -99,16 +99,24 @@ test_that("plot_enrichment_dots draws one panel per result, each in its own pale
     expect_equal(enrichment_panel_palettes(c("white", "red"), c("Up", "Down"))$Down, c("white", "red"))
     expect_error(enrichment_panel_palettes(list(Up = "seq-red"), c("Up", "Down")), "Down")
 
+    # The panels, then the legends in two columns, in one flat layout (it
+    # can be printed)
+    parts <- patchwork_parts(p2)$plots
+    p_up <- parts[[1]]
+    p_down <- parts[[2]]
+    grDevices::pdf(NULL)
+    expect_no_error(print(p2))
+    grDevices::dev.off()
     # Legend order is fixed: colour bar first, size second, in every panel
-    for (pp in list(p2[[1]], p2[[2]])) {
+    for (pp in list(p_up, p_down)) {
         g <- pp$scales$get_scales("colour")$guide
         if (!identical(g, "none")) expect_equal(g$params$order, 1)
     }
-    expect_equal(p2[[1]]$scales$get_scales("size")$guide$params$order, 2)
+    expect_equal(p_up$scales$get_scales("size")$guide$params$order, 2)
     # With shared limits, the size legend is drawn once
-    expect_identical(p2[[2]]$scales$get_scales("size")$guide, "none")
+    expect_identical(p_down$scales$get_scales("size")$guide, "none")
     # Panels share colour limits
-    expect_equal(p2[[1]]$scales$get_scales("colour")$limits, p2[[2]]$scales$get_scales("colour")$limits)
+    expect_equal(p_up$scales$get_scales("colour")$limits, p_down$scales$get_scales("colour")$limits)
 })
 
 test_that("plot_enrichment_dots takes GSEA results, with counts from the leading edge", {
@@ -160,7 +168,20 @@ test_that("plot_gsea_rank draws a gene set from an fgsea table with its ranked l
     expect_s3_class(p, "patchwork")
     src <- attr(p, "source_data")
     expect_equal(sum(src$in_set), 21)
-    expect_equal(p$patches$annotation$title, "Set up")
+    # Title: the name, then the ID; subtitle: the comparison
+    expect_equal(p$patches$annotation$title, "Set up\nSET_UP")
+    expect_equal(p$patches$annotation$subtitle, "KO vs WT")
+    # The first five genes of the leading edge (set genes up to the peak)
+    # are named, by rank
+    peak <- which.max(src$running_es)
+    expect_equal(src$leading_edge, src$in_set & src$rank <= peak)
+    expect_equal(src$gene[src$labelled], utils::head(src$gene[src$leading_edge], 5))
+    p_sel <- plot_gsea_rank(res, "SET_UP", stats = stats, gene.sets = sets, label = "selected",
+                            label.features = "Gene300")
+    expect_equal(attr(p_sel, "source_data")$gene[attr(p_sel, "source_data")$labelled], "Gene300")
+    p_none <- plot_gsea_rank(res, "SET_UP", stats = stats, gene.sets = sets, label = "none", band = "none")
+    expect_false(any(attr(p_none, "source_data")$labelled))
+    expect_length(Filter(function(l) inherits(l$geom, "GeomRect"), p_none$patches$plots[[2]]$layers), 0)
     # Running score, gene positions over the metric band, ranked metric
     expect_length(p$patches$plots, 2)
     band <- Filter(function(l) inherits(l$geom, "GeomRect"), p$patches$plots[[2]]$layers)[[1]]$data
@@ -174,4 +195,30 @@ test_that("plot_gsea_rank draws a gene set from an fgsea table with its ranked l
     expect_warning(plot_gsea_rank(res, "SET_DOWN", stats = stats, gene.sets = sets), "differs")
     expect_error(plot_gsea_rank(res, "SET_UP"), "ranked list")
     expect_error(plot_gsea_rank(res, "nope", stats = stats, gene.sets = sets), "not found")
+})
+
+test_that("plot_enrichment_dots lines up panels side by side and collects legends", {
+    ora <- function(n) {
+        d <- data.frame(Description = paste("gene set", seq_len(n)), Count = 5 + seq_len(n),
+                        GeneRatio = paste0(5 + seq_len(n), "/200"), BgRatio = "100/20000",
+                        pvalue = 10^-(seq_len(n) + 2))
+        d$p.adjust <- d$pvalue
+        d
+    }
+    p <- plot_enrichment_dots(list(A = ora(6), B = ora(2)), n = 6, nrow = 1)
+    # Both panels as tall as the longest: B gets 4 empty rows, without names
+    parts <- patchwork_parts(p)$plots
+    panels <- Filter(function(q) inherits(q$data, "data.frame") && "id" %in% names(q$data), parts)
+    heights <- vapply(panels, function(q) as.numeric(q$theme$panel.heights), numeric(1))
+    expect_equal(length(unique(round(heights, 6))), 1)
+    b <- ggplot2::ggplot_build(panels[[2]])
+    expect_equal(length(b$layout$panel_params[[1]]$y$get_breaks()), 2)
+    # Legends in two columns beside the panels: colour bars, then sizes
+    block <- parts[[length(parts)]]$layers[[2]]$geom_params$grob$children[[1]]
+    expect_s3_class(block, "bt_legend_block")
+    expect_length(block$columns, 2)
+    expect_no_warning(save_plot(p, tempfile(fileext = ".pdf")))
+    # Stacked: collected by patchwork, as before 0.11.0
+    p_stacked <- plot_enrichment_dots(list(A = ora(6), B = ora(2)), n = 6, nrow = 1, legend.layout = "stacked")
+    expect_identical(p_stacked$patches$layout$guides, "collect")
 })

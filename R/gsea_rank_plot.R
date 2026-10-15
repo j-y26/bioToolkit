@@ -30,9 +30,15 @@
 #      gene set of a comparison, so drawn quietly in grey; `show.metric =
 #      FALSE` leaves it out.
 # NES and FDR (the adjusted p-value) sit in the corner the curve leaves
-# empty: top right for a positive score, bottom left for a negative one. The title is the gene
-# set's name; the subtitle its ID (when it differs) and the comparison, in
-# italics; plain ggplot2 title and subtitle, so no ggtext.
+# empty: top right for a positive score, bottom left for a negative one. The
+# title is the gene set's name, with its ID (when it differs) on a second
+# line; the subtitle the comparison, in bold italics; plain ggplot2 title
+# and subtitle, so no ggtext.
+# Revision of 2026-10-14 (user): NES / FDR in bold at the base size;
+# smaller gap between title and subtitle; `band = "none"` leaves the band
+# out; leading-edge genes (the first five by default, or chosen ones) are
+# named in the metric panel with a small arrow to their ticks
+# (`gsea_gene_labels()`), as in the user's own figures.
 
 
 #' @title GSEA running enrichment score plot
@@ -86,6 +92,34 @@
 #'                    gene set of a comparison (the ranked list), so it can be
 #'                    left out of all but one figure
 #'
+#' @param band What the band under the gene positions shows: "metric"
+#'             (default) or "none". The band is the ranking metric along the
+#'             list, as in the GSEA desktop plot: magenta where genes rank up
+#'             (metric above 0), white around 0, blue where they rank down,
+#'             saturating at the 95th percentile of |metric|. It is the same
+#'             for every gene set of a comparison and shows where the list
+#'             turns from up- to down-ranked genes. (The band of
+#'             \code{enrichplot::gseaplot2()} is different: it colours eight
+#'             stretches of the list holding equal shares of the set's genes,
+#'             by a count taken from the other end of the list, and encodes
+#'             no value at the rank where it is drawn.)
+#'
+#' @param label Genes named on the plot, with an arrow to their ticks:
+#'              "leading.edge" (default; the first `label.n` genes of the
+#'              leading edge, counted from the end of the list the set is
+#'              enriched at), "selected" (`label.features`) or "none". The
+#'              leading edge is the set's genes ranked before the peak of a
+#'              positive score (after the peak of a negative one), as in GSEA,
+#'              fgsea and clusterProfiler. Named genes have taller ticks in
+#'              the line colour
+#'
+#' @param label.n Number of leading-edge genes named, default is 5
+#'
+#' @param label.features Genes named with `label = "selected"`, matched
+#'                       exactly
+#'
+#' @param italic.genes Whether gene names are set in italics, default is TRUE
+#'
 #' @param panel.width Width of the panels in inches, default is 3
 #'
 #' @param panel.heights Heights of the running score, gene position and
@@ -99,7 +133,8 @@
 #'
 #' @return A patchwork object; its source data
 #'         (\code{\link{export_source_data}}) hold one row per gene: `rank`,
-#'         `gene`, `metric`, `running_es` and `in_set`
+#'         `gene`, `metric`, `running_es`, `in_set`, `leading_edge` and
+#'         `labelled`
 #'
 #' @examples
 #' set.seed(1)
@@ -128,11 +163,18 @@ plot_gsea_rank <- function(
     cols = NULL,
     metric.title = "Ranked\nmetric",
     show.metric = TRUE,
+    band = c("metric", "none"),
+    label = c("leading.edge", "selected", "none"),
+    label.n = 5,
+    label.features = NULL,
+    italic.genes = TRUE,
     panel.width = 3,
     panel.heights = c(1.3, 0.32, 0.55),
     bg = "transparent",
     ...
 ) {
+    band <- match.arg(band)
+    label <- match.arg(label)
     if (!(is.character(term) && length(term) == 1 && !is.na(term))) {
         stop("`term` must be a single gene set ID or name", call. = FALSE)
     }
@@ -223,7 +265,29 @@ plot_gsea_rank <- function(
     no_x <- theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.line.x = element_blank(),
                   axis.title.x = element_blank())
 
+    # Genes named on the plot: the first `label.n` of the leading edge (the
+    # set's genes ranked before the peak of a positive score, after the peak
+    # of a negative one), counted from the end of the list the set is
+    # enriched at; or `label.features`
+    run$leading_edge <- run$in_set & (if (positive) run$rank <= peak else run$rank >= peak)
+    named <- character(0)
+    if (label == "leading.edge") {
+        le <- run[run$leading_edge, , drop = FALSE]
+        le <- le[order(if (positive) le$rank else -le$rank), , drop = FALSE]
+        named <- utils::head(le$gene, label.n)
+    } else if (label == "selected") {
+        if (!length(label.features)) stop("`label = \"selected\"` needs `label.features`", call. = FALSE)
+        missing <- setdiff(label.features, run$gene[run$in_set])
+        if (length(missing)) {
+            warning("`label.features` not in the gene set: ", paste(missing, collapse = ", "), call. = FALSE)
+        }
+        named <- intersect(label.features, run$gene[run$in_set])
+    }
+    run$labelled <- run$gene %in% named
+
     # 1. Running score, NES and FDR in the corner the curve leaves empty
+    es_lim <- range(c(run$running_es, 0))
+    es_lim <- es_lim + c(-0.06, 0.1) * diff(es_lim)
     stat_label <- paste0("NES = ", formatC(nes, format = "f", digits = 2), "\n",
                          "FDR = ", format(signif(info$padj, 2), scientific = info$padj < 1e-3))
     p1 <- ggplot(run, aes(x = .data$rank, y = .data$running_es)) +
@@ -231,12 +295,22 @@ plot_gsea_rank <- function(
         geom_vline(xintercept = peak, colour = "grey60", linewidth = lw, linetype = "dashed") +
         geom_line(colour = line_col, linewidth = pt_to_linewidth(1.2)) +
         # Placed 3% of the list in from the side, so that both lines align on
-        # it (a fractional hjust would shift them differently)
-        annotate("text", x = if (positive) n * 0.97 else 1 + n * 0.03, y = if (positive) Inf else -Inf,
-                 hjust = if (positive) 1 else 0, vjust = if (positive) 1.3 else -0.4,
-                 label = stat_label, size = pt_to_size(sz$small), lineheight = 0.95, colour = "black") +
+        # it (a fractional hjust would shift them differently). Bold, at the
+        # base size (user, 2026-10-14)
+        annotate(
+            "text",
+            x = if (positive) n * 0.97 else 1 + n * 0.03,
+            y = if (positive) Inf else -Inf,
+            hjust = if (positive) 1 else 0,
+            vjust = if (positive) 1.3 else -0.4,
+            label = stat_label,
+            size = pt_to_size(sz$base),
+            fontface = "bold",
+            lineheight = 0.95,
+            colour = "black"
+        ) +
         x_scale +
-        scale_y_continuous(expand = expansion(mult = c(0.06, 0.1))) +
+        scale_y_continuous(limits = es_lim, expand = expansion(0)) +
         labs(x = NULL, y = "Running\nenrichment score") +
         stacked +
         panel_size_theme(panel.width, panel.heights[1]) +
@@ -249,20 +323,33 @@ plot_gsea_rank <- function(
     #    that a few extreme genes do not leave the rest of the band white. The
     #    band is drawn as runs of equal colour (the metric is sorted, so
     #    colours change monotonically): a few dozen rectangles, not one per
-    #    gene
-    band_max <- stats::quantile(abs(run$metric), 0.95, names = FALSE)
-    if (!is.finite(band_max) || band_max == 0) band_max <- max(abs(run$metric), 1e-8)
-    band_pal <- scales::col_numeric(c(dir_cols[["down"]], "white", dir_cols[["up"]]), domain = c(-1, 1))
-    level <- round(pmax(-1, pmin(1, run$metric / band_max)) * 50) / 50
-    runs <- rle(level)
-    band <- data.frame(xmin = c(0, cumsum(runs$lengths)[-length(runs$lengths)]) + 0.5,
-                       xmax = cumsum(runs$lengths) + 0.5, fill = band_pal(runs$values))
-    hit_df <- run[run$in_set, , drop = FALSE]
-    p2 <- ggplot() +
-        geom_rect(aes(xmin = .data$xmin, xmax = .data$xmax, ymin = 0, ymax = 0.3, fill = I(.data$fill)),
-                  data = band, colour = NA) +
-        geom_segment(aes(x = .data$rank, xend = .data$rank, y = 0.36, yend = 1), data = hit_df,
-                     colour = "black", linewidth = pt_to_linewidth(0.4)) +
+    #    gene. Named genes have taller ticks in the line colour
+    hit_df <- run[run$in_set & !run$labelled, , drop = FALSE]
+    named_df <- run[run$labelled, , drop = FALSE]
+    tick_bottom <- if (band == "metric") 0.36 else 0
+    p2 <- ggplot()
+    if (band == "metric") {
+        band_max <- stats::quantile(abs(run$metric), 0.95, names = FALSE)
+        if (!is.finite(band_max) || band_max == 0) band_max <- max(abs(run$metric), 1e-8)
+        band_pal <- scales::col_numeric(c(dir_cols[["down"]], "white", dir_cols[["up"]]), domain = c(-1, 1))
+        level <- round(pmax(-1, pmin(1, run$metric / band_max)) * 50) / 50
+        runs <- rle(level)
+        band_df <- data.frame(xmin = c(0, cumsum(runs$lengths)[-length(runs$lengths)]) + 0.5,
+                              xmax = cumsum(runs$lengths) + 0.5, fill = band_pal(runs$values))
+        p2 <- p2 + geom_rect(
+            aes(xmin = .data$xmin, xmax = .data$xmax, ymin = 0, ymax = 0.3, fill = I(.data$fill)),
+            data = band_df,
+            colour = NA
+        )
+    }
+    p2 <- p2 +
+        geom_segment(aes(x = .data$rank, xend = .data$rank, y = tick_bottom, yend = 1), data = hit_df,
+                     colour = "black", linewidth = pt_to_linewidth(0.4))
+    if (nrow(named_df)) {
+        p2 <- p2 + geom_segment(aes(x = .data$rank, xend = .data$rank, y = tick_bottom, yend = 1),
+                                data = named_df, colour = line_col, linewidth = pt_to_linewidth(0.9))
+    }
+    p2 <- p2 +
         x_scale +
         scale_y_continuous(limits = c(0, 1), expand = expansion(0)) +
         labs(x = NULL, y = NULL) +
@@ -276,6 +363,8 @@ plot_gsea_rank <- function(
     #    as quiet context (grey area), with the rank where it crosses 0
     if (show.metric) {
         zero <- which(run$metric <= 0)[1]
+        m_lim <- range(run$metric)
+        m_lim <- m_lim + c(-1, 1) * 0.05 * diff(m_lim)
         p3 <- ggplot(run, aes(x = .data$rank, y = .data$metric)) +
             geom_area(fill = "grey75", colour = NA) +
             geom_hline(yintercept = 0, colour = "grey50", linewidth = lw) +
@@ -283,7 +372,7 @@ plot_gsea_rank <- function(
                 geom_vline(xintercept = zero, colour = "grey50", linewidth = lw, linetype = "dashed")
             }) +
             x_scale +
-            scale_y_continuous(breaks = scales::breaks_extended(3), expand = expansion(mult = 0.05)) +
+            scale_y_continuous(limits = m_lim, breaks = scales::breaks_extended(3), expand = expansion(0)) +
             labs(x = "Rank in ordered gene list", y = metric.title) +
             stacked +
             panel_size_theme(panel.width, panel.heights[3]) +
@@ -298,24 +387,186 @@ plot_gsea_rank <- function(
                   axis.title.x = element_text(size = sz$base))
     }
 
-    # Title: the gene set's name; subtitle: its ID and the comparison
+    # Names of the labelled genes, with an arrow to their ticks: in the
+    # metric panel, pointing up to the band; without it, at the bottom of the
+    # score panel, pointing down to the ticks
+    if (length(named)) {
+        target <- stats::median(named_df$rank)
+        host <- if (show.metric) 3L else 1L
+        plots[[host]] <- plots[[host]] + gsea_gene_labels(
+            genes = named,
+            target = target,
+            n = n,
+            positive = positive,
+            y_rng = if (show.metric) m_lim else es_lim,
+            to = if (show.metric) "top" else "bottom",
+            panel.width = panel.width,
+            panel.height = panel.heights[host],
+            italic = italic.genes,
+            sz = sz
+        )
+    }
+
+    # Title: the gene set's name, with its ID on a second line (as in the
+    # user's figures); subtitle: the comparison, bold italic
     if (is.null(title)) title <- info$term
-    sub_parts <- c(if (show.id && info$set_id != title) info$set_id, comparison)
+    if (show.id && info$set_id != title) title <- paste(title, info$set_id, sep = "\n")
     transparent_bg <- is.na(bg) || identical(bg, "transparent")
+    # A title wider than the figure (long IDs have no spaces to wrap at) gets
+    # room on the right: the figure is sized from its panels and axes (about
+    # 0.7 in left of the panels); measured on a PDF device, with 20% to spare
+    # for the wider fonts of raster devices
+    grDevices::pdf(NULL)
+    title_w <- tryCatch({
+        texts <- c(strsplit(title, "\n", fixed = TRUE)[[1]])
+        max(vapply(texts, function(t) {
+            g <- grid::textGrob(t, gp = grid::gpar(fontsize = sz$large, fontface = "bold"))
+            grid::convertWidth(grid::grobWidth(g), "in", valueOnly = TRUE)
+        }, numeric(1)))
+    }, finally = grDevices::dev.off())
+    extra_right <- max(0, 1.2 * title_w - (panel.width + 0.7))
+    # On the top panel: patchwork gives the panels of a column the same
+    # margins, and save_plot() sizes the figure from them
+    if (extra_right > 0) {
+        plots[[1]] <- plots[[1]] + theme(plot.margin = margin(0, extra_right * 72, 0, 0))
+    }
     p <- patchwork::wrap_plots(plots, ncol = 1) +
         patchwork::plot_annotation(
             title = title,
-            subtitle = if (length(sub_parts)) paste(sub_parts, collapse = "\n"),
+            subtitle = comparison,
             theme = theme(
-                plot.title = element_text(size = sz$large, face = "bold", hjust = 0),
-                plot.subtitle = element_text(size = sz$small, face = "italic", hjust = 0, lineheight = 1.05,
-                                             margin = margin(t = 2, b = 4)),
+                plot.title = element_text(size = sz$large, face = "bold", hjust = 0, lineheight = 1,
+                                          margin = margin(b = if (is.null(comparison)) 4 else 1)),
+                plot.subtitle = element_text(size = sz$base, face = "bold.italic", hjust = 0,
+                                             margin = margin(t = 0, b = 4)),
                 plot.background = element_rect(fill = if (transparent_bg) "transparent" else bg, colour = NA)
             )
         )
     src <- run
     attr(p, "source_data") <- src
     p
+}
+
+
+#' Names of a few genes of a GSEA plot, with an arrow to their ticks
+#'
+#' The names are one comma-separated line (wrapped when wider than 80\% of
+#' the panel, measured on a PDF device with 15\% to spare), a little inside the panel from the end of the list the genes
+#' are at, and a small arrow runs from the names to the edge of the panel
+#' next to the gene ticks, at the middle rank of the named genes.
+#'
+#' @param genes Genes named, in order
+#'
+#' @param target Rank the arrow points to
+#'
+#' @param n Number of genes in the list
+#'
+#' @param positive Whether the score is positive (genes at the start of the
+#'                 list)
+#'
+#' @param y_rng Limits of the panel's y-axis
+#'
+#' @param to "top" (the arrow points up, from the metric panel) or "bottom"
+#'           (down, from the score panel)
+#'
+#' @param panel.width,panel.height Size of the panel in inches
+#'
+#' @param italic Whether the names are set in italics
+#'
+#' @param sz Sizes from \code{theme_sizes()}
+#'
+#' @return A list of ggplot2 layers
+#'
+#' @keywords internal
+gsea_gene_labels <- function(genes,
+                             target,
+                             n,
+                             positive,
+                             y_rng,
+                             to,
+                             panel.width,
+                             panel.height,
+                             italic,
+                             sz) {
+    size <- sz$base
+    face <- if (italic) "bold.italic" else "bold"
+    # Widths of text as drawn (inches), measured on a PDF device, plus 15%:
+    # raster devices often use a wider font than the PDF metrics
+    grDevices::pdf(NULL)
+    on.exit(grDevices::dev.off(), add = TRUE)
+    text_width <- function(x) {
+        g <- grid::textGrob(x, gp = grid::gpar(fontsize = size, fontface = face, lineheight = 0.95))
+        1.15 * grid::convertWidth(grid::grobWidth(g), "in", valueOnly = TRUE)
+    }
+    # Names on lines of at most 80% of the panel width; at most two lines,
+    # at the small text size if the base size needs more
+    wrap <- function() {
+        lines <- character(0)
+        cur <- ""
+        for (g in genes) {
+            piece <- if (cur == "") g else paste0(cur, ", ", g)
+            if (text_width(piece) > 0.8 * panel.width && cur != "") {
+                lines <- c(lines, paste0(cur, ","))
+                cur <- g
+            } else {
+                cur <- piece
+            }
+        }
+        c(lines, cur)
+    }
+    lines <- wrap()
+    if (length(lines) > 2) {
+        size <- sz$small
+        lines <- wrap()
+    }
+    # Inches to data units
+    x_in <- n / panel.width
+    y_in <- diff(y_rng) / panel.height
+    text_w <- text_width(paste(lines, collapse = "\n"))
+    text_h <- length(lines) * 1.05 * size / 72
+    # The names start 0.25 in past the target, kept inside the panel
+    x_text <- if (positive) {
+        min(target + 0.25 * x_in, n - (text_w + 0.05) * x_in)
+    } else {
+        max(target - 0.25 * x_in, 1 + (text_w + 0.05) * x_in)
+    }
+    # Vertically: 0.12 in from the edge the arrow points to (top of the
+    # metric panel, bottom of the score panel)
+    if (to == "top") {
+        y_near <- y_rng[2] - 0.12 * y_in
+        y_text <- y_near - text_h / 2 * y_in
+        y_tip <- y_rng[2]
+    } else {
+        y_near <- y_rng[1] + 0.12 * y_in
+        y_text <- y_near + text_h / 2 * y_in
+        y_tip <- y_rng[1]
+    }
+    # The arrow leaves from the corner of the names nearest the target
+    x_start <- x_text + (if (positive) -0.04 else 0.04) * x_in
+    list(
+        annotate(
+            "text",
+            x = x_text,
+            y = y_text,
+            label = paste(lines, collapse = "\n"),
+            hjust = if (positive) 0 else 1,
+            vjust = 0.5,
+            size = pt_to_size(size),
+            fontface = face,
+            lineheight = 0.95,
+            colour = "black"
+        ),
+        annotate(
+            "segment",
+            x = x_start,
+            y = y_near,
+            xend = target,
+            yend = y_tip,
+            colour = "black",
+            linewidth = pt_to_linewidth(0.75),
+            arrow = grid::arrow(length = grid::unit(0.06, "in"), angle = 25, type = "closed")
+        )
+    )
 }
 
 

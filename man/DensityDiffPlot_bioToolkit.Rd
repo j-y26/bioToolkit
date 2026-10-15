@@ -32,6 +32,7 @@ DensityDiffPlot_bioToolkit(
   legend.position = c("right", "left", "top", "bottom", "none"),
   legend.title = NULL,
   ncol = NULL,
+  arrow.panels = c("bottom.left", "all", "left", "right", "top", "bottom", "none"),
   panel.width = 4,
   panel.height = panel.width,
   panel.spacing = 0.1,
@@ -92,8 +93,10 @@ masked (not coloured), default is 0.05}
 "blue-magenta", a palette name, or colours from low to high,
 e.g. `c(low, mid, high)`}
 
-\item{limits}{The colour scale runs from -`limits` to `limits`. If NULL
-(default), the largest absolute value drawn}
+\item{limits}{Cutoff of the colour scale: it runs from -`limits` to
+`limits`, each end trimmed to the most extreme value drawn on
+its side, so that it gets the full colour. If NULL (default),
+from the lowest to the highest value drawn, centred on 0}
 
 \item{na.value}{Colour of masked cells, default is "grey88"}
 
@@ -121,6 +124,10 @@ and "black"}
 the reference}
 
 \item{ncol}{Number of columns of panels. If NULL (default), all in one row}
+
+\item{arrow.panels}{Panels that get the dimension arrows: "bottom.left"
+(default), "all", "left", "right", "top", "bottom" or
+"none", as in \code{\link{DimPlot_bioToolkit}}}
 
 \item{panel.width, panel.height}{Size of each panel in inches, default 4;
 `panel.height` defaults to `panel.width`}

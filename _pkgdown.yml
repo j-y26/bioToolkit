@@ -1,0 +1,200 @@
+# Website of bioToolkit, built with pkgdown by .github/workflows/pkgdown.yaml
+# when the package version changes. Design notes: dev/documentation_site.md.
+# Every exported function must be listed under `reference` (pkgdown fails the
+# build otherwise), so a new export cannot be left out of the site.
+
+url: https://j-y26.github.io/bioToolkit/
+
+template:
+  bootstrap: 5
+  light-switch: true
+  bslib:
+    primary: "#2C5DA8"
+    secondary: "#B5338A"
+    base_font: {google: "Inter"}
+    heading_font: {google: "Inter"}
+    code_font: {google: "JetBrains Mono"}
+    font-size-base: 0.95rem
+    border-radius: 0.5rem
+    link-decoration: none
+
+development:
+  mode: release
+
+home:
+  title: "bioToolkit: plots and helpers for single-cell and bulk genomics"
+  description: >
+    Utility functions for transcriptomic and epigenomic analysis in R:
+    processing single-cell and bulk data, summarising differential expression
+    and gene-set enrichment, and turning the results into publication-quality
+    figures.
+
+navbar:
+  structure:
+    left: [guides, reference, news]
+    right: [search, github, lightswitch]
+  components:
+    guides:
+      text: Guides
+      menu:
+      - text: Figures
+      - text: Figure essentials and colours
+        href: articles/figures.html
+      - text: -------
+      - text: Single-cell
+      - text: Embeddings
+        href: articles/sc-embeddings.html
+      - text: Expression across groups
+        href: articles/sc-expression.html
+      - text: Comparing conditions
+        href: articles/sc-conditions.html
+      - text: -------
+      - text: Bulk and differential expression
+      - text: "Bulk RNA-seq: samples and structure"
+        href: articles/bulk-samples.html
+      - text: "DE: one comparison"
+        href: articles/de-single.html
+      - text: "DE: many comparisons"
+        href: articles/de-multi.html
+      - text: -------
+      - text: Gene sets
+      - text: Gene-set enrichment
+        href: articles/enrichment.html
+    reference:
+      text: Functions
+      href: reference/index.html
+    news:
+      text: Changelog
+      href: news/index.html
+    github:
+      icon: fab fa-github fa-lg
+      href: https://github.com/j-y26/bioToolkit
+      aria-label: GitHub
+
+articles:
+- title: Figures
+  navbar: ~
+  contents:
+  - articles/figures
+- title: Single-cell
+  contents:
+  - articles/sc-embeddings
+  - articles/sc-expression
+  - articles/sc-conditions
+- title: Bulk and differential expression
+  contents:
+  - articles/bulk-samples
+  - articles/de-single
+  - articles/de-multi
+- title: Gene sets
+  contents:
+  - articles/enrichment
+
+reference:
+- title: Figure essentials
+  desc: >
+    Shared by every plot: the theme, fixed panel sizes, saving to PDF and PNG,
+    legends as separate files, the data behind a plot, italic gene names.
+    Guide: [Figure essentials and colours](../articles/figures.html).
+  contents:
+  - theme_bioToolkit
+  - panel_size_theme
+  - save_plot
+  - extract_legend
+  - export_source_data
+  - italic_labels
+
+- title: Colours
+  desc: >
+    Browse, pick and check palettes; every plot takes one `cols` argument.
+    Guide: [Figure essentials and colours](../articles/figures.html#colours).
+  contents:
+  - bt_palette
+  - list_palettes
+  - show_palettes
+  - check_palette
+  - mix_colors
+  - sort_colors_by_hue
+  - ggplot_colors
+
+- title: "Single-cell: embeddings"
+  desc: >
+    Cells, groups and genes on a UMAP / t-SNE; orienting embeddings; restyling
+    plots made by Seurat. Guide: [Embeddings](../articles/sc-embeddings.html).
+  contents:
+  - DimPlot_bioToolkit
+  - FeaturePlot_bioToolkit
+  - transform_embedding
+  - format_sc_plots
+  - manipulate_sc_plot
+  - add_dimension_arrows
+
+- title: "Single-cell: expression across groups"
+  desc: >
+    Marker genes and expression per cluster, cell type or condition.
+    Guide: [Expression across groups](../articles/sc-expression.html).
+  contents:
+  - top_markers
+  - DotPlot_bioToolkit
+  - VlnPlot_bioToolkit
+  - RidgePlot_bioToolkit
+  - DoHeatmap_bioToolkit
+
+- title: "Single-cell: comparing conditions"
+  desc: >
+    Cell type composition and where cells gain or lose density between
+    conditions. Guide: [Comparing conditions](../articles/sc-conditions.html).
+  contents:
+  - summarize_group_meta
+  - plot_composition_scatter
+  - DensityDiffPlot_bioToolkit
+  - get_meta_pivot
+
+- title: "Bulk RNA-seq: samples and structure"
+  desc: >
+    Sample annotation, low-expression filtering, PCA, what drives variation,
+    group summaries and co-expression with a gene.
+    Guide: [Bulk RNA-seq](../articles/bulk-samples.html).
+  contents:
+  - keywords_to_info
+  - filter_low_expression_genes
+  - plot_pca
+  - extract_pc_loadings
+  - plot_variance_explained
+  - summarize_group_expression
+  - calc_expr_corr
+
+- title: "Differential expression: one comparison"
+  desc: >
+    Read a DE table from edgeR, DESeq2, limma or Seurat; volcano and MA plots;
+    up / down gene lists and ranked lists for GSEA.
+    Guide: [DE: one comparison](../articles/de-single.html).
+  contents:
+  - standardize_de
+  - plot_volcano
+  - plot_ma
+  - filter_de_genes
+  - rank_de_genes
+  - generate_de_rank_file
+
+- title: "Differential expression: many comparisons"
+  desc: >
+    DE across cell types, time points, treatments or assays.
+    Guide: [DE: many comparisons](../articles/de-multi.html).
+  contents:
+  - plot_multi_volcano
+  - plot_de_dots
+  - plot_fc_quadrant
+
+- title: Gene-set enrichment
+  desc: >
+    Over-representation and GSEA results from clusterProfiler, fgsea or GSEA:
+    dot plots, NES bars, grids across comparisons, running scores.
+    Guide: [Gene-set enrichment](../articles/enrichment.html).
+  contents:
+  - standardize_enrichment
+  - plot_enrichment_dots
+  - plot_enrichment_bars
+  - plot_enrichment_grid
+  - plot_gsea_rank
+  - format_gene_sets

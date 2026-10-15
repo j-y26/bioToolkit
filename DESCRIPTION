@@ -1,7 +1,7 @@
 Package: bioToolkit
 Type: Package
 Title: An R package hosting useful functions for data analysis
-Version: 0.9.0
+Version: 0.10.0
 Author: person("Jielin", "Yang",
                 email = "jielin.yang@sickkids.ca",
                 role = c("aut", "cre"),
@@ -12,7 +12,7 @@ License: MIT + file LICENSE
 File: LICENSE
 Encoding: UTF-8
 LazyData: true
-URL: https://github.com/j-y26/bioToolkit
+URL: https://j-y26.github.io/bioToolkit/, https://github.com/j-y26/bioToolkit
 BugReports: https://github.com/j-y26/bioToolkit/issues
 biocViews: BiomedicalInformatics
 RoxygenNote: 7.3.3
@@ -34,23 +34,12 @@ Imports:
     utils,
     viridisLite
 Suggests:
-    aplot,
-    data.table,
     edgeR,
     ggrepel,
     Matrix,
     purrr,
     Seurat,
-    stringr,
     GSEABase,
-    ChIPseeker,
-    GenomicRanges,
-    GSVA,
-    BiocParallel,
-    IRanges,
-    Rsamtools,
-    rtracklayer,
-    Biobase,
     RColorBrewer,
     colorspace,
     ggrastr,
@@ -64,3 +53,18 @@ Suggests:
     DOSE,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Config/Needs/website:
+    pkgdown,
+    muscData,
+    ExperimentHub,
+    macrophage,
+    SingleCellExperiment,
+    SummarizedExperiment,
+    harmony,
+    immunogenomics/presto,
+    DESeq2,
+    msigdbr,
+    fgsea,
+    clusterProfiler,
+    variancePartition,
+    BiocParallel

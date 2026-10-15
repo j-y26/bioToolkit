@@ -181,7 +181,7 @@
 #'                     feature)
 #'
 #' @param legend.title.face Font face of the legend title. "auto" (default)
-#'                          sets gene names in italics
+#'                          sets it in bold, gene names in bold italics
 #'
 #' @param legend.length Length of the colour bar in inches, default is 1.5
 #'
@@ -196,6 +196,13 @@
 #'
 #' @param by.row Whether panels fill the grid row by row (default, TRUE) or
 #'               column by column (FALSE)
+#'
+#' @param arrow.panels Panels that get the dimension arrows: "bottom.left"
+#'                     (default; the first panel of the bottom row), "all",
+#'                     "left" / "right" (the first / last panel of each row),
+#'                     "top" / "bottom" (the top / lowest panel of each
+#'                     column) or "none". With `combine = FALSE`, every plot
+#'                     gets its own arrows unless "none"
 #'
 #' @param combine Whether to return a single plot (default, TRUE) or a list of
 #'                one plot per panel, each with its own arrows, to be arranged
@@ -232,7 +239,9 @@
 #' @param seed Random seed used for drawing order and label placement, default
 #'             is 42. The global random number generator state is not changed
 #'
-#' @param ... Additional arguments passed to \code{\link{add_dimension_arrows}}
+#' @param ... Arguments of the dimension arrows, as in
+#'            \code{\link{add_dimension_arrows}} (e.g. `arrow.length = 1.5`;
+#'            the snake_case names used before 0.10.0 are deprecated)
 #'
 #' @return A ggplot object when there is a single colour scale over one
 #'         feature; otherwise a patchwork object, whose panels keep their
@@ -286,6 +295,7 @@ FeaturePlot_bioToolkit <- function(
     legend.text.size = NULL,
     ncol = NULL,
     by.row = TRUE,
+    arrow.panels = c("bottom.left", "all", "left", "right", "top", "bottom", "none"),
     combine = TRUE,
     panel.width = 4,
     panel.height = panel.width,
@@ -316,9 +326,11 @@ FeaturePlot_bioToolkit <- function(
     }
     legend.direction <- match.arg(legend.direction, c("vertical", "horizontal"))
     if (geom == "hex") check_installed("hexbin", reason = "to bin cells into hexagons")
+    arrow.panels <- match.arg(arrow.panels)
     arrow_args <- list(...)
     raster <- resolve_raster_arg(raster, arrow_args)
     arrow_args$rasterize <- NULL
+    arrow_args <- resolve_arrow_args(arrow_args, "FeaturePlot_bioToolkit")
     dims <- resolve_dims(dims, reduction)
     # Text sizes not given are taken from theme_sizes(), as in theme_bioToolkit()
     sizes <- theme_sizes()
@@ -457,18 +469,25 @@ FeaturePlot_bioToolkit <- function(
     default_ncol <- if (rd$split_plot) length(panels) else seurat_feature_ncol(n_features)
     layout <- panel_layout(length(panels), ncol, by.row, default_ncol)
     single_plot <- combine && n_features == 1 && length(colour_scales) == 1
+    # Panels that get the arrows (`arrow.panels`), in the order they fill the
+    # grid
+    idx <- arrow_panel_index(length(panels), layout$ncol, layout$nrow, layout$by.row, arrow.panels)
 
     if (single_plot) {
         p <- build(panels, layout$ncol, layout$nrow, layout$dir, strip = rd$split_plot)
-        return(arrows(p, panel = if (rd$split_plot) panels[[layout$bottom_left]]$label))
+        labels <- vapply(panels, `[[`, "", "label")
+        return(arrows(p, panel = if (arrow.panels == "none") character(0) else if (rd$split_plot) labels[idx]))
     }
 
     # A strip names the panel whenever there is more than one
     plots <- lapply(panels, function(pn) build(list(pn), 1L, 1L, "h", strip = length(panels) > 1))
     names(plots) <- vapply(panels, `[[`, "", "label")
-    if (!combine) return(lapply(plots, arrows))
+    if (!combine) {
+        if (arrow.panels == "none") return(plots)
+        return(lapply(plots, arrows))
+    }
 
-    plots[[layout$bottom_left]] <- arrows(plots[[layout$bottom_left]])
+    plots[idx] <- lapply(plots[idx], arrows)
     # Panels sharing a scale have identical legends, which patchwork collects
     # into one; panels with their own scale keep their own legend
     collect <- length(colour_scales) == 1
@@ -632,7 +651,7 @@ feature_ggplot <- function(members,
         theme(
             legend.title = element_text(
                 size = legend.text.size,
-                face = if (identical(legend.title.face, "auto")) "plain" else legend.title.face,
+                face = if (identical(legend.title.face, "auto")) "bold" else legend.title.face,
                 hjust = if (vertical) 0 else 0.5,
                 margin = margin(b = 0.1, unit = "cm")
             )
@@ -1077,10 +1096,11 @@ resolve_colour_scale <- function(members,
     } else {
         diverging
     }
+    # Diverging: the centre colour at `center`, each side stretched to its
+    # own end, so that the extreme of the shorter side is not faded
+    # (rescale_diverging(); user decision 2026-10-14)
     rescaler <- if (is_diverging) {
-        function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
-            scales::rescale_mid(x, to = to, from = from, mid = center)
-        }
+        rescale_diverging(center)
     } else {
         function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) scales::rescale(x, to = to, from = from)
     }
@@ -1156,8 +1176,8 @@ legend_title_label <- function(legend.title,
     }
     f <- scale_features
     if (identical(legend.title.face, "auto") && is_gene[[f]]) {
-        if (is.null(suffix)) return(bquote(italic(.(f))))
-        return(bquote(italic(.(f)) ~ .(suffix)))
+        if (is.null(suffix)) return(bquote(bolditalic(.(f))))
+        return(bquote(bolditalic(.(f)) ~ bold(.(suffix))))
     }
     paste(c(f, suffix), collapse = " ")
 }

@@ -76,3 +76,21 @@ test_that("the volcano panel is square by default", {
     expect_equal(p$theme$panel.widths, grid::unit(2.5, "in"))
     expect_equal(p$theme$panel.heights, grid::unit(2.5, "in"))
 })
+
+
+test_that("legend blocks arrange legends in columns, built when drawn", {
+    p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, colour = hp, size = cyl)) + ggplot2::geom_point()
+    block <- legend_block_grob(list(list(p + ggplot2::guides(size = "none")),
+                                    list(p + ggplot2::guides(colour = "none"))))
+    expect_s3_class(block, "bt_legend_block")
+    grDevices::pdf(NULL)
+    lay <- legend_block_layout(block)
+    grDevices::dev.off()
+    expect_length(lay$grobs, 2)
+    expect_gt(lay$width, 0)
+    # Fixed width only: the figure takes the height of the rows it spans
+    fig <- legend_block_figure(block)
+    expect_gt(as.numeric(fig$theme$panel.widths), lay$width)
+    expect_null(fig$theme$panel.heights)
+    expect_gt(attr(fig, "block_height"), 0)
+})

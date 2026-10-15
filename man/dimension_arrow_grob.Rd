@@ -19,29 +19,11 @@ dimension_arrow_grob(
 )
 }
 \arguments{
-\item{reduction}{The reduction method used to generate the plot, default is
-"umap", allowed values are "umap", "tsne", "pca", "spatial"}
+\item{reduction, dims}{As in \code{\link{add_dimension_arrows}}}
 
-\item{dims}{A vector of dimension names, overwrites the default dimension
-names assumed from reduction method}
-
-\item{arrow_length}{The size of the arrow, default is 2 (cm)}
-
-\item{x_coord_adjust}{Horizontal adjustment of the arrow origin, default is 0.25 (cm)}
-
-\item{y_coord_adjust}{Vertical adjustment of the arrow origin, default is the same as x_coord_adjust}
-
-\item{arrow_size}{The size of the arrow head, default is 0.25 cm}
-
-\item{arrow_width}{The width of the arrow, default is 0.2 cm}
-
-\item{arrow_line_width}{The width of the arrow line, default is 3}
-
-\item{arrow_color}{The color of the arrow and label, default is "black"}
-
-\item{text_font_size}{The font size of the text, default is 12}
-
-\item{text_dst}{The distance of the text from the arrow in cm, default is 0.3}
+\item{arrow_length, x_coord_adjust, y_coord_adjust, arrow_size, arrow_width, arrow_line_width, arrow_color, text_font_size, text_dst}{The arrow geometry, as the dot.case arguments of
+\code{\link{add_dimension_arrows}} (e.g. `arrow_length` is
+`arrow.length`)}
 }
 \value{
 A grob tree

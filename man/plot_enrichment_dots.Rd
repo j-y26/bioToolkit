@@ -24,6 +24,7 @@ plot_enrichment_dots(
   cell.height = 0.2,
   panel.width = 2,
   legend.position = c("right", "bottom", "none"),
+  legend.layout = c("columns", "stacked"),
   bg = "transparent",
   ...
 )
@@ -100,6 +101,13 @@ side}
 \item{legend.position}{Position of the legends of each panel: "right"
 (default), "bottom" or "none"}
 
+\item{legend.layout}{Arrangement of the legends on the right:
+"columns" (default; colour bars in one column and
+size legends in the next, each in panel order; a
+single panel's two legends side by side) or "stacked"
+(one column, each panel's colour bar and size legend
+in turn)}
+
 \item{bg}{Background colour, default is "transparent"}
 
 \item{...}{Arguments to \code{\link{standardize_enrichment}} when
@@ -125,8 +133,15 @@ Shows the most significant gene sets of one enrichment result,
 \details{
 Legends: each panel has its own colour bar (in its palette) when
          panels are drawn in different palettes; the size legend is drawn
-         once when the limits are shared. In every panel the colour bar
-         comes first and the size legend second, whatever the data.
+         once when the limits are shared. With legends on the right
+         (default), the legends of all panels are gathered to the right of
+         the panels: colour bars in one column and size legends in the
+         next (`legend.layout = "columns"`), or all in one column. Panels
+         side by side (or in a grid) have the same height, so that their
+         rows line up: shorter panels get empty rows at the bottom. Long
+         names of stacked panels are wrapped to fit the height of their
+         strip; all strips have the same thickness, with their names
+         centred.
 
          Gene ratio is a descriptive measure: a set of 10 genes with 5 in
          the list has a higher ratio than a set of 500 with 50, but is

@@ -13,7 +13,11 @@
 #   marked by a coloured dot (default), a colour strip or nothing, with a
 #   legend, since such columns are too narrow to name. Without `split.by`,
 #   the groups are the blocks (named on top) and the markers show the
-#   DimPlot_bioToolkit() colours.
+#   DimPlot_bioToolkit() colours. Blocks of columns and blocks of genes (a
+#   named list of `features`) are each marked by a bar and their name
+#   (R/group_bars.R; 2026-10-14): column blocks on top (`split.by.cols`),
+#   gene blocks on the side opposite the gene names (`feature.group.cols`),
+#   which follows `label.side`.
 # * No clustering and no dendrograms (use ComplexHeatmap for that). Genes are
 #   in the order of `features`, in blocks for a named list (e.g. from
 #   top_markers()); cells are in random order within their group, or ordered
@@ -151,6 +155,19 @@
 #' @param label.side Side of the feature names: "right" (default) or "left".
 #'                   Names of blocks of features are on the other side
 #'
+#' @param feature.group.cols Colours of the bars marking the blocks of
+#'                           features (a named list of `features`): NULL
+#'                           (default) for black bars, a qualitative palette
+#'                           name, or colours named by block
+#'
+#' @param split.by.cols Colours of the bars marking the blocks of columns
+#'                      (`split.by`, or the groups without it): NULL (default)
+#'                      for black bars, a qualitative palette name, or colours
+#'                      named by block
+#'
+#' @param group.bar.width Thickness of the block bars in points, default is
+#'                        3.5
+#'
 #' @param italic.genes Whether gene names are set in italics, default is TRUE
 #'                     (genomic regions such as peaks never are)
 #'
@@ -234,6 +251,9 @@ DoHeatmap_bioToolkit <- function(
     cols = NULL,
     label.features = NULL,
     label.side = c("right", "left"),
+    feature.group.cols = NULL,
+    split.by.cols = NULL,
+    group.bar.width = 3.5,
     italic.genes = TRUE,
     panel.width = 6,
     cell.width = 0.18,
@@ -250,6 +270,7 @@ DoHeatmap_bioToolkit <- function(
     group.marker <- match.arg(group.marker)
     label.side <- match.arg(label.side)
     legend.position <- match.arg(legend.position)
+    check_bar_width(group.bar.width)
     if (!is.null(max.cells) && !(is.numeric(max.cells) && length(max.cells) == 1 && max.cells >= 1)) {
         stop("`max.cells` must be NULL or a single number >= 1", call. = FALSE)
     }
@@ -308,6 +329,15 @@ DoHeatmap_bioToolkit <- function(
     long <- heatmap_long(sv, ft, cl, rl)
     body <- heatmap_body(long, cl, rl, fill_cols, limits, fill_title, show_names, italic, label.side,
                          split.gap, legend.position, sz, bg)
+    # Bars of the blocks of features, opposite the feature names
+    if (rl$grouped) {
+        feat_cols <- group_bar_colours(feature.group.cols, rl$blocks, "feature.group.cols")
+        body <- body + heatmap_row_bars(cl, rl, feat_cols, label.side, group.bar.width) +
+            theme(
+                strip.text.y.left = element_text(margin = group_bar_margin("left", group.bar.width)),
+                strip.text.y.right = element_text(margin = group_bar_margin("right", group.bar.width))
+            )
+    }
     group_all <- hd$group_levels
     group_cols <- group_colours(group.cols, group_all, arg = "group.cols")$cols
     header <- list()
@@ -322,9 +352,13 @@ DoHeatmap_bioToolkit <- function(
         header[[a]] <- heatmap_annotation_row(cl, a, annotation_colours(annotation.cols, a, hd$cells[[a]], i),
                                               split.gap, sz, bg)
     }
-    # Block names on the top row
+    # Block names on the top row, beyond their bars
     rows <- c(header, list(body = body))
-    rows[[1]] <- rows[[1]] + heatmap_block_labels(cl, sz)
+    block_cols <- group_bar_colours(split.by.cols, cl$blocks, "split.by.cols")
+    # On the body (no header rows), the bars go on its first block of rows only
+    rows[[1]] <- rows[[1]] + heatmap_block_labels(cl, sz, group.bar.width) +
+        heatmap_column_bars(cl, block_cols, group.bar.width,
+                            row_block = if (length(header) == 0 && rl$grouped) rl$blocks)
     for (i in seq_along(rows)[-1]) rows[[i]] <- rows[[i]] + theme(strip.text.x = element_blank())
 
     side <- if (length(mark)) heatmap_mark_labels(rl, ft, mark, italic, label.side, sz, bg)
@@ -516,12 +550,9 @@ heatmap_fill_limits <- function(v,
     v <- v[is.finite(v)]
     if (length(v) == 0) return(c(-1, 1))
     if (scale || !signed) return(dot_fill_limits(v, scale, min.cutoff, max.cutoff))
-    # Signed values as they are: symmetric around 0
-    m <- max(abs(v))
-    if (m == 0) m <- 1
-    lim <- c(cutoff_value(min.cutoff, v, function(x) -m), cutoff_value(max.cutoff, v, function(x) m))
-    if (lim[2] <= lim[1]) lim[2] <- lim[1] + 1
-    lim
+    # Signed values as they are: centred on 0, each end the cutoff or the
+    # data's extreme on that side (diverging_limits())
+    diverging_limits(v, cutoff_value(min.cutoff, v, function(x) NA), cutoff_value(max.cutoff, v, function(x) NA))
 }
 
 
@@ -701,8 +732,76 @@ heatmap_frame <- function(cl,
             strip.placement = "outside",
             strip.clip = "off",
             plot.margin = margin(1, 2, 1, 2)
-        )
+        ),
+        # Block bars are drawn outside the panels
+        coord_cartesian(clip = "off")
     )
+}
+
+
+#' Bars of the blocks of columns of a heatmap, above the top row
+#'
+#' @param cl Result of \code{heatmap_column_layout()}
+#'
+#' @param cols Bar colours named by block
+#'
+#' @param width Thickness of the bars in points
+#'
+#' @param row_block When the bars are drawn on the body, its blocks of rows
+#'                  (the bars go on the first); NULL for a header row
+#'
+#' @return A ggplot2 layer
+#'
+#' @keywords internal
+heatmap_column_bars <- function(cl,
+                                cols,
+                                width,
+                                row_block = NULL) {
+    # Each bar spans its whole block (the columns sit at 1..n)
+    n <- vapply(cl$limits[cl$blocks], function(l) l[2] - 0.5, numeric(1))
+    bars <- data.frame(
+        block = factor(cl$blocks, levels = cl$blocks),
+        x = 1,
+        xend = unname(n),
+        fill = unname(cols[cl$blocks])
+    )
+    if (!is.null(row_block)) bars$row_block <- factor(row_block[1], levels = row_block)
+    group_bar_layer(bars, side = "top", width = width)
+}
+
+
+#' Bars of the blocks of features of a heatmap, opposite the feature names
+#'
+#' @param cl Result of \code{heatmap_column_layout()}
+#'
+#' @param rl Result of \code{heatmap_row_layout()}
+#'
+#' @param cols Bar colours named by block of features
+#'
+#' @param label.side Side of the feature names
+#'
+#' @param width Thickness of the bars in points
+#'
+#' @return A ggplot2 layer
+#'
+#' @keywords internal
+heatmap_row_bars <- function(cl,
+                             rl,
+                             cols,
+                             label.side,
+                             width) {
+    rows <- rl$rows
+    side <- if (label.side == "right") "left" else "right"
+    # Drawn on the outermost block of columns on that side
+    column_block <- if (side == "left") cl$blocks[1] else cl$blocks[length(cl$blocks)]
+    bars <- data.frame(
+        row_block = factor(rl$blocks, levels = rl$blocks),
+        block = factor(column_block, levels = cl$blocks),
+        y = vapply(rl$blocks, function(b) min(rows$y[rows$block == b]), numeric(1)),
+        yend = vapply(rl$blocks, function(b) max(rows$y[rows$block == b]), numeric(1)),
+        fill = unname(cols[rl$blocks])
+    )
+    group_bar_layer(bars, side = side, width = width)
 }
 
 
@@ -751,11 +850,14 @@ heatmap_body <- function(long,
         geom_raster() +
         scale_fill_gradientn(
             colours = fill_cols, limits = limits, oob = scales::oob_squish,
-            rescaler = function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
-                if (limits[1] < 0 && limits[2] > 0) scales::rescale_mid(x, to, from, mid = 0)
-                else scales::rescale(x, to, from)
+            # Signed values: the centre colour at 0, each side stretched to
+            # its own end (rescale_diverging())
+            rescaler = if (limits[1] < 0 && limits[2] > 0) {
+                rescale_diverging(0)
+            } else {
+                function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) scales::rescale(x, to, from)
             },
-            na.value = "transparent", name = fill_title,
+            na.value = "transparent", name = bold_title(fill_title),
             guide = guide_colourbar(
                 order = 1,
                 direction = if (vertical) "vertical" else "horizontal",
@@ -890,14 +992,19 @@ heatmap_blank_blocks <- function(cl) {
 #'
 #' @keywords internal
 heatmap_block_labels <- function(cl,
-                                 sz) {
+                                 sz,
+                                 bar.width = 3.5) {
     label_w <- nchar(cl$blocks) * 0.6 * sz$small / 72
     upright <- any(label_w > cl$widths + 0.04)
-    theme(strip.text.x.top = element_text(size = sz$small, face = "bold",
-                                          angle = if (upright) 90 else 0,
-                                          hjust = if (upright) 0 else 0.5,
-                                          vjust = 0.5,
-                                          margin = margin(b = 3)))
+    theme(strip.text.x.top = element_text(
+        size = sz$small,
+        face = "bold",
+        angle = if (upright) 90 else 0,
+        hjust = if (upright) 0 else 0.5,
+        vjust = 0.5,
+        # Room for the block bar between the name and the heatmap
+        margin = group_bar_margin("top", bar.width)
+    ))
 }
 
 

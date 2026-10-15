@@ -69,6 +69,38 @@ test_that("VlnPlot_bioToolkit sizes violins and draws split.by as blocks", {
     expect_length(pst$patches$plots, 2)
 })
 
+test_that("VlnPlot_bioToolkit marks split.by blocks with bars and cuts violins at y.max", {
+    so <- sim_seurat()
+    ps <- suppressMessages(VlnPlot_bioToolkit(so, "Cd3e", group.by = "ct", split.by = "cond",
+                                              split.by.cols = c(WT = "red", KO = "blue")))
+    bars <- Filter(function(l) inherits(l$geom, "GeomGroupBar"), ps$layers)
+    expect_length(bars, 1)
+    expect_equal(bars[[1]]$geom_params$side, "top")
+    expect_setequal(bars[[1]]$data$fill, c("red", "blue"))
+    pf <- suppressMessages(VlnPlot_bioToolkit(so, "Cd3e", group.by = "ct", split.by = "cond", flip = TRUE,
+                                              split.by.side = "labels"))
+    expect_equal(Filter(function(l) inherits(l$geom, "GeomGroupBar"), pf$layers)[[1]]$geom_params$side, "left")
+    expect_no_error(ggplot2::ggplotGrob(pf))
+    # Violins and boxes end at y.max; points above it are not drawn
+    top <- 2
+    py <- suppressMessages(VlnPlot_bioToolkit(so, "Cd3e", group.by = "ct", y.max = top))
+    b <- ggplot2::ggplot_build(py)
+    is_violin <- vapply(py$layers, function(l) inherits(l$geom, "GeomViolinTop"), logical(1))
+    is_box <- vapply(py$layers, function(l) inherits(l$geom, "GeomBoxplotTop"), logical(1))
+    expect_lte(max(b$data[[which(is_violin)]]$y), top)
+    expect_lte(max(b$data[[which(is_box)]]$upper), top)
+    expect_true(all(attr(py, "source_data")$value[0] <= top))
+})
+
+test_that("cut_density closes a violin at the top", {
+    d <- data.frame(y = c(0, 1, 2, 3), violinwidth = c(0, 1, 0.5, 0))
+    out <- cut_density(d, 1.5)
+    expect_equal(out$y, c(0, 1, 1.5))
+    expect_equal(out$violinwidth[3], 0.75)
+    expect_equal(nrow(cut_density(d, -1)), 0)
+    expect_equal(cut_density(d, 5), d)
+})
+
 test_that("VlnPlot_bioToolkit and RidgePlot_bioToolkit take a data frame", {
     meta <- data.frame(n = c(1:20, 101:120), mito = runif(40, 0, 0.1), s = rep(c("a", "b"), each = 20),
                        row.names = paste0("c", 1:40))

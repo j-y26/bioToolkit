@@ -16,7 +16,9 @@ violin_panel(
   adjust,
   layer_fun,
   seed,
-  annotate
+  annotate,
+  top = NA_real_,
+  split_side = if (flip) "right" else "top"
 )
 }
 \arguments{
@@ -34,6 +36,12 @@ violin_panel(
 \item{layer_fun}{Function rasterizing the point layer, or not}
 
 \item{annotate}{Whether to print the \% of cells above 0 per group}
+
+\item{top}{Top of the value axis on the scale it is drawn on (log10 for a
+log axis), where violins and boxes are cut; NA for none}
+
+\item{split_side}{Side of the split.by block names: "top" / "bottom"
+(vertical violins) or "left" / "right" (horizontal)}
 }
 \value{
 A ggplot object (no scales for the value axis yet)

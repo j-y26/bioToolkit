@@ -23,6 +23,13 @@ plot_de_dots(
   cluster.features = FALSE,
   cluster.comparisons = FALSE,
   cols = NULL,
+  comparison.marker = c("dot", "strip", "none"),
+  comparison.cols = NULL,
+  groups.cols = NULL,
+  groups.side = c("opposite", "labels"),
+  feature.group.cols = NULL,
+  feature.group.side = c("opposite", "labels"),
+  group.bar.width = 3.5,
   flip = FALSE,
   italic.genes = TRUE,
   cell.width = 0.18,
@@ -64,10 +71,12 @@ dots not drawn)}
 is 20 (padj = 1e-20); more significant results are drawn at
 that size and the legend says so}
 
-\item{logfc.limits}{Limits of the colour scale. If NULL (default),
-symmetric around 0 at the largest absolute log2 fold
-change of the significant dots. Values beyond get the
-colour of the end}
+\item{logfc.limits}{Limits of the colour scale. If NULL (default), from
+the most negative to the most positive log2 fold
+change of the significant dots, centred on 0: each
+side reaches its full colour at its own extreme. Give
+two numbers to share one scale between figures; values
+beyond get the colour of the end}
 
 \item{cluster.features, cluster.comparisons}{Whether to order genes (within
 their groups) / comparisons (within their groups) by hierarchical
@@ -76,6 +85,37 @@ clustering of their log2 fold changes, default is FALSE}
 \item{cols}{Colours of the diverging log2 fold change scale: NULL
 (default, "blue-magenta"), a palette name, or colours from low
 to high, e.g. `c("#2166AC", "white", "#B2182B")`}
+
+\item{comparison.marker}{How each comparison is marked with its colour
+next to its name, as the groups of
+\code{\link{DotPlot_bioToolkit}}: "dot" (default;
+a coloured dot), "strip" (a colour strip) or
+"none"}
+
+\item{comparison.cols}{Colours of the comparison markers: NULL (default,
+"scanpy-20"), a qualitative palette name, or colours
+named by comparison (e.g. the cell type colours of
+an embedding)}
+
+\item{groups.cols}{Colours of the bars marking the `groups` of comparisons:
+NULL (default) for black bars, a qualitative palette
+name, or colours named by group}
+
+\item{groups.side}{Side of the `groups`: "opposite" (default; opposite the
+comparison names: on the right, or on top with `flip =
+TRUE`) or "labels" (beyond the comparison names)}
+
+\item{feature.group.cols}{Colours of the bars marking the groups of genes
+(a named list of `features`): NULL (default) for
+black bars, a qualitative palette name, or colours
+named by gene group}
+
+\item{feature.group.side}{Side of the gene groups: "opposite" (default; on
+top, or on the right with `flip = TRUE`) or
+"labels" (beyond the gene names)}
+
+\item{group.bar.width}{Thickness of the bars marking gene groups and
+`groups`, in points, default is 3.5}
 
 \item{flip}{Whether to draw genes as rows and comparisons as columns,
 default is FALSE}
@@ -102,7 +142,10 @@ Shows selected genes across several DE comparisons: each dot's
              it with \code{\link{save_plot}}.
 }
 \details{
-Genes not tested in a comparison have no dot. The source data
+Comparisons play the part of `group.by` in the single-cell plots
+         (the units compared, marked by colour) and `groups` that of
+         `split.by` (higher-level blocks, marked by a bar and a name).
+         Genes not tested in a comparison have no dot. The source data
          (\code{\link{export_source_data}}) hold one row per gene and
          comparison with the standardized DE columns plus `significant`.
 }

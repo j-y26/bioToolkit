@@ -53,3 +53,39 @@ test_that("plot_composition_scatter picks the axes and handles zeros on log axes
     expect_equal(nrow(attr(q, "source_data")), 2)
     expect_no_error(ggplot2::ggplotGrob(q))
 })
+
+test_that("plot_composition_scatter leaves out groups absent from a panel", {
+    skip_if_not_installed("ggrepel")
+    meta <- data.frame(
+        ct = c("A", "A", "B", "B", "C", "C"),
+        geno = c("WT", "Mut", "WT", "Mut", "WT", "Mut"),
+        lineage = c("L1", "L1", "L1", "L1", "L2", "L2")
+    )
+    p <- suppressMessages(plot_composition_scatter(meta, "ct", "geno", facet.by = "lineage"))
+    src <- attr(p, "source_data")
+    expect_equal(nrow(src), 3)
+    expect_setequal(paste(src$facet, src$group), c("L1 A", "L1 B", "L2 C"))
+})
+
+
+test_that("plot_composition_scatter draws SEM, SD or 95% CI bars with caps", {
+    meta <- comp_meta()
+    p <- suppressMessages(plot_composition_scatter(meta, "ct", "geno", x = "WT", y = "Mut",
+                                                   sample.by = "sample", label = FALSE))
+    src <- attr(p, "source_data")
+    expect_equal(src$y_error, src$y_sem)
+    bars <- Filter(function(l) inherits(l$geom, "GeomErrorbar"), p$layers)
+    expect_length(bars, 2)
+    # Caps (a width) and 0.75 pt black lines
+    expect_true(all(vapply(bars, function(l) l$geom_params$width > 0, logical(1))))
+    expect_equal(bars[[1]]$aes_params$colour, "black")
+    expect_equal(bars[[1]]$aes_params$linewidth, pt_to_linewidth(0.75))
+    psd <- suppressMessages(plot_composition_scatter(meta, "ct", "geno", x = "WT", y = "Mut",
+                                                     sample.by = "sample", error = "sd", label = FALSE))
+    expect_equal(attr(psd, "source_data")$x_error, attr(psd, "source_data")$x_sd)
+    pci <- suppressMessages(plot_composition_scatter(meta, "ct", "geno", x = "WT", y = "Mut",
+                                                     sample.by = "sample", error = "ci95", label = FALSE))
+    s2 <- attr(pci, "source_data")
+    expect_equal(s2$y_error, stats::qt(0.975, 1) * s2$y_sem)
+    expect_no_error(ggplot2::ggplotGrob(pci))
+})

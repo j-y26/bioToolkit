@@ -127,11 +127,13 @@
 #'
 #' @param min.cutoff,max.cutoff Ends of the colour scale: a number, a quantile
 #'                              of the plotted values such as "q5" / "q95",
-#'                              or NA (default). With `scale = TRUE`, NA gives
-#'                              a scale symmetric around 0 reaching
-#'                              +-min(largest |z-score|, 2.5); otherwise 0
-#'                              and the largest mean. Values beyond the ends
-#'                              get the colour of the end
+#'                              or NA (default). With `scale = TRUE` the
+#'                              scale is centred on 0 and each end is the
+#'                              cutoff (NA: +-2.5) or, when closer to 0, the
+#'                              most extreme z-score on that side, so that it
+#'                              gets the full colour; otherwise 0 and the
+#'                              largest mean. Values beyond the ends get the
+#'                              colour of the end
 #'
 #' @param cluster.features Whether to order genes by hierarchical clustering
 #'                         of their colour values (within each group of
@@ -157,6 +159,27 @@
 #'                   the colours \code{\link{DimPlot_bioToolkit}} gives them
 #'                   ("scanpy-20" up to 20 groups), a qualitative palette name,
 #'                   or colours named by group (or in level order)
+#'
+#' @param feature.group.cols Colours of the bars marking the groups of genes
+#'                           (a named list of `features`): NULL (default)
+#'                           for black bars, a qualitative palette name, or
+#'                           colours named by gene group
+#'
+#' @param feature.group.side Side of the gene groups: "opposite" (default;
+#'                           opposite the gene names: on top, or on the right
+#'                           with `flip = TRUE`) or "labels" (beyond the gene
+#'                           names)
+#'
+#' @param split.by.cols Colours of the bars marking the `split.by` blocks: NULL
+#'                      (default) for black bars, a qualitative palette name,
+#'                      or colours named by level of `split.by`
+#'
+#' @param split.by.side Side of the `split.by` blocks: "opposite" (default;
+#'                      opposite the group names: on the right, or on top with
+#'                      `flip = TRUE`) or "labels" (beyond the group names)
+#'
+#' @param group.bar.width Thickness of the bars marking gene groups and
+#'                        `split.by` blocks, in points, default is 3.5
 #'
 #' @param flip Whether to draw genes as rows and groups as columns, default is
 #'             FALSE (genes as columns, as Seurat)
@@ -242,6 +265,11 @@ DotPlot_bioToolkit <- function(
     cols = NULL,
     group.marker = c("dot", "strip", "none"),
     group.cols = NULL,
+    feature.group.cols = NULL,
+    feature.group.side = c("opposite", "labels"),
+    split.by.cols = NULL,
+    split.by.side = c("opposite", "labels"),
+    group.bar.width = 3.5,
     flip = FALSE,
     italic.genes = TRUE,
     fill.title = NULL,
@@ -254,6 +282,8 @@ DotPlot_bioToolkit <- function(
     check_installed("Seurat", reason = "to fetch expression")
     average <- match.arg(average)
     group.marker <- match.arg(group.marker)
+    feature.group.side <- match.arg(feature.group.side)
+    split.by.side <- match.arg(split.by.side)
     legend.position <- match.arg(legend.position)
     if (!(is.numeric(pct.max) && length(pct.max) == 1 && pct.max > 0 && pct.max <= 100)) {
         stop("`pct.max` must be a single number in (0, 100]", call. = FALSE)
@@ -379,6 +409,13 @@ DotPlot_bioToolkit <- function(
     if (has_marker) eng$strip <- unname(strip_cols[as.character(plot_df$group)])
     if (is.null(fill.title)) fill.title <- if (scale) "Mean expression\n(z-score)" else "Mean\nexpression"
     italic <- stats::setNames(rep(italic.genes, length(feat_labels)), names(feat_labels))
+    # Bar colours of the gene groups and split.by blocks (black by default)
+    feat_bar_cols <- if (!is.null(feat_group)) {
+        group_bar_colours(feature.group.cols, levels(droplevels(feat_group)), "feature.group.cols")
+    }
+    split_bar_cols <- if (!is.null(unit_group)) {
+        group_bar_colours(split.by.cols, levels(droplevels(unit_group)), "split.by.cols")
+    }
 
     p <- dot_grid_plot(
         eng,
@@ -398,6 +435,11 @@ DotPlot_bioToolkit <- function(
         strip.style = if (group.marker == "dot") "dot" else "strip",
         cell.width = cell.width,
         cell.height = cell.height,
+        x.group.side = if (!flip) feature.group.side else split.by.side,
+        y.group.side = if (!flip) split.by.side else feature.group.side,
+        x.group.cols = if (!flip) feat_bar_cols else split_bar_cols,
+        y.group.cols = if (!flip) split_bar_cols else feat_bar_cols,
+        bar.width = group.bar.width,
         legend.position = legend.position,
         bg = bg
     )
@@ -588,11 +630,13 @@ dot_fill_limits <- function(v,
     v <- v[is.finite(v)]
     if (length(v) == 0) return(c(0, 1))
     if (scale) {
-        # Symmetric around 0, at most +-2.5 (Seurat's col.min / col.max)
-        m <- min(max(abs(v)), 2.5)
-        if (m == 0) m <- 1
-        default_lo <- function(x) -m
-        default_hi <- function(x) m
+        # Diverging around 0: each end at most 2.5 (Seurat's col.min /
+        # col.max) or the cutoff given, trimmed to the data on its side, so
+        # that the most extreme z-score of either side gets the full colour
+        # (diverging_limits(); user decision 2026-10-14)
+        lo <- cutoff_value(min.cutoff, v, function(x) -2.5)
+        hi <- cutoff_value(max.cutoff, v, function(x) 2.5)
+        return(diverging_limits(v, lo, hi, center = 0))
     } else {
         default_lo <- function(x) min(0, min(x))
         default_hi <- function(x) max(x)

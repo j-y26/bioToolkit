@@ -128,6 +128,12 @@
 #' @param by.row Whether panels fill the grid row by row (default, TRUE) or
 #'               column by column (FALSE)
 #'
+#' @param arrow.panels Panels that get the dimension arrows: "bottom.left"
+#'                     (default; the first panel of the bottom row), "all",
+#'                     "left" / "right" (the first / last panel of each row),
+#'                     "top" / "bottom" (the top / lowest panel of each
+#'                     column) or "none"
+#'
 #' @param panel.width Width of a single panel in inches, default is 4
 #'
 #' @param panel.height Height of a single panel in inches, default is
@@ -157,7 +163,9 @@
 #' @param seed Random seed used for shuffling and label placement, default is
 #'             42. The global random number generator state is not changed
 #'
-#' @param ... Additional arguments passed to \code{\link{add_dimension_arrows}}.
+#' @param ... Arguments of the dimension arrows, as in
+#'            \code{\link{add_dimension_arrows}} (e.g. `arrow.length = 1.5`;
+#'            the snake_case names used before 0.10.0 are deprecated).
 #'            `rasterize` is accepted as a deprecated alias of `raster`
 #'
 #' @return a ggplot object
@@ -199,6 +207,7 @@ DimPlot_bioToolkit <- function(
     legend.text.size = NULL,
     ncol = NULL,
     by.row = TRUE,
+    arrow.panels = c("bottom.left", "all", "left", "right", "top", "bottom", "none"),
     panel.width = 4,
     panel.height = panel.width,
     panel.spacing = 0.1,
@@ -215,9 +224,11 @@ DimPlot_bioToolkit <- function(
     # Preparation
     check_fixed_panel_support()
     legend.position <- match.arg(legend.position)
+    arrow.panels <- match.arg(arrow.panels)
     arrow_args <- list(...)
     raster <- resolve_raster_arg(raster, arrow_args)
     arrow_args$rasterize <- NULL
+    arrow_args <- resolve_arrow_args(arrow_args, "DimPlot_bioToolkit")
     dims <- resolve_dims(dims, reduction)
     # Text sizes not given are taken from theme_sizes(), as in theme_bioToolkit()
     sizes <- theme_sizes()
@@ -347,10 +358,15 @@ DimPlot_bioToolkit <- function(
         )
     }
 
-    # Arrows in place of axes, drawn once in the bottom left panel
+    # Arrows in place of axes, in the panels chosen by `arrow.panels` (by
+    # default once, in the bottom left panel)
+    idx <- arrow_panel_index(rd$n_panels, layout$ncol, layout$nrow, layout$by.row, arrow.panels)
     add_reduction_arrows(
-        p, reduction = reduction, labels = dims$labels, arrow_args = arrow_args,
-        panel = if (rd$split_plot) levels(df$panel)[layout$bottom_left]
+        p,
+        reduction = reduction,
+        labels = dims$labels,
+        arrow_args = arrow_args,
+        panel = if (arrow.panels == "none") character(0) else if (rd$split_plot) levels(df$panel)[idx]
     )
 }
 

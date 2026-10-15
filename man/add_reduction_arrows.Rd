@@ -15,8 +15,8 @@ add_reduction_arrows(p, reduction, labels, arrow_args, panel = NULL)
 
 \item{arrow_args}{Further arguments to \code{\link{dimension_arrow_grob}}}
 
-\item{panel}{Level of the facetting variable `panel` to draw the arrows in,
-or NULL to draw them in every panel}
+\item{panel}{Levels of the facetting variable `panel` to draw the arrows
+in, or NULL to draw them in every panel}
 }
 \value{
 a ggplot object

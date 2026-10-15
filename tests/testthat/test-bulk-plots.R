@@ -241,6 +241,21 @@ test_that("plot_fc_quadrant() shows the correlation and labels the top per quadr
     expect_equal(attr(p2, "source_data")$feature[attr(p2, "source_data")$labelled], "NS")
 })
 
+test_that("plot_fc_quadrant() draws 1 pt black zero lines and an optional trend line", {
+    f <- quadrant_fixture()
+    p <- quiet(plot_fc_quadrant(f$x, f$y, label = "none"))
+    zero <- Filter(function(l) inherits(l$geom, "GeomHline"), p$layers)[[1]]
+    expect_equal(zero$aes_params$colour, "black")
+    expect_equal(zero$aes_params$linewidth, pt_to_linewidth(1))
+    expect_false(any(vapply(p$layers, function(l) inherits(l$geom, "GeomSmooth"), logical(1))))
+    expect_equal(p$theme$plot.subtitle$face, "bold")
+    pt <- quiet(plot_fc_quadrant(f$x, f$y, label = "none", trend = TRUE))
+    smooth <- Filter(function(l) inherits(l$geom, "GeomSmooth"), pt$layers)
+    expect_length(smooth, 1)
+    expect_true(smooth[[1]]$stat_params$se)
+    expect_no_error(ggplot2::ggplotGrob(pt))
+})
+
 test_that("map_features() keeps one feature per gene", {
     d <- data.frame(feature = c("p1", "p2", "p3", "p4"), logfc = c(1, -3, 2, 1), padj = c(1e-5, 0.2, 1e-3, NA))
     map <- c(p1 = "G1", p2 = "G1", p3 = "G2", p4 = NA)

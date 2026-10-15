@@ -36,6 +36,12 @@
 # * Labels: the `label.n` features farthest from the origin in each quadrant,
 #   among those significant in both (so discordant genes are named too), or
 #   only `label.features`; bold italic as in the volcano.
+# * Revision of 2026-10-14 (user): the x = 0 and y = 0 lines are 1 pt black,
+#   as the axes; the correlation is set larger (11 pt), bold and black; an
+#   optional least-squares trend line with its 95% confidence band (`trend`),
+#   on the same features as the correlation. Both fold changes are noisy
+#   estimates, so the least-squares slope is biased toward 0 (regression
+#   dilution): the line shows the trend, its slope is not an effect ratio.
 
 
 #' @title Quadrant plot of the log fold changes of two DE comparisons
@@ -101,6 +107,13 @@
 #'               y)
 #'
 #' @param diagonal Whether to draw the y = x line (dashed), default TRUE
+#'
+#' @param trend Whether to draw a least-squares line of y on x with its 95\%
+#'              confidence band, fitted on the features of the correlation
+#'              (`cor.on`), default FALSE. Both fold changes are noisy
+#'              estimates, which biases the slope toward 0 (regression
+#'              dilution): the line shows the trend, but its slope is not the
+#'              ratio of the effects
 #'
 #' @param equal.axes Whether x and y have the same range, symmetric around 0
 #'                   (default TRUE), so that the diagonal is the line of equal
@@ -215,6 +228,7 @@ plot_fc_quadrant <- function(
     correlation = c("spearman", "pearson", "none"),
     cor.on = c("all", "significant"),
     diagonal = TRUE,
+    trend = FALSE,
     equal.axes = TRUE,
     label = c("top", "selected", "none"),
     label.n = 5,
@@ -312,9 +326,11 @@ plot_fc_quadrant <- function(
     ylim <- c(-1, 1) * m_y
 
     layer_fun <- points_layer_fun(raster, nrow(df), 5000, raster.dpi)
+    # The zero lines split the quadrants: black and as thick as the axes
+    axis_lw <- pt_to_linewidth(sz$axis)
     p <- ggplot(df, aes(x = .data$logfc_x, y = .data$logfc_y)) +
-        geom_hline(yintercept = 0, colour = "grey70", linewidth = lw) +
-        geom_vline(xintercept = 0, colour = "grey70", linewidth = lw)
+        geom_hline(yintercept = 0, colour = "black", linewidth = axis_lw) +
+        geom_vline(xintercept = 0, colour = "black", linewidth = axis_lw)
     if (diagonal) {
         # Stops short of the corners (at 88% of the shorter half-axis), where
         # the counts are printed
@@ -333,7 +349,8 @@ plot_fc_quadrant <- function(
         theme_bioToolkit("axis", bg = bg) +
         panel_size_theme(panel.width, panel.height) +
         theme(legend.position = legend.position,
-              plot.subtitle = element_text(size = sz$small, colour = "grey25", hjust = 0,
+              # The correlation: bold, black, base size (user, 2026-10-14)
+              plot.subtitle = element_text(size = sz$base, face = "bold", colour = "black", hjust = 0,
                                            margin = margin(b = 4))) +
         guides(colour = guide_legend(override.aes = list(size = 2.2, alpha = 1)))
 
@@ -356,17 +373,34 @@ plot_fc_quadrant <- function(
         )
     }
 
+    # Features of the correlation and trend line
+    use <- if (cor.on == "all") rep(TRUE, nrow(df)) else df$.any_sig
+    if (trend) {
+        if (sum(use) >= 3) {
+            p <- p + geom_smooth(
+                data = df[use, , drop = FALSE],
+                method = "lm",
+                formula = y ~ x,
+                level = 0.95,
+                colour = "grey15",
+                fill = "grey50",
+                alpha = 0.25,
+                linewidth = pt_to_linewidth(0.75)
+            )
+        } else {
+            message("Fewer than 3 features for the trend line; not drawn")
+        }
+    }
     if (correlation != "none") {
-        use <- if (cor.on == "all") rep(TRUE, nrow(df)) else df$.any_sig
         n_use <- sum(use)
         if (n_use >= 3) {
             r <- stats::cor(df$logfc_x[use], df$logfc_y[use], method = correlation)
             r_txt <- formatC(r, format = "f", digits = 2)
             n_txt <- format(n_use, big.mark = ",")
             sub <- if (correlation == "spearman") {
-                bquote("Spearman" ~ rho == .(r_txt) * "," ~ italic(n) == .(n_txt))
+                bquote(bold("Spearman" ~ rho == .(r_txt) * "," ~ bolditalic(n) == .(n_txt)))
             } else {
-                bquote("Pearson" ~ italic(r) == .(r_txt) * "," ~ italic(n) == .(n_txt))
+                bquote(bold("Pearson" ~ bolditalic(r) == .(r_txt) * "," ~ bolditalic(n) == .(n_txt)))
             }
             p <- p + labs(subtitle = sub)
         } else {

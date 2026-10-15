@@ -632,7 +632,7 @@ variance_pcs_plot <- function(x,
         geom_text(aes(label = .data$label, colour = .data$text), size = text_size, show.legend = FALSE) +
         scale_colour_manual(values = c(low = "grey60", mid = "grey15", high = "white"), guide = "none") +
         scale_fill_gradientn(
-            colours = fill_cols, limits = c(0, 1), name = quote(R^2),
+            colours = fill_cols, limits = c(0, 1), name = bold_title(quote(R^2)),
             guide = guide_colourbar(theme = theme(legend.key.height = unit(0.9, "in"),
                                                   legend.key.width = unit(0.12, "in"),
                                                   legend.frame = element_rect(colour = "black", linewidth = 0.3),

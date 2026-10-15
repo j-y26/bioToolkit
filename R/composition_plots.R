@@ -20,8 +20,15 @@
 # * Replicates (optional, `sample.by`): pooling cells gives one proportion
 #   per condition, in which a large sample counts more than a small one.
 #   With `sample.by`, a proportion is computed per sample and the point is
-#   the mean of the samples of each condition, with +-SEM bars on both axes.
-#   Without it (default), the pooled proportion, as in the user's code.
+#   the mean of the samples of each condition, with error bars on both axes:
+#   the horizontal bar from the samples of the x condition, the vertical one
+#   from those of the y condition. `error` (2026-10-14): SEM (default), SD,
+#   or a 95% confidence interval of the mean (t-based, mean +- t(0.975,
+#   n - 1) * SEM, since conditions have few samples). Bars have caps of a
+#   fixed physical size (as in GraphPad Prism) and are 0.75 pt black; an end
+#   past the axis (e.g. below 0, or 0 on a log axis) is cut at the axis.
+#   Without `sample.by` (default), the pooled proportion, as in the user's
+#   code.
 # * No statistics: whether a composition change is significant needs a test
 #   on samples (e.g. propeller, scCODA, or Milo for neighbourhoods), not on
 #   cells.
@@ -144,9 +151,17 @@ summarize_group_meta <- function(object,
 #'
 #' @param sample.by Column of the samples. If given, proportions are computed
 #'                  per sample and each point is the mean of the samples of a
-#'                  condition, with +-SEM bars on both axes, so that every
-#'                  sample counts the same. If NULL (default), cells of all
-#'                  samples are pooled into one proportion per condition
+#'                  condition, with error bars on both axes (see `error`), so
+#'                  that every sample counts the same. If NULL (default),
+#'                  cells of all samples are pooled into one proportion per
+#'                  condition
+#'
+#' @param error Error bars with `sample.by`: "sem" (default; standard error
+#'              of the mean), "sd" (standard deviation of the samples) or
+#'              "ci95" (95\% confidence interval of the mean, mean +-
+#'              t(0.975, n - 1) x SEM). The horizontal bar is computed from
+#'              the samples of the x condition, the vertical one from those
+#'              of the y condition. A condition with one sample has no bar
 #'
 #' @param cells Cells (rows) to use, as names or indices, e.g. one lineage:
 #'              proportions are then of that subset. If NULL (default), all
@@ -190,8 +205,12 @@ summarize_group_meta <- function(object,
 #' @details
 #' The source data (\code{\link{export_source_data}}) hold one row per group
 #' (and panel): the values on x and y, the cell counts and totals of both
-#' conditions and, with `sample.by`, the SEM and number of samples.
+#' conditions and, with `sample.by`, the SEM, SD, number of samples and the
+#' half-width of the error bars drawn (`x_error`, `y_error`).
 #' Per-sample proportions are returned by \code{\link{summarize_group_meta}}.
+#'
+#' Groups with no cells in either condition (of a panel, or among `cells`)
+#' are not drawn.
 #'
 #' The plot shows where proportions differ, not whether the difference is
 #' significant: that needs a test on samples, not cells (e.g. propeller,
@@ -225,6 +244,7 @@ plot_composition_scatter <- function(
     y = NULL,
     facet.by = NULL,
     sample.by = NULL,
+    error = c("sem", "sd", "ci95"),
     cells = NULL,
     groups = NULL,
     value = c("percent", "count"),
@@ -240,6 +260,7 @@ plot_composition_scatter <- function(
     bg = "transparent"
 ) {
     value <- match.arg(value)
+    error <- match.arg(error)
     if (!(isTRUE(label) || isFALSE(label) || is.character(label))) {
         stop("`label` must be TRUE, FALSE or the groups to name", call. = FALSE)
     }
@@ -262,6 +283,10 @@ plot_composition_scatter <- function(
     message("x: ", x, ", y: ", y, " (levels of `", split.by, "`)")
 
     wide <- composition_wide(tab, x, y, value)
+    # A group with no cells in either condition (e.g. a myeloid cell type in a
+    # lymphoid panel of `facet.by`, or outside `cells`) is not present there:
+    # it is not drawn, rather than drawn and labelled at the origin
+    wide <- wide[wide$x_value > 0 | wide$y_value > 0, , drop = FALSE]
     # Groups drawn; colours from all levels in the object, as DimPlot
     group_all <- fetch_plot_group(object, group.by, plot_cells(object, NULL))
     if (!is.null(groups)) {
@@ -280,9 +305,25 @@ plot_composition_scatter <- function(
     if (nrow(wide) == 0) stop("No groups to draw", call. = FALSE)
     group_cols <- group_colours(cols, group_all)$cols
 
+    # Half-width of the error bars (per sample): SEM, SD or t-based 95% CI,
+    # each axis from the samples of its own condition
+    per_sample <- !is.null(wide$x_sem)
+    if (per_sample) {
+        for (a in c("x", "y")) {
+            n <- wide[[paste0(a, "_n_samples")]]
+            sem <- wide[[paste0(a, "_sem")]]
+            wide[[paste0(a, "_error")]] <- switch(
+                error,
+                sem = sem,
+                sd = wide[[paste0(a, "_sd")]],
+                ci95 = ifelse(n > 1, stats::qt(0.975, pmax(n - 1, 1)) * sem, 0)
+            )
+        }
+    }
+
     # Same range on both axes and in every panel
     ends <- c(wide$x_value, wide$y_value)
-    if (!is.null(wide$x_sem)) ends <- c(ends, wide$x_value + wide$x_sem, wide$y_value + wide$y_sem)
+    if (per_sample) ends <- c(ends, wide$x_value + wide$x_error, wide$y_value + wide$y_error)
     lim <- if (log) {
         r <- range(ends[ends > 0])
         c(r[1] / 1.25, r[2] * 1.25)
@@ -316,12 +357,35 @@ plot_composition_scatter <- function(
         }
         p <- p + slope_lines
     }
-    if (!is.null(wide$x_sem)) {
+    if (per_sample) {
+        # Bar ends are kept within the axis (an SD below 0, or 0 on a log
+        # axis, is cut there). Caps are 0.1 in wide whatever the axis range:
+        # `width` is in the units of the axis drawn (log10 units on a log
+        # axis), with no expansion
+        bars <- wide[(wide$x_error > 0) | (wide$y_error > 0), , drop = FALSE]
+        bars$x_low <- pmax(bars$x_value - bars$x_error, lim[1])
+        bars$x_high <- bars$x_value + bars$x_error
+        bars$y_low <- pmax(bars$y_value - bars$y_error, lim[1])
+        bars$y_high <- bars$y_value + bars$y_error
+        span <- if (log) diff(log10(lim)) else diff(lim)
+        cap <- 0.1 * span
+        bar_lw <- pt_to_linewidth(0.75)
         p <- p +
-            geom_errorbar(aes(xmin = .data$x_value - .data$x_sem, xmax = .data$x_value + .data$x_sem),
-                          width = 0, colour = "grey30", linewidth = lw, orientation = "y") +
-            geom_errorbar(aes(ymin = .data$y_value - .data$y_sem, ymax = .data$y_value + .data$y_sem),
-                          width = 0, colour = "grey30", linewidth = lw)
+            geom_errorbar(
+                aes(xmin = .data$x_low, xmax = .data$x_high),
+                data = bars[bars$x_error > 0, , drop = FALSE],
+                width = cap / panel.height,
+                colour = "black",
+                linewidth = bar_lw,
+                orientation = "y"
+            ) +
+            geom_errorbar(
+                aes(ymin = .data$y_low, ymax = .data$y_high),
+                data = bars[bars$y_error > 0, , drop = FALSE],
+                width = cap / panel.width,
+                colour = "black",
+                linewidth = bar_lw
+            )
     }
     p <- p +
         geom_point(aes(fill = .data$group), shape = 21, colour = "black", size = pt.size,
@@ -364,8 +428,9 @@ plot_composition_scatter <- function(
 #' @param value "percent" or "count"
 #'
 #' @return A data frame: `facet` (if any), `group`, `x_value`, `y_value`, and
-#'         `x_count`, `x_total`, `y_count`, `y_total` (pooled), or `x_sem`,
-#'         `y_sem`, `x_n_samples`, `y_n_samples` (per sample)
+#'         `x_count`, `x_total`, `y_count`, `y_total` (pooled), or `x_sd`,
+#'         `x_sem`, `y_sd`, `y_sem`, `x_n_samples`, `y_n_samples` (per
+#'         sample)
 #'
 #' @keywords internal
 composition_wide <- function(tab,
@@ -379,8 +444,10 @@ composition_wide <- function(tab,
     side <- function(cond, prefix) {
         d <- tab[tab$condition == cond, , drop = FALSE]
         if (per_sample) {
-            # Mean and SEM over the samples of the condition
+            # Mean, SD and SEM over the samples of the condition
             agg <- stats::aggregate(list(value = d$v), d[c(keys, "group")], mean)
+            agg$sd <- stats::aggregate(list(s = d$v), d[c(keys, "group")],
+                                       function(z) if (length(z) > 1) stats::sd(z) else 0)$s
             agg$sem <- stats::aggregate(list(s = d$v), d[c(keys, "group")],
                                         function(z) if (length(z) > 1) stats::sd(z) / sqrt(length(z)) else 0)$s
             agg$n_samples <- stats::aggregate(list(n = d$v), d[c(keys, "group")], length)$n

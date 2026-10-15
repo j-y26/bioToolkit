@@ -9,8 +9,12 @@
 stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 <!-- badges: end -->
 
-An R package hosting a mix of useful functions for bioinformatics data
-analysis.
+Publication-ready ggplot2 figures and analysis helpers for single-cell and
+bulk genomics: embeddings, marker expression, composition, differential
+expression and gene-set enrichment.
+
+**Documentation:** <https://j-y26.github.io/bioToolkit/>, with guides by
+task and the function index.
 
 ## Installation
 

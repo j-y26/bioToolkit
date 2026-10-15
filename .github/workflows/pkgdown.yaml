@@ -1,0 +1,107 @@
+# Builds the bioToolkit website with pkgdown and publishes it to the gh-pages
+# branch (https://j-y26.github.io/bioToolkit/).
+#
+# The site is rebuilt only when the package version changes: on a push to
+# master whose DESCRIPTION has a new `Version:`, when a GitHub release is
+# published, or when the workflow is started by hand (Actions tab > pkgdown >
+# Run workflow). Other commits do not change the published site.
+#
+# The guides download public example data (Bioconductor muscData,
+# macrophage; MSigDB via msigdbr) and cache the processed objects; the cache
+# is kept between runs, keyed on vignettes/articles/_data.R.
+# Design notes: dev/documentation_site.md (local only).
+
+name: pkgdown
+
+on:
+  push:
+    branches: [master]
+    paths: [DESCRIPTION]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pkgdown
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Check for a version change
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: check
+        name: Compare the version before and after the push
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # Releases and manual runs always build
+          if [ "$EVENT" != "push" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          new=$(grep '^Version:' DESCRIPTION)
+          old=""
+          if git cat-file -e "$BEFORE:DESCRIPTION" 2>/dev/null; then
+            old=$(git show "$BEFORE:DESCRIPTION" | grep '^Version:')
+          fi
+          echo "Before: ${old:-none}; after: $new"
+          if [ "$old" != "$new" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  pkgdown:
+    name: Build and deploy the website
+    needs: version
+    if: needs.version.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      # Imports and Suggests of the package, plus Config/Needs/website (the
+      # packages only the guides need); cached between runs
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pkgdown, local::.
+          needs: website
+
+      # Downloaded datasets (ExperimentHub) and the processed objects of
+      # vignettes/articles/_data.R (tools::R_user_dir("bioToolkitDocs", "cache"))
+      - name: Cache example data
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/R/ExperimentHub
+            ~/.cache/R/bioToolkitDocs
+          key: docs-data-${{ hashFiles('vignettes/articles/_data.R') }}
+
+      - name: Build site
+        run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+        shell: Rscript {0}
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4.5.0
+        with:
+          clean: false
+          branch: gh-pages
+          folder: docs

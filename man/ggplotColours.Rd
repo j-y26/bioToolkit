@@ -2,29 +2,21 @@
 % Please edit documentation in R/helpers.R
 \name{ggplotColours}
 \alias{ggplotColours}
-\title{Getting default ggplot2 colors}
+\title{Deprecated: use ggplot_colors()}
 \usage{
 ggplotColours(n = 6, h = c(0, 360) + 15, showColor = FALSE)
 }
 \arguments{
-\item{n}{Number of categories}
+\item{n, h}{As in \code{\link{ggplot_colors}}}
 
-\item{h}{Hue range}
-
-\item{showColor}{Show the colors, default is FALSE}
+\item{showColor}{`show.colors` of \code{\link{ggplot_colors}}}
 }
 \value{
-A vector of colors (hexadecimal)
+As \code{\link{ggplot_colors}}
 }
 \description{
-Since Seurat DimPlot uses ggplot2 default colors when no palette is
-specified, different categories will result in lack of consistency in
-colors (ggplot2 ensure the first the last color are the same, but the
-middle colors are different depending on the number of categories). This
-function returns the default ggplot2 colors for a given number of categories.
-This function is directly taken and modified from the following StackOverflow post:
-https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
+`ggplotColours()` was renamed \code{\link{ggplot_colors}} in
+             0.11.0 (snake case, as the other colour helpers); it still
+             works, with a deprecation warning.
 }
-\references{
-https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
-}
+\keyword{internal}

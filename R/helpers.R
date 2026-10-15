@@ -14,7 +14,9 @@
 #'
 #' @param h Hue range
 #'
-#' @param showColor Show the colors, default is FALSE
+#' @param show.colors Whether to draw the colors (with
+#'                    \code{scales::show_col()}) instead of returning them,
+#'                    default is FALSE
 #'
 #' @return A vector of colors (hexadecimal)
 #'
@@ -22,19 +24,42 @@
 #'
 #' @references https://stackoverflow.com/questions/8197559/emulate-ggplot2-default-color-palette
 #'
-ggplotColours <- function(n = 6,
+ggplot_colors <- function(n = 6,
                           h = c(0, 360) + 15,
-                          showColor = FALSE) {
+                          show.colors = FALSE) {
   if ((diff(h) %% 360) < 1) h[2] <- h[2] - 360/n
   colors <- hcl(h = (seq(h[1], h[2], length = n)), c = 100, l = 65)
 
   # Show the colors, if desired
-  if (showColor) {
+  if (show.colors) {
     check_installed("scales", reason = "to display colors")
     scales::show_col(colors)
   } else {
     return(colors)
   }
+}
+
+
+#' @title Deprecated: use ggplot_colors()
+#'
+#' @description `ggplotColours()` was renamed \code{\link{ggplot_colors}} in
+#'              0.11.0 (snake case, as the other colour helpers); it still
+#'              works, with a deprecation warning.
+#'
+#' @param n,h As in \code{\link{ggplot_colors}}
+#'
+#' @param showColor `show.colors` of \code{\link{ggplot_colors}}
+#'
+#' @return As \code{\link{ggplot_colors}}
+#'
+#' @keywords internal
+#' @export
+#'
+ggplotColours <- function(n = 6,
+                          h = c(0, 360) + 15,
+                          showColor = FALSE) {
+  .Deprecated("ggplot_colors", package = "bioToolkit")
+  ggplot_colors(n = n, h = h, show.colors = showColor)
 }
 
 

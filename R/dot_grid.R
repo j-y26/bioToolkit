@@ -17,11 +17,13 @@
 # everything drawn outside the cells uses either its own facet or the panel
 # edge (`-Inf` / `Inf`, which do not train scales):
 #   * Groups are facets (`facet_grid(space = "free")`), one panel per group,
-#     with the group name in the strip (top for column groups, left for row
-#     groups). Column groups get a thin bracket line along the top panel
-#     edge, drawn at +Inf in a gap added to the scale expansion
-#     (`bracket.gap`); row groups are set apart by the breaks of the y-axis
-#     line between their panels.
+#     with the group name in the strip. Each group is marked by a bar along
+#     its cells, set off from the grid, with its name beyond it
+#     (R/group_bars.R; revision of 2026-10-14, replacing a thin bracket line
+#     that read as another axis). By default the groups of columns are on
+#     top and those of rows on the right, opposite the tick labels
+#     (`x.group.side` / `y.group.side` = "opposite"); "labels" moves them to
+#     the side of the labels, beyond the labels.
 #   * The group markers (e.g. cell-type colours next to the cell-type rows)
 #     are a facet of its own, with no axis label or tick, between the labels
 #     and the axis: either one narrow column (or row) of tiles (a colour
@@ -71,7 +73,8 @@
 #' @param fill.colours Colours of the fill scale, from low to high
 #'
 #' @param fill.limits Limits of the fill scale; values beyond get the colour of
-#'                    the nearest end
+#'                    the nearest end. For a diverging scale they need not be
+#'                    symmetric (see \code{diverging_limits()})
 #'
 #' @param fill.center Centre of a diverging fill scale, or NULL for a
 #'                    sequential one
@@ -93,6 +96,16 @@
 #'                    dot per row or column)
 #'
 #' @param cell.width,cell.height Size of one column / row in inches
+#'
+#' @param x.group.side,y.group.side Side of the column / row groups: "opposite"
+#'                                  (default; opposite the tick labels: top /
+#'                                  right) or "labels" (beyond the labels:
+#'                                  bottom / left)
+#'
+#' @param x.group.cols,y.group.cols Colours of the group bars, named by group;
+#'                                  NULL for black
+#'
+#' @param bar.width Thickness of the group bars in points
 #'
 #' @param legend.position Position of the legends
 #'
@@ -121,9 +134,17 @@ dot_grid_plot <- function(df,
                           strip.style = "strip",
                           cell.width = 0.18,
                           cell.height = 0.18,
+                          x.group.side = "opposite",
+                          y.group.side = "opposite",
+                          x.group.cols = NULL,
+                          y.group.cols = NULL,
+                          bar.width = 3.5,
                           legend.position = "right",
                           bg = "transparent") {
     check_fixed_panel_support()
+    x.group.side <- match.arg(x.group.side, c("opposite", "labels"))
+    y.group.side <- match.arg(y.group.side, c("opposite", "labels"))
+    check_bar_width(bar.width)
     sz <- theme_sizes()
     lw <- pt_to_linewidth(sz$line)
     has_x_group <- !is.null(df$x_group)
@@ -142,16 +163,16 @@ dot_grid_plot <- function(df,
     df$x_group <- droplevels(df$x_group)
     df$y_group <- droplevels(df$y_group)
 
-    # Gaps in inches: between the panels of groups; between the top panel
-    # edge and the column-group bracket line; and between the axes (left and
-    # bottom edges) and the first column / row of dots, so that the largest
-    # dots do not touch the axis lines. The bracket and axis gaps are added to
-    # the scale expansion of that edge, so they are part of the panel and the
-    # cells keep their size
+    # Gaps in inches: between the panels of groups (which also sets the bars
+    # of neighbouring groups apart); and between the axes (left and bottom
+    # edges) and the first column / row of dots, so that the largest dots do
+    # not touch the axis lines. The axis gap is added to the scale expansion
+    # of that edge, so it is part of the panel and the cells keep their size
     spacing <- 0.08
-    bracket.gap <- 0.06
     axis.gap <- 0.04
-    x_bracket <- has_x_group
+    # Sides of the group bars and names
+    x_side <- if (x.group.side == "opposite") "top" else "bottom"
+    y_side <- if (y.group.side == "opposite") "right" else "left"
     # Axis line and ticks (pt), as the "axis" theme: 1 pt, ticks a third of
     # the tick-label size long
     axis.width <- sz$axis
@@ -199,8 +220,7 @@ dot_grid_plot <- function(df,
     if (!is.null(strip_df)) strip_df <- relevel_all(strip_df)
 
     # Panel sizes: number of categories per group times the cell size; the
-    # strip facet is a narrow band (or one cell, for dots); panels next to a
-    # bracket get its gap
+    # strip facet is a narrow band (or one cell, for dots)
     strip_size <- if (strip.style == "dot") {
         if (identical(strip.axis, "y")) cell.width else cell.height
     } else {
@@ -211,7 +231,7 @@ dot_grid_plot <- function(df,
     # Gaps in categories (the unit of the expansion)
     gap_x <- axis.gap / cell.width
     gap_bottom <- axis.gap / cell.height
-    gap_top <- if (x_bracket) bracket.gap / cell.height else 0
+    gap_top <- 0
     widths <- grid_panel_size(n_x, cell.width) + gap_x * cell.width
     heights <- grid_panel_size(n_y, cell.height) + (gap_bottom + gap_top) * cell.height
     # The strip facet holds one category plus the gaps, in a narrow band, so
@@ -225,7 +245,7 @@ dot_grid_plot <- function(df,
         }
     }
     # Expansion: half a category on each side, plus the axis gap on the left
-    # and bottom and the bracket gap on the top
+    # and bottom
     x_expand <- expansion(add = c(0.5 + gap_x, 0.5))
     y_expand <- expansion(add = c(0.5 + gap_bottom, 0.5 + gap_top))
 
@@ -292,7 +312,7 @@ dot_grid_plot <- function(df,
         plain$ring <- factor(rep(outline.labels[2], nrow(plain)), levels = outline.labels)
         ringed$ring <- factor(rep(outline.labels[1], nrow(ringed)), levels = outline.labels)
         sig_guide <- guide_legend(order = 3, override.aes = list(
-            size = max_size * 0.7, fill = "grey50", stroke = ring
+            size = max_size * 0.7, fill = "black", stroke = ring
         ))
         p <- p +
             geom_point(aes(size = .data$size, fill = .data$fill, colour = .data$ring, alpha = .data$ring),
@@ -320,19 +340,21 @@ dot_grid_plot <- function(df,
                          expand = y_expand, drop = TRUE) +
         scale_size_area(
             max_size = max_size, limits = size.limits, breaks = size.breaks,
-            labels = size.labels, oob = scales::oob_squish, name = size.title,
-            guide = guide_legend(order = 2, override.aes = list(fill = "grey50", colour = "grey25"))
+            labels = size.labels, oob = scales::oob_squish, name = bold_title(size.title),
+            # Black keys (user decision 2026-10-14): the size legend explains
+            # size only, so its dots carry no colour of the fill scale
+            guide = guide_legend(order = 2, override.aes = list(fill = "black", colour = "black"))
         ) +
         scale_fill_gradientn(
             colours = fill.colours, limits = fill.limits, oob = scales::oob_squish,
+            # Diverging scales: the centre colour at `fill.center`, each side
+            # stretched to its own end (rescale_diverging())
             rescaler = if (is.null(fill.center)) {
                 function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) scales::rescale(x, to, from)
             } else {
-                function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
-                    scales::rescale_mid(x, to, from, mid = fill.center)
-                }
+                rescale_diverging(fill.center)
             },
-            na.value = na.value, name = fill.title,
+            na.value = na.value, name = bold_title(fill.title),
             guide = guide_colourbar(
                 order = 1,
                 direction = if (vertical) "vertical" else "horizontal",
@@ -364,23 +386,54 @@ dot_grid_plot <- function(df,
             legend.title.position = "top",
             legend.key.size = unit(max(min(cell.width, cell.height), 0.16), "in"),
             legend.spacing.y = unit(0.15, "in"),
-            # Groups are named by their strips, set off from the grid by the
-            # bracket lines
+            # Groups are named by their strips, beyond their bars: on the
+            # label side, outside the labels, with no extra pad
             strip.placement = "outside",
+            strip.switch.pad.grid = unit(0, "pt"),
             strip.clip = "off",
-            strip.text.x.top = element_text(size = sz$small, face = "bold", angle = x_group_angle,
-                                            hjust = if (x_group_angle == 0) 0.5 else 0,
-                                            vjust = if (x_group_angle == 0) 0.5 else 0.5,
-                                            margin = margin(b = 2, t = 1)),
-            strip.text.y.left = element_text(size = sz$small, face = "bold", angle = 0, hjust = 1,
-                                             margin = margin(r = 3, l = 1))
+            strip.text.x.top = element_text(
+                size = sz$small,
+                face = "bold",
+                angle = x_group_angle,
+                hjust = if (x_group_angle == 0) 0.5 else 0,
+                vjust = 0.5,
+                margin = group_bar_margin("top", bar.width)
+            ),
+            strip.text.x.bottom = element_text(
+                size = sz$small,
+                face = "bold",
+                angle = x_group_angle,
+                hjust = if (x_group_angle == 0) 0.5 else 1,
+                vjust = 0.5,
+                margin = group_bar_margin("bottom", bar.width)
+            ),
+            strip.text.y.left = element_text(
+                size = sz$small,
+                face = "bold",
+                angle = 0,
+                hjust = 1,
+                margin = group_bar_margin("left", bar.width)
+            ),
+            strip.text.y.right = element_text(
+                size = sz$small,
+                face = "bold",
+                angle = 0,
+                hjust = 0,
+                margin = group_bar_margin("right", bar.width)
+            )
         )
 
     if (has_x_group || has_y_group || !is.null(strip.axis)) {
+        # Strips are on top and right by default; "labels" switches them to
+        # the bottom / left
+        switch <- c(if (x_side == "bottom") "x", if (y_side == "left") "y")
+        switch <- if (length(switch) == 2) "both" else if (length(switch) == 1) switch else NULL
         p <- p + facet_grid(
-            rows = vars(.data$y_group), cols = vars(.data$x_group),
-            scales = "free", space = "free",
-            switch = "y",
+            rows = vars(.data$y_group),
+            cols = vars(.data$x_group),
+            scales = "free",
+            space = "free",
+            switch = switch,
             labeller = as_labeller(function(x) ifelse(x == strip_level, "", x))
         )
         # Facets that exist only to hold the strip have no label
@@ -388,22 +441,53 @@ dot_grid_plot <- function(df,
         if (!has_y_group) p <- p + theme(strip.text.y = element_blank())
     }
 
-    # Bracket lines above column groups (top row of panels), drawn at +Inf so
-    # they do not train the scales
+    # Group bars, on the outermost panel of their side (the marker facet
+    # when it is on that side). On the label side they sit beyond the tick
+    # labels, whose size is measured when the plot is drawn
     data_xg <- setdiff(xg_lv, strip_level)
     data_yg <- setdiff(yg_lv, strip_level)
+    gap <- grid::unit(GROUP_BAR_GAP, "pt")
     if (has_x_group) {
-        br <- data.frame(x_group = factor(data_xg, levels = xg_lv),
-                         y_group = factor(yg_lv[1], levels = yg_lv),
-                         x = -Inf, xend = Inf, y = Inf, yend = Inf)
-        p <- p + geom_segment(data = br, aes(x = .data$x, xend = .data$xend, y = .data$y, yend = .data$yend),
-                              inherit.aes = FALSE, colour = "black", linewidth = pt_to_linewidth(0.75))
+        bar_cols <- if (is.null(x.group.cols)) stats::setNames(rep("black", length(data_xg)), data_xg) else x.group.cols
+        ends <- lapply(data_xg, function(g) range(as.integer(df$x[df$x_group == g])))
+        bars <- data.frame(
+            x_group = factor(data_xg, levels = xg_lv),
+            y_group = factor(if (x_side == "top") yg_lv[1] else yg_lv[length(yg_lv)], levels = yg_lv),
+            x = factor(x_lv[vapply(ends, `[`, 1L, 1)], levels = x_lv),
+            xend = factor(x_lv[vapply(ends, `[`, 1L, 2)], levels = x_lv),
+            fill = unname(bar_cols[data_xg])
+        )
+        offset <- if (x_side == "top") {
+            gap
+        } else {
+            labs_x <- label_fun(x.labels, x.italic)(levels(df$x))
+            grid::unit(label_gap(identical(strip.axis, "x")), "pt") +
+                label_extent(labs_x, sz$small, angle = 45, across = "height") + gap
+        }
+        p <- p + group_bar_layer(bars, side = x_side, width = bar.width, offset = offset)
+    }
+    if (has_y_group) {
+        bar_cols <- if (is.null(y.group.cols)) stats::setNames(rep("black", length(data_yg)), data_yg) else y.group.cols
+        ends <- lapply(data_yg, function(g) range(as.integer(df$y[df$y_group == g])))
+        bars <- data.frame(
+            y_group = factor(data_yg, levels = yg_lv),
+            x_group = factor(if (y_side == "right") xg_lv[length(xg_lv)] else xg_lv[1], levels = xg_lv),
+            y = factor(y_lv[vapply(ends, `[`, 1L, 1)], levels = y_lv),
+            yend = factor(y_lv[vapply(ends, `[`, 1L, 2)], levels = y_lv),
+            fill = unname(bar_cols[data_yg])
+        )
+        offset <- if (y_side == "right") {
+            gap
+        } else {
+            labs_y <- label_fun(y.labels, y.italic)(levels(df$y))
+            grid::unit(label_gap(identical(strip.axis, "y")), "pt") +
+                label_extent(labs_y, sz$small, across = "width") + gap
+        }
+        p <- p + group_bar_layer(bars, side = y_side, width = bar.width, offset = offset)
     }
 
     # Axes: the y-axis on the first column of data panels (one tick per row),
-    # the x-axis on the last row of data panels (one tick per column). The
-    # y-axis line stops below the bracket gap, so that it does not run into
-    # the column-group brackets
+    # the x-axis on the last row of data panels (one tick per column)
     y_ticks <- unique(grid_df[c("y", "y_group")])
     y_ticks$x_group <- factor(data_xg[1], levels = xg_lv)
     y_ticks$x <- -Inf
@@ -411,7 +495,7 @@ dot_grid_plot <- function(df,
     x_ticks$y_group <- factor(data_yg[length(data_yg)], levels = yg_lv)
     x_ticks$y <- -Inf
     axis_params <- list(width = axis.width, length = tick.length)
-    p + grid_axis_layer(y_ticks, c(axis_params, side = "left", top.trim = gap_top * cell.height)) +
+    p + grid_axis_layer(y_ticks, c(axis_params, side = "left", top.trim = 0)) +
         grid_axis_layer(x_ticks, c(axis_params, side = "bottom", top.trim = 0))
 }
 

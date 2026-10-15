@@ -40,10 +40,13 @@ test_that("dot_grid_plot panels are cells x categories, with strip and brackets"
     h <- as.numeric(p$theme$panel.heights)
     # Strip facet (0.1 in, plus the axis gap of 0.04 in scaled to it) then
     # one column per group (one cell each, plus the axis gap);
-    # rows: 2 cells plus the axis gap (bottom) and the bracket gap (top)
+    # rows: 2 cells plus the axis gap (bottom); the group bars are outside
     expect_equal(w, c(0.1 * (1 + 0.04 / 0.2), 0.2 + 0.04, 0.2 + 0.04))
-    expect_equal(h, 2 * 0.25 + 0.04 + 0.06)
-    expect_true(any(vapply(p$layers, function(l) inherits(l$geom, "GeomSegment"), logical(1))))
+    expect_equal(h, 2 * 0.25 + 0.04)
+    bars <- Filter(function(l) inherits(l$geom, "GeomGroupBar"), p$layers)
+    expect_length(bars, 1)
+    expect_equal(bars[[1]]$geom_params$side, "top")
+    expect_equal(as.character(bars[[1]]$data$x_group), c("G1", "G2"))
     # Dot markers: a column one cell wide, holding one dot per row
     pd <- draw_grid(df, strip.axis = "y", strip.style = "dot", cell.width = 0.2, cell.height = 0.25)
     expect_equal(as.numeric(pd$theme$panel.widths)[1], 0.2 * (1 + 0.04 / 0.2))
@@ -106,9 +109,11 @@ test_that("scale_columns z-scores and zeroes constant genes", {
     expect_equal(as.vector(z[, "b"]), c(0, 0, 0))
 })
 
-test_that("dot_fill_limits: symmetric for z-scores, at most 2.5; cutoffs override", {
-    expect_equal(dot_fill_limits(c(-1, 0.5), TRUE, NA, NA), c(-1, 1))
+test_that("dot_fill_limits: z-scores centred on 0, each end at most 2.5 or its data", {
+    # Each end trimmed to the data on its side (2026-10-14)
+    expect_equal(dot_fill_limits(c(-1, 0.5), TRUE, NA, NA), c(-1, 0.5))
     expect_equal(dot_fill_limits(c(-4, 3), TRUE, NA, NA), c(-2.5, 2.5))
+    expect_equal(dot_fill_limits(c(-0.3, 4), TRUE, -2, 2), c(-0.3, 2))
     expect_equal(dot_fill_limits(c(0.2, 3), FALSE, NA, NA), c(0, 3))
     expect_equal(dot_fill_limits(c(0.2, 3), FALSE, NA, 2), c(0, 2))
 })
@@ -165,6 +170,23 @@ test_that("DotPlot_bioToolkit groups genes, splits groups and keeps rows below p
     # Scaling needs two groups
     expect_message(DotPlot_bioToolkit(so, features = "Cd3e", group.by = "ct", cells = colnames(so)[1:40]),
                    "Only one group")
+})
+
+test_that("DotPlot_bioToolkit bars: gene groups on top, split.by on the right, or by the labels", {
+    so <- sim_seurat()
+    feats <- list(T = "Cd3e", B = c("Ms4a1", "Cd68"))
+    p <- suppressMessages(DotPlot_bioToolkit(so, feats, group.by = "ct", split.by = "cond"))
+    bars <- Filter(function(l) inherits(l$geom, "GeomGroupBar"), p$layers)
+    expect_equal(unname(vapply(bars, function(l) l$geom_params$side, "")), c("top", "right"))
+    p2 <- suppressMessages(DotPlot_bioToolkit(so, feats, group.by = "ct", split.by = "cond", flip = TRUE,
+                                              feature.group.side = "labels", split.by.cols = "okabe-ito"))
+    bars2 <- Filter(function(l) inherits(l$geom, "GeomGroupBar"), p2$layers)
+    # Flipped: split.by blocks are columns (top), gene groups rows (labels: left)
+    expect_equal(unname(vapply(bars2, function(l) l$geom_params$side, "")), c("top", "left"))
+    expect_false(any(bars2[[1]]$data$fill == "black"))
+    expect_no_error(ggplot2::ggplotGrob(p2))
+    # The % expressing legend is black
+    expect_equal(p$scales$get_scales("size")$guide$params$override.aes$fill, "black")
 })
 
 test_that("resolve_assay fails clearly on an assay without the layer", {

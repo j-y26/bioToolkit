@@ -2,53 +2,59 @@
 % Please edit documentation in R/process_rnaseq.R
 \name{filter_de_genes}
 \alias{filter_de_genes}
-\title{Filter genes based on differential expression analysis results}
+\title{Split DE results into up- and down-regulated genes}
 \usage{
 filter_de_genes(
-  de_results,
-  log2fc_min = 0,
-  pvalue_max = 0.05,
-  de_method = "edgeR",
-  pvalue_col = NULL,
-  log2fc_col = NULL
+  data,
+  logfc.cutoff = 0,
+  padj.cutoff = 0.05,
+  method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+  padj.col = NULL,
+  logfc.col = NULL,
+  ...
 )
 }
 \arguments{
-\item{de_results}{A data frame containing the results of differential
-expression analysis. The data frame should have at least
-a column for log2 fold change and a column for (adjusted)
-p-value.}
+\item{data}{A data frame of DE results with a log2 fold change and an
+adjusted p-value column (edgeR, DESeq2, limma or Seurat
+results, or any table with the columns given)}
 
-\item{log2fc_min}{The minimum log2 fold change to filter genes. Default is
-0, which means no filtering based on log2 fold change.}
+\item{logfc.cutoff}{Minimum absolute log2 fold change (strictly greater).
+Default is 0 (any change)}
 
-\item{pvalue_max}{The maximum adjusted p-value to filter genes. Default is
-0.05.}
+\item{padj.cutoff}{Maximum adjusted p-value (strictly smaller). Default is
+0.05}
 
-\item{de_method}{The method used for differential expression analysis.
-Must be one of "edgeR" or "DESeq2". Default is "edgeR".
-Use this argument to automatically set the column names
-for log2 fold change and adjusted P-value. If provided value
-is not "edgeR" or "DESeq2", the user must provide both the
-column names for log2 fold change and P-value using the
-\code{log2fc_col} and \code{pvalue_col} arguments,
-respectively.}
+\item{method}{The tool that produced the results: "auto" (default) detects
+it from the column names, as \code{\link{standardize_de}}
+does; or one of "edgeR", "DESeq2", "limma" and "seurat"}
 
-\item{pvalue_col}{The name of the column in \code{de_results} that contains
-the p-values. If not NULL, overrides the default column
-name based on \code{de_method}.}
+\item{padj.col}{Column of the (adjusted) p-values used for the ranking. If
+NULL (default), taken from `method` (e.g. "FDR" for edgeR,
+"padj" for DESeq2)}
 
-\item{log2fc_col}{The name of the column in \code{de_results} that contains
-the log2 fold changes.}
+\item{logfc.col}{Column of the log2 fold changes. If NULL (default), taken
+from `method`}
+
+\item{...}{Deprecated names of the arguments (`de_results`, `log2fc_min`,
+`pvalue_max`, `de_method`, `pvalue_col`, `log2fc_col`), accepted
+with a warning; renamed in 0.10.0}
 }
 \value{
-A list of two data frames:
-         \item{up_reg}{Data frame containing up-regulated genes}
-         \item{down_reg}{Data frame containing down-regulated genes}
+A list of two data frames, the rows of `data` that pass:
+         \item{up_reg}{up-regulated genes}
+         \item{down_reg}{down-regulated genes}
 }
 \description{
-This function filters genes based on the results of differential
-             expression analysis for RNA-seq data. The user can specify the
-             minimum log2 fold change and maximum adjusted p-value to filter
-             the genes.
+Keeps the genes of a DE table with an adjusted p-value below
+             `padj.cutoff` and an absolute log2 fold change above
+             `logfc.cutoff`, split by direction.
+}
+\examples{
+de <- data.frame(
+    logFC = c(2.1, -1.4, 0.2), PValue = c(1e-8, 1e-4, 0.6),
+    FDR = c(3e-8, 2e-4, 0.6), row.names = c("ISG15", "CD3E", "ACTB")
+)
+filter_de_genes(de, logfc.cutoff = 1)
+
 }

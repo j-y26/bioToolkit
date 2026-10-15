@@ -113,12 +113,12 @@ test_that("legend_title_label builds automatic and custom titles", {
     is_gene <- c(Epcam = TRUE, S.Score = FALSE)
     features <- names(is_gene)
     expect_null(legend_title_label(NULL, "auto", "Epcam", features, is_gene, NULL))
-    expect_equal(legend_title_label("auto", "auto", "Epcam", features, is_gene, NULL), quote(italic("Epcam")))
+    expect_equal(legend_title_label("auto", "auto", "Epcam", features, is_gene, NULL), quote(bolditalic("Epcam")))
     expect_equal(legend_title_label("auto", "auto", "S.Score", features, is_gene, "(smoothed)"),
                  "S.Score (smoothed)")
     expect_equal(legend_title_label("auto", "bold", "Epcam", features, is_gene, NULL), "Epcam")
     expect_equal(legend_title_label("auto", "auto", features, features, is_gene, NULL), "Value")
-    expect_equal(legend_title_label("auto", "auto", "Epcam", "Epcam", is_gene, NULL), quote(italic("Epcam")))
+    expect_equal(legend_title_label("auto", "auto", "Epcam", "Epcam", is_gene, NULL), quote(bolditalic("Epcam")))
     expect_equal(legend_title_label(c(S.Score = "S", Epcam = "E"), "auto", "Epcam", features, is_gene, NULL), "E")
     expect_equal(legend_title_label(c("E", "S"), "auto", "S.Score", features, is_gene, NULL), "S")
 })
@@ -201,4 +201,46 @@ test_that("group_colours names colours by group, keeping all levels", {
     expect_error(group_colours(c("red"), g, arg = "mark.cols"), "`mark.cols` has 1")
     expect_error(group_colours(c(a = "red"), g), "No colour given")
     expect_error(group_colours("mako", g), "sequential palette")
+})
+
+
+test_that("arrow_panel_index picks the panels of each edge of a grid", {
+    # 5 panels in 3 columns, by row: row 1 = 1 2 3, row 2 = 4 5
+    expect_equal(arrow_panel_index(5, 3, 2, TRUE, "bottom.left"), 4)
+    expect_equal(arrow_panel_index(5, 3, 2, TRUE, "all"), 1:5)
+    expect_equal(arrow_panel_index(5, 3, 2, TRUE, "none"), integer(0))
+    expect_equal(arrow_panel_index(5, 3, 2, TRUE, "left"), c(1, 4))
+    expect_equal(arrow_panel_index(5, 3, 2, TRUE, "right"), c(3, 5))
+    expect_equal(arrow_panel_index(5, 3, 2, TRUE, "top"), 1:3)
+    # Panel 3 has nothing below it: it is on the bottom edge
+    expect_equal(arrow_panel_index(5, 3, 2, TRUE, "bottom"), 3:5)
+    # By column: col 1 = 1 2, col 2 = 3 4, col 3 = 5
+    expect_equal(arrow_panel_index(5, 3, 2, FALSE, "bottom.left"), 2)
+    expect_equal(arrow_panel_index(5, 3, 2, FALSE, "right"), c(4, 5))
+    expect_equal(arrow_panel_index(5, 3, 2, FALSE, "bottom"), c(2, 4, 5))
+    expect_equal(panel_layout(5, 3, TRUE, 3)$by.row, TRUE)
+})
+
+test_that("format_sc_plots places arrows by arrow.panels and replaces existing ones", {
+    mk <- function(i) {
+        p <- ggplot2::ggplot(data.frame(x = 1:3, y = 1:3), ggplot2::aes(x, y)) + ggplot2::geom_point()
+        add_dimension_arrows(p)
+    }
+    n_arrows <- function(p) {
+        sum(vapply(p$layers, function(l) inherits(l$geom_params$grob, "bt_dimension_arrows"), logical(1)))
+    }
+    plots <- lapply(1:4, mk)
+    out <- format_sc_plots(plots, ncol = 2)
+    # bottom.left by default: one set, on plot 3; the arrows already there are
+    # replaced, not added to
+    expect_equal(vapply(patchwork_parts(out)$plots, n_arrows, numeric(1)), c(0, 0, 1, 0))
+    out_l <- format_sc_plots(plots, ncol = 2, arrow.panels = "left")
+    expect_equal(vapply(patchwork_parts(out_l)$plots, n_arrows, numeric(1)), c(1, 0, 1, 0))
+    out_all <- format_sc_plots(plots, ncol = 2, arrow.panels = "all")
+    expect_equal(vapply(patchwork_parts(out_all)$plots, n_arrows, numeric(1)), c(1, 1, 1, 1))
+    # The old arguments are translated, with a warning
+    expect_warning(old <- format_sc_plots(plots, ncol = 2, add.arrow = TRUE, bottom.left.only = FALSE),
+                   "arrow.panels")
+    expect_equal(vapply(patchwork_parts(old)$plots, n_arrows, numeric(1)), c(1, 1, 1, 1))
+    expect_error(suppressWarnings(format_sc_plots(plots, add.arrow = FALSE, arrow.panels = "all")), "not both")
 })

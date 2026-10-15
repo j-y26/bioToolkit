@@ -38,6 +38,7 @@ DimPlot_bioToolkit(
   legend.text.size = NULL,
   ncol = NULL,
   by.row = TRUE,
+  arrow.panels = c("bottom.left", "all", "left", "right", "top", "bottom", "none"),
   panel.width = 4,
   panel.height = panel.width,
   panel.spacing = 0.1,
@@ -166,6 +167,12 @@ chooses based on the number of groups and the position}
 \item{by.row}{Whether panels fill the grid row by row (default, TRUE) or
 column by column (FALSE)}
 
+\item{arrow.panels}{Panels that get the dimension arrows: "bottom.left"
+(default; the first panel of the bottom row), "all",
+"left" / "right" (the first / last panel of each row),
+"top" / "bottom" (the top / lowest panel of each
+column) or "none"}
+
 \item{panel.width}{Width of a single panel in inches, default is 4}
 
 \item{panel.height}{Height of a single panel in inches, default is
@@ -195,7 +202,9 @@ halos are then white). Use e.g. "white" for an opaque background}
 \item{seed}{Random seed used for shuffling and label placement, default is
 42. The global random number generator state is not changed}
 
-\item{...}{Additional arguments passed to \code{\link{add_dimension_arrows}}.
+\item{...}{Arguments of the dimension arrows, as in
+\code{\link{add_dimension_arrows}} (e.g. `arrow.length = 1.5`;
+the snake_case names used before 0.10.0 are deprecated).
 `rasterize` is accepted as a deprecated alias of `raster`}
 }
 \value{

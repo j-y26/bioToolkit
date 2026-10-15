@@ -10,7 +10,9 @@
 #
 # * `plot_de_dots()` (G2) shows *selected* genes: a grid of genes x
 #   comparisons on the dot-grid engine (G0), colour = log2 fold change
-#   (diverging, symmetric), size = -log10 adjusted p-value. Significance
+#   (diverging, centred on 0, each side to its own extreme), size = -log10
+#   adjusted p-value. Comparisons are marked by a coloured dot, as the groups
+#   of DotPlot_bioToolkit(); `groups` and gene groups by bars (R/group_bars.R). Significance
 #   needs both cutoffs (padj and |log2FC|), so it is not readable from the
 #   dot size alone: significant results are drawn opaque with a dark ring,
 #   the others faded (default, "fade"), keeping their fold-change colour so
@@ -18,9 +20,14 @@
 #   out both cutoffs. "grey" and "hide" remain available. Replaces
 #   `de_dot_plot()`.
 # * `plot_multi_volcano()` (G4) shows *all* DE genes: one column of genes per
-#   comparison, log2 fold change on the y-axis, a coloured band at 0 spanning
-#   exactly +-`logfc.cutoff` (the non-significant zone). No capping of extreme
-#   values (decided 2026-10-13).
+#   comparison, log2 fold change on the y-axis. No capping of extreme values
+#   (decided 2026-10-13). Revision of 2026-10-14 (user): the coloured band at
+#   0 spanning +-`logfc.cutoff` is gone (huge with a high cutoff, invisible at
+#   0); each comparison is marked by a strip of fixed thickness above its
+#   column (R/group_bars.R) with its name beyond, the cutoffs are dashed
+#   lines, non-significant genes are drawn in grey by default (`show.ns`),
+#   `groups` get bars like split.by, and `flip = TRUE` lists comparisons as
+#   rows (names on the left, down-regulated genes left, up right).
 
 
 #' @title Dot plot of differential expression across comparisons
@@ -66,10 +73,12 @@
 #'                 is 20 (padj = 1e-20); more significant results are drawn at
 #'                 that size and the legend says so
 #'
-#' @param logfc.limits Limits of the colour scale. If NULL (default),
-#'                     symmetric around 0 at the largest absolute log2 fold
-#'                     change of the significant dots. Values beyond get the
-#'                     colour of the end
+#' @param logfc.limits Limits of the colour scale. If NULL (default), from
+#'                     the most negative to the most positive log2 fold
+#'                     change of the significant dots, centred on 0: each
+#'                     side reaches its full colour at its own extreme. Give
+#'                     two numbers to share one scale between figures; values
+#'                     beyond get the colour of the end
 #'
 #' @param cluster.features,cluster.comparisons Whether to order genes (within
 #'        their groups) / comparisons (within their groups) by hierarchical
@@ -78,6 +87,37 @@
 #' @param cols Colours of the diverging log2 fold change scale: NULL
 #'             (default, "blue-magenta"), a palette name, or colours from low
 #'             to high, e.g. `c("#2166AC", "white", "#B2182B")`
+#'
+#' @param comparison.marker How each comparison is marked with its colour
+#'                          next to its name, as the groups of
+#'                          \code{\link{DotPlot_bioToolkit}}: "dot" (default;
+#'                          a coloured dot), "strip" (a colour strip) or
+#'                          "none"
+#'
+#' @param comparison.cols Colours of the comparison markers: NULL (default,
+#'                        "scanpy-20"), a qualitative palette name, or colours
+#'                        named by comparison (e.g. the cell type colours of
+#'                        an embedding)
+#'
+#' @param groups.cols Colours of the bars marking the `groups` of comparisons:
+#'                    NULL (default) for black bars, a qualitative palette
+#'                    name, or colours named by group
+#'
+#' @param groups.side Side of the `groups`: "opposite" (default; opposite the
+#'                    comparison names: on the right, or on top with `flip =
+#'                    TRUE`) or "labels" (beyond the comparison names)
+#'
+#' @param feature.group.cols Colours of the bars marking the groups of genes
+#'                           (a named list of `features`): NULL (default) for
+#'                           black bars, a qualitative palette name, or colours
+#'                           named by gene group
+#'
+#' @param feature.group.side Side of the gene groups: "opposite" (default; on
+#'                           top, or on the right with `flip = TRUE`) or
+#'                           "labels" (beyond the gene names)
+#'
+#' @param group.bar.width Thickness of the bars marking gene groups and
+#'                        `groups`, in points, default is 3.5
 #'
 #' @param flip Whether to draw genes as rows and comparisons as columns,
 #'             default is FALSE
@@ -91,7 +131,10 @@
 #'
 #' @param bg Background colour, default is "transparent"
 #'
-#' @details Genes not tested in a comparison have no dot. The source data
+#' @details Comparisons play the part of `group.by` in the single-cell plots
+#'          (the units compared, marked by colour) and `groups` that of
+#'          `split.by` (higher-level blocks, marked by a bar and a name).
+#'          Genes not tested in a comparison have no dot. The source data
 #'          (\code{\link{export_source_data}}) hold one row per gene and
 #'          comparison with the standardized DE columns plus `significant`.
 #'
@@ -135,6 +178,13 @@ plot_de_dots <- function(
     cluster.features = FALSE,
     cluster.comparisons = FALSE,
     cols = NULL,
+    comparison.marker = c("dot", "strip", "none"),
+    comparison.cols = NULL,
+    groups.cols = NULL,
+    groups.side = c("opposite", "labels"),
+    feature.group.cols = NULL,
+    feature.group.side = c("opposite", "labels"),
+    group.bar.width = 3.5,
     flip = FALSE,
     italic.genes = TRUE,
     cell.width = 0.18,
@@ -144,6 +194,9 @@ plot_de_dots <- function(
 ) {
     method <- match.arg(method)
     significance <- match.arg(significance)
+    comparison.marker <- match.arg(comparison.marker)
+    groups.side <- match.arg(groups.side)
+    feature.group.side <- match.arg(feature.group.side)
     legend.position <- match.arg(legend.position)
     check_de_cutoffs(padj.cutoff, logfc.cutoff)
     if (!(is.numeric(size.max) && length(size.max) == 1 && size.max > 0)) {
@@ -213,11 +266,12 @@ plot_de_dots <- function(
     size <- ifelse(drawn, df$neg_log10_padj, NA)
     fill <- if (significance == "grey") ifelse(df$significant, df$logfc, NA) else df$logfc
     if (is.null(logfc.limits)) {
-        v <- abs(df$logfc[drawn & df$significant])
-        if (length(v) == 0) v <- abs(df$logfc[drawn])
-        m <- max(c(v, 0), na.rm = TRUE)
-        if (m == 0) m <- 1
-        logfc.limits <- c(-m, m)
+        # From the most negative to the most positive fold change of the
+        # significant dots (all dots when none is), centred on 0: each side
+        # gets its full colour at its own extreme (diverging_limits())
+        v <- df$logfc[drawn & df$significant]
+        if (length(v) == 0) v <- df$logfc[drawn]
+        logfc.limits <- diverging_limits(v, center = 0)
     }
     size_breaks <- scales::breaks_extended(4)(c(0, size.max))
     size_breaks <- size_breaks[size_breaks > 0 & size_breaks <= size.max]
@@ -247,9 +301,22 @@ plot_de_dots <- function(
         eng$y_group <- feat_group
     }
     if (significance == "fade") eng$outline <- df$significant
+    # Comparisons are marked by their colour (as the groups of DotPlot)
+    has_marker <- comparison.marker != "none"
+    if (has_marker) {
+        cmp_cols <- group_colours(comparison.cols, factor(cmp, levels = cmp), arg = "comparison.cols")$cols
+        eng$strip <- unname(cmp_cols[as.character(df$comparison)])
+    }
     feat_labels <- stats::setNames(ft$feature, ft$id)
     cmp_labels <- stats::setNames(cmp, cmp)
     italic <- stats::setNames(rep(italic.genes, length(feat_labels)), names(feat_labels))
+    # Bar colours of the gene groups and comparison groups (black by default)
+    feat_bar_cols <- if (!is.null(feat_group)) {
+        group_bar_colours(feature.group.cols, levels(droplevels(feat_group)), "feature.group.cols")
+    }
+    comp_bar_cols <- if (!is.null(comp_group)) {
+        group_bar_colours(groups.cols, levels(droplevels(comp_group)), "groups.cols")
+    }
 
     p <- dot_grid_plot(
         eng,
@@ -268,8 +335,15 @@ plot_de_dots <- function(
         na.value = "grey80",
         outline.labels = significance_labels(padj.cutoff, logfc.cutoff),
         outline.title = "Significance",
+        strip.axis = if (has_marker) (if (!flip) "y" else "x"),
+        strip.style = if (comparison.marker == "dot") "dot" else "strip",
         cell.width = cell.width,
         cell.height = cell.height,
+        x.group.side = if (!flip) feature.group.side else groups.side,
+        y.group.side = if (!flip) groups.side else feature.group.side,
+        x.group.cols = if (!flip) feat_bar_cols else comp_bar_cols,
+        y.group.cols = if (!flip) comp_bar_cols else feat_bar_cols,
+        bar.width = group.bar.width,
         legend.position = legend.position,
         bg = bg
     )
@@ -323,11 +397,12 @@ check_de_cutoffs <- function(padj.cutoff,
 #'
 #' @description Summarizes genome-wide DE results of many comparisons in one
 #'              figure (e.g. condition B vs A within each cell type): one
-#'              column of DE genes per comparison, at their log2 fold change,
-#'              with a coloured band at 0 spanning exactly
-#'              +-`logfc.cutoff` (the non-significant zone), the numbers of up-
-#'              and down-regulated genes above and below each column, and the
-#'              top genes labelled. An improved version of the plot made
+#'              column of genes per comparison, at their log2 fold change
+#'              (non-significant genes in grey, the cutoffs as dashed lines),
+#'              each comparison marked by a coloured strip and its name on
+#'              top, the numbers of up- and down-regulated genes above and
+#'              below each column, and the top genes labelled. `flip = TRUE`
+#'              lists the comparisons as rows. An improved version of the plot made
 #'              popular by scRNAtoolVis' \code{jjVolcano()}: colour carries
 #'              the significance (or how many comparisons share a gene)
 #'              rather than repeating the direction, points are spread by
@@ -352,8 +427,9 @@ check_de_cutoffs <- function(padj.cutoff,
 #'                                 absolute log2 fold change above
 #'                                 `logfc.cutoff` (default 1)
 #'
-#' @param show.ns Whether to draw non-significant genes too, faint and under
-#'                the band, default is FALSE
+#' @param show.ns Whether to draw non-significant genes too, in grey under
+#'                the DE genes as in \code{\link{plot_volcano}}, default is
+#'                TRUE
 #'
 #' @param layout How points spread across their column: "sina" (default;
 #'               as wide as the density of genes at that fold change, so the
@@ -380,13 +456,32 @@ check_de_cutoffs <- function(padj.cutoff,
 #'             centre, `c(up = "firebrick4", down = "midnightblue")` and
 #'             "plasma_r"
 #'
-#' @param band.cols Colours of the bands, one per comparison: NULL (default;
-#'                  the default group palette), a qualitative palette name, or
-#'                  colours named by comparison
+#' @param comparison.cols Colours of the comparison strips (a bar along
+#'                        each column, or row when flipped): NULL (default;
+#'                        the default group palette, "scanpy-20"), a
+#'                        qualitative palette name, or colours named by
+#'                        comparison (e.g. the cell type colours of an
+#'                        embedding)
 #'
-#' @param band.labels Display names of the comparisons, named by comparison.
-#'                    Names are written in the bands when they fit, otherwise
-#'                    under the columns
+#' @param comparison.labels Display names of the comparisons, named by
+#'                          comparison, written beyond the strips (turned 45
+#'                          degrees when wider than a column)
+#'
+#' @param groups.cols Colours of the bars marking the `groups` of comparisons:
+#'                    NULL (default) for black bars, a qualitative palette
+#'                    name, or colours named by group
+#'
+#' @param groups.side Side of the `groups`: "opposite" (default; opposite the
+#'                    comparison names: at the bottom, or on the right when
+#'                    flipped) or "labels" (beyond the comparison names)
+#'
+#' @param group.bar.width Thickness of the comparison strips and group bars in
+#'                        points, default is 3.5
+#'
+#' @param flip Whether to list the comparisons as rows, with log2 fold change
+#'             on the x-axis (down-regulated genes on the left, up on the
+#'             right) and the comparison names on the left, default is FALSE
+#'             (comparisons as columns, names on top)
 #'
 #' @param label Which genes to label: "top" (default; the `label.n` most
 #'              significant genes per column and direction, plus
@@ -416,7 +511,7 @@ check_de_cutoffs <- function(padj.cutoff,
 #'
 #' @param alpha Point opacity, default is 0.8
 #'
-#' @param raster Whether to rasterize the points (labels, bands and text stay
+#' @param raster Whether to rasterize the points (labels, strips and text stay
 #'               vector): NULL (default) rasterizes above 5,000 points, or
 #'               TRUE / FALSE
 #'
@@ -424,7 +519,14 @@ check_de_cutoffs <- function(padj.cutoff,
 #'
 #' @param cell.width Width of one column in inches, default is 0.6
 #'
-#' @param panel.height Height of the panel in inches, default is 3.5
+#' @param cell.height Height of one row in inches when flipped, default is
+#'                    `cell.width`
+#'
+#' @param panel.height Height of the panel (the log2 fold change axis) in
+#'                     inches, default is 3.5
+#'
+#' @param panel.width Width of the panel (the log2 fold change axis) in inches
+#'                    when flipped, default is `panel.height`
 #'
 #' @param legend.position Position of the legend, default is "right"
 #'
@@ -433,7 +535,14 @@ check_de_cutoffs <- function(padj.cutoff,
 #' @param seed Random seed for the spread of points and label placement,
 #'             default is 42
 #'
-#' @details The source data (\code{\link{export_source_data}}) hold one row
+#' @param ... `band.cols` and `band.labels`, the names of `comparison.cols`
+#'            and `comparison.labels` before 0.11.0, accepted with a
+#'            deprecation warning
+#'
+#' @details Comparisons play the part of `group.by` in the single-cell plots
+#'          (the units compared, marked by colour) and `groups` that of
+#'          `split.by` (higher-level blocks, marked by a bar and a name).
+#'          The source data (\code{\link{export_source_data}}) hold one row
 #'          per drawn gene with its comparison, x position, log2 fold change,
 #'          adjusted p-value, direction, the number of comparisons it is DE in
 #'          (`n_shared`) and whether it is labelled.
@@ -469,12 +578,16 @@ plot_multi_volcano <- function(
     groups = NULL,
     padj.cutoff = 0.05,
     logfc.cutoff = 1,
-    show.ns = FALSE,
+    show.ns = TRUE,
     layout = c("sina", "pvalue", "jitter"),
     color.by = c("padj", "direction", "sharing"),
     cols = NULL,
-    band.cols = NULL,
-    band.labels = NULL,
+    comparison.cols = NULL,
+    comparison.labels = NULL,
+    groups.cols = NULL,
+    groups.side = c("opposite", "labels"),
+    group.bar.width = 3.5,
+    flip = FALSE,
     label = c("top", "selected", "none"),
     label.n = 3,
     label.features = NULL,
@@ -487,17 +600,26 @@ plot_multi_volcano <- function(
     raster = NULL,
     raster.dpi = 1000,
     cell.width = 0.6,
+    cell.height = cell.width,
     panel.height = 3.5,
+    panel.width = panel.height,
     legend.position = "right",
     bg = "transparent",
-    seed = 42
+    seed = 42,
+    ...
 ) {
+    # `band.cols` / `band.labels` (before 0.11.0, when comparisons were
+    # coloured bands) are the new `comparison.cols` / `comparison.labels`
+    list2env(renamed_args(list(...), c(band.cols = "comparison.cols", band.labels = "comparison.labels"),
+                          "plot_multi_volcano", names(match.call())), environment())
     method <- match.arg(method)
     layout <- match.arg(layout)
     color.by <- match.arg(color.by)
     label <- match.arg(label)
     label.rank <- match.arg(label.rank)
     order <- match.arg(order)
+    groups.side <- match.arg(groups.side)
+    check_bar_width(group.bar.width)
     check_de_cutoffs(padj.cutoff, logfc.cutoff)
     sz <- theme_sizes()
     lw <- pt_to_linewidth(sz$line)
@@ -534,42 +656,45 @@ plot_multi_volcano <- function(
         cmp <- cluster_order(m, grp_of)
     }
     grp_of <- if (!is.null(res$group)) res$group[match(cmp, as.character(res$comparison))]
+    # The comparisons of a group sit together (in the order above), so that
+    # each group's panel spans consecutive positions
+    if (!is.null(grp_of)) {
+        cmp <- cmp[base::order(grp_of)]
+        grp_of <- grp_of[base::order(grp_of)]
+    }
 
     df <- res[is_de | show.ns, , drop = FALSE]
     if (!any(df$direction != "ns")) warning("No DE genes at these cutoffs", call. = FALSE)
     df$comparison <- factor(as.character(df$comparison), levels = cmp)
-    # Column position: within the group's panel when grouped
-    if (is.null(grp_of)) {
-        pos <- stats::setNames(seq_along(cmp), cmp)
-    } else {
-        pos <- stats::setNames(stats::ave(seq_along(cmp), grp_of, FUN = seq_along), cmp)
-    }
+    # Position of each comparison, numbered across all groups so that one
+    # axis names them in every panel of a grouped plot (each group's panel
+    # spans its own positions). Rows of a flipped plot list the first
+    # comparison at the top
+    pos <- stats::setNames(if (flip) rev(seq_along(cmp)) else seq_along(cmp), cmp)
     half <- 0.4
-    df$x <- pos[as.character(df$comparison)] +
+    df$pos <- pos[as.character(df$comparison)] +
         with_seed(seed, multi_volcano_offsets(df, layout, half))
 
-    # y limits: all values (no capping), with room in inches for the counts
-    y_rng <- range(c(df$logfc, -logfc.cutoff, logfc.cutoff, 0))
-    room <- if (show.counts) 0.22 else 0.05
-    unit <- diff(y_rng) / (panel.height - 2 * room)
-    ylim <- y_rng + c(-1, 1) * room * unit
-    # Band: +-logfc.cutoff, at least tall enough for its label
-    band_text <- if (is.null(band.labels)) stats::setNames(cmp, cmp) else {
-        lab <- stats::setNames(cmp, cmp)
-        lab[intersect(names(band.labels), cmp)] <- band.labels[intersect(names(band.labels), cmp)]
-        lab
-    }
-    band_h <- max(logfc.cutoff, 0.6 * sz$small / 72 * unit)
-    fits <- all(nchar(band_text) * 0.55 * sz$small / 72 <= 0.92 * cell.width) &&
-        2 * band_h / unit >= 1.1 * sz$small / 72
-    band_cols <- group_colours(band.cols, factor(cmp, levels = cmp), arg = "band.cols")$cols
-    band <- data.frame(comparison = factor(cmp, levels = cmp), x = unname(pos[cmp]),
-                       fill = unname(band_cols[cmp]), label = unname(band_text[cmp]))
-    if (!is.null(grp_of)) band$group <- grp_of
-    lum <- colSums(grDevices::col2rgb(band$fill) * c(0.299, 0.587, 0.114))
-    band$text_col <- ifelse(lum < 140, "white", "black")
+    # Value (log2 fold change) limits: all values (no capping), with room in
+    # inches at both ends for the counts
+    v_rng <- range(c(df$logfc, -logfc.cutoff, logfc.cutoff, 0))
+    room <- if (show.counts) (if (flip) 0.3 else 0.22) else 0.05
+    value_len <- if (flip) panel.width else panel.height
+    unit <- diff(v_rng) / (value_len - 2 * room)
+    vlim <- v_rng + c(-1, 1) * room * unit
 
-    # Labels: top genes per column and direction, plus selected genes
+    # Comparisons: display names and strip colours
+    cmp_text <- stats::setNames(cmp, cmp)
+    if (!is.null(comparison.labels)) {
+        known <- intersect(names(comparison.labels), cmp)
+        cmp_text[known] <- comparison.labels[known]
+    }
+    cmp_cols <- group_colours(comparison.cols, factor(cmp, levels = cmp), arg = "comparison.cols")$cols
+    # Names above the columns are turned 45 degrees when one is wider than
+    # its column (about 0.55 em per character)
+    upright <- flip || all(nchar(cmp_text) * 0.55 * sz$small / 72 <= 0.92 * cell.width)
+
+    # Labels: top genes per comparison and direction, plus selected genes
     df$labelled <- FALSE
     if (label == "top") {
         for (cm in cmp) {
@@ -587,41 +712,61 @@ plot_multi_volcano <- function(
 
     # Point colours
     up_down <- volcano_colours(if (color.by == "direction") cols else NULL)
+    colourbar <- guide_colourbar(theme = theme(
+        legend.key.height = unit(1.2, "in"),
+        legend.key.width = unit(0.12, "in"),
+        legend.frame = element_rect(colour = "black", linewidth = 0.3),
+        legend.ticks = element_line(colour = "black", linewidth = 0.3)
+    ))
     if (color.by == "padj") {
         df$colour_value <- ifelse(df$direction == "up", 1, -1) * df$neg_log10_padj
         # The colour saturates at the 95th percentile of the DE genes' -log10
         # padj: a few p-values near 0 (common with per-cell tests) would
-        # otherwise leave every other gene pale. Positions are not capped
-        v <- abs(df$colour_value[df$direction != "ns"])
-        m <- max(if (length(v)) stats::quantile(v, 0.95, names = FALSE) else 0, -log10(padj.cutoff) * 2)
-        saturated <- any(v > m)
+        # otherwise leave every other gene pale. Positions are not capped.
+        # Each end is trimmed to the most extreme gene of its direction, so
+        # that the side with fewer or weaker genes is not faded
+        # (diverging_limits(); 2026-10-14)
+        v <- df$colour_value[df$direction != "ns"]
+        m <- max(if (length(v)) stats::quantile(abs(v), 0.95, names = FALSE) else 0, -log10(padj.cutoff) * 2)
+        lim <- diverging_limits(v, -m, m)
+        sat <- c(any(v < lim[1]), any(v > lim[2]))
         pal <- if (is.null(cols)) bt_palette("blue-magenta")[c(1:4, 8:11)] else resolve_continuous_palette(cols, TRUE)
+        # Breaks on each side up to its own end, which is labelled; a side
+        # gets breaks in proportion to its share of the colour bar, so that
+        # the labels of a short side do not crowd
+        side_breaks <- function(end) {
+            if (end <= 0) return(numeric(0))
+            n <- max(1, round(5 * end / diff(lim)))
+            b <- scales::breaks_extended(n + 1)(c(0, end))
+            c(b[b > 0 & b < end * 0.8], end)
+        }
         colour_scale <- scale_colour_gradientn(
-            colours = pal, limits = c(-m, m), oob = scales::oob_squish, name = quote(-log[10] ~ "padj"),
+            colours = pal,
+            limits = lim,
+            rescaler = rescale_diverging(0),
+            oob = scales::oob_squish,
+            name = bold_title(quote(-log[10] ~ "padj")),
+            breaks = function(l) c(-rev(side_breaks(-l[1])), side_breaks(l[2])),
             labels = function(b) {
-                out <- format(abs(signif(b, 3)), trim = TRUE)
-                if (saturated) out[abs(b) >= m * 0.999] <- paste0("\u2265", out[abs(b) >= m * 0.999])
+                out <- vapply(abs(signif(b, 3)), format, "", trim = TRUE)
+                at_end <- (b <= lim[1] * 0.999 & sat[1]) | (b >= lim[2] * 0.999 & sat[2])
+                out[at_end] <- paste0("\u2265", out[at_end])
                 out
             },
-            breaks = function(l) {
-                b <- scales::breaks_extended(5)(c(0, l[2]))
-                b <- b[b > 0 & b < l[2] * 0.9]
-                c(-rev(c(b, l[2])), c(b, l[2]))
-            },
-            guide = guide_colourbar(theme = theme(
-                legend.key.height = unit(1.2, "in"), legend.key.width = unit(0.12, "in"),
-                legend.frame = element_rect(colour = "black", linewidth = 0.3),
-                legend.ticks = element_line(colour = "black", linewidth = 0.3)
-            ))
+            guide = colourbar
         )
     } else if (color.by == "direction") {
         df$colour_value <- factor(ifelse(df$direction == "up", "Up", "Down"), levels = c("Up", "Down"))
-        colour_scale <- scale_colour_manual(values = c(Up = up_down[["up"]], Down = up_down[["down"]]), name = NULL,
-                                            guide = guide_legend(override.aes = list(size = 2, alpha = 1)))
+        colour_scale <- scale_colour_manual(
+            values = c(Up = up_down[["up"]], Down = up_down[["down"]]),
+            name = NULL,
+            guide = guide_legend(override.aes = list(size = 2, alpha = 1))
+        )
     } else {
         df$colour_value <- df$n_shared
         colour_scale <- scale_colour_gradientn(
-            colours = resolve_continuous_palette(cols, FALSE), limits = c(1, max(2, length(cmp))),
+            colours = resolve_continuous_palette(cols, FALSE),
+            limits = c(1, max(2, length(cmp))),
             breaks = function(l) unique(round(scales::breaks_extended(4)(l))),
             name = "DE in n\ncomparisons"
         )
@@ -632,98 +777,215 @@ plot_multi_volcano <- function(
     # The most significant points last, on top
     de_df <- de_df[base::order(de_df$neg_log10_padj), , drop = FALSE]
     layer_fun <- points_layer_fun(raster, nrow(df), 5000, raster.dpi)
-    p <- ggplot(de_df, aes(x = .data$x, y = .data$logfc))
+    # Positions along the comparison axis, values along the other
+    map <- if (flip) aes(x = .data$logfc, y = .data$pos) else aes(x = .data$pos, y = .data$logfc)
+    p <- ggplot(de_df, map)
+    # Cutoffs as dashed lines, as in plot_volcano() (0 when there is none)
+    cut_at <- if (logfc.cutoff > 0) c(-1, 1) * logfc.cutoff else 0
+    p <- p + if (flip) {
+        geom_vline(xintercept = cut_at, linetype = "dashed", colour = "grey40", linewidth = lw)
+    } else {
+        geom_hline(yintercept = cut_at, linetype = "dashed", colour = "grey40", linewidth = lw)
+    }
     if (nrow(ns_df)) {
-        p <- p + layer_fun(geom_point(data = ns_df, colour = "grey80", size = pt.size * 0.8, alpha = 0.5,
-                                      shape = 16, stroke = 0))
+        # Not significant: grey, under the DE genes, as in plot_volcano()
+        p <- p + layer_fun(geom_point(
+            data = ns_df,
+            colour = up_down[["ns"]],
+            size = pt.size,
+            alpha = alpha,
+            shape = 16,
+            stroke = 0
+        ))
     }
     p <- p +
-        geom_rect(data = band, aes(xmin = .data$x - 0.47, xmax = .data$x + 0.47, ymin = -band_h, ymax = band_h),
-                  fill = band$fill, inherit.aes = FALSE, colour = NA) +
-        layer_fun(geom_point(aes(colour = .data$colour_value), size = pt.size, alpha = alpha,
-                             shape = 16, stroke = 0)) +
+        layer_fun(geom_point(
+            aes(colour = .data$colour_value),
+            size = pt.size,
+            alpha = alpha,
+            shape = 16,
+            stroke = 0
+        )) +
         colour_scale
-    if (fits) {
-        p <- p + geom_text(data = band, aes(x = .data$x, y = 0, label = .data$label), inherit.aes = FALSE,
-                           colour = band$text_col, size = pt_to_size(sz$small))
-    }
+
     if (show.counts) {
-        counts <- stats::aggregate(cbind(up = direction == "up", down = direction == "down") ~ comparison,
-                                   data = df, FUN = sum, drop = FALSE)
-        counts$x <- unname(pos[as.character(counts$comparison)])
+        counts <- stats::aggregate(
+            cbind(up = direction == "up", down = direction == "down") ~ comparison,
+            data = df,
+            FUN = sum,
+            drop = FALSE
+        )
+        counts$pos <- unname(pos[as.character(counts$comparison)])
         if (!is.null(grp_of)) counts$group <- grp_of[match(as.character(counts$comparison), cmp)]
-        p <- p +
-            geom_text(data = counts, aes(x = .data$x, y = ylim[2], label = .data$up), inherit.aes = FALSE,
-                      vjust = 1, size = pt_to_size(sz$small), colour = up_down[["up"]]) +
-            geom_text(data = counts, aes(x = .data$x, y = ylim[1], label = .data$down), inherit.aes = FALSE,
-                      vjust = 0, size = pt_to_size(sz$small), colour = up_down[["down"]])
-    }
-    if (any(df$labelled)) {
-        check_installed("ggrepel", reason = "to label genes")
-        # Labels of up-regulated genes stay above the band and those of
-        # down-regulated genes below it, clear of the counts
-        top <- ylim[2] - room * unit
-        bottom <- ylim[1] + room * unit
-        for (d in c("up", "down", "ns")) {
-            lab_df <- df[df$labelled & df$direction == d, , drop = FALSE]
-            if (nrow(lab_df) == 0) next
-            p <- p + ggrepel::geom_text_repel(
-                data = lab_df, aes(label = .data$feature),
-                size = pt_to_size(sz$small) * 0.9,
-                fontface = if (italic.genes) "bold.italic" else "bold",
-                colour = "black", max.overlaps = Inf, min.segment.length = 0,
-                segment.colour = "grey30", segment.size = lw, box.padding = 0.2,
-                max.time = 3, max.iter = 1e5, seed = seed,
-                ylim = switch(d, up = c(band_h, top), down = c(bottom, -band_h), ns = c(bottom, top))
+        text_size <- pt_to_size(sz$small)
+        p <- p + if (flip) {
+            list(
+                geom_text(data = counts, aes(x = vlim[2], y = .data$pos, label = .data$up),
+                          inherit.aes = FALSE, hjust = 1, size = text_size, colour = up_down[["up"]]),
+                geom_text(data = counts, aes(x = vlim[1], y = .data$pos, label = .data$down),
+                          inherit.aes = FALSE, hjust = 0, size = text_size, colour = up_down[["down"]])
+            )
+        } else {
+            list(
+                geom_text(data = counts, aes(x = .data$pos, y = vlim[2], label = .data$up),
+                          inherit.aes = FALSE, vjust = 1, size = text_size, colour = up_down[["up"]]),
+                geom_text(data = counts, aes(x = .data$pos, y = vlim[1], label = .data$down),
+                          inherit.aes = FALSE, vjust = 0, size = text_size, colour = up_down[["down"]])
             )
         }
     }
+    if (any(df$labelled)) {
+        check_installed("ggrepel", reason = "to label genes")
+        # Labels of up-regulated genes stay beyond the upper cutoff and those
+        # of down-regulated genes beyond the lower one, clear of the counts
+        hi <- vlim[2] - room * unit
+        lo <- vlim[1] + room * unit
+        for (d in c("up", "down", "ns")) {
+            lab_df <- df[df$labelled & df$direction == d, , drop = FALSE]
+            if (nrow(lab_df) == 0) next
+            span <- switch(d, up = c(logfc.cutoff, hi), down = c(lo, -logfc.cutoff), ns = c(lo, hi))
+            repel <- list(
+                data = lab_df,
+                mapping = aes(label = .data$feature),
+                size = pt_to_size(sz$small) * 0.9,
+                fontface = if (italic.genes) "bold.italic" else "bold",
+                colour = "black",
+                max.overlaps = Inf,
+                min.segment.length = 0,
+                segment.colour = "grey30",
+                segment.size = lw,
+                box.padding = 0.2,
+                max.time = 3,
+                max.iter = 1e5,
+                seed = seed
+            )
+            repel[[if (flip) "xlim" else "ylim"]] <- span
+            p <- p + do.call(ggrepel::geom_text_repel, repel)
+        }
+    }
 
-    # x: one unit per column; the panel is as wide as its columns
-    n_cols <- if (is.null(grp_of)) length(cmp) else as.vector(table(droplevels(grp_of)))
-    blank <- data.frame(x = c(0.5, if (is.null(grp_of)) length(cmp) + 0.5 else n_cols + 0.5), logfc = 0)
+    # Comparison strips: a bar of each comparison's colour along its column
+    # (above it) or row (left of it), its name beyond
+    strips <- data.frame(fill = unname(cmp_cols[cmp]))
+    strips[[if (flip) "y" else "x"]] <- unname(pos[cmp])
+    strips[[if (flip) "yend" else "xend"]] <- unname(pos[cmp])
+    if (!is.null(grp_of)) strips$group <- grp_of
+    p <- p + group_bar_layer(strips, side = if (flip) "left" else "top", width = group.bar.width, half = 0.47)
+
+    # Groups of comparisons: a bar along each group's panel and its name,
+    # opposite the comparison names by default
+    groups_side_abs <- if (!flip) {
+        if (groups.side == "opposite") "bottom" else "top"
+    } else {
+        if (groups.side == "opposite") "right" else "left"
+    }
     if (!is.null(grp_of)) {
-        blank <- data.frame(x = c(rep(0.5, length(n_cols)), n_cols + 0.5), logfc = 0,
-                            group = factor(rep(levels(droplevels(grp_of)), 2), levels = levels(droplevels(grp_of))))
+        grp_lv <- levels(droplevels(grp_of))
+        grp_bar_cols <- group_bar_colours(groups.cols, grp_lv, "groups.cols")
+        gb <- data.frame(group = factor(grp_lv, levels = grp_lv), fill = unname(grp_bar_cols[grp_lv]))
+        gb[[if (flip) "y" else "x"]] <- vapply(grp_lv, function(g) min(pos[cmp[grp_of == g]]), numeric(1))
+        gb[[if (flip) "yend" else "xend"]] <- vapply(grp_lv, function(g) max(pos[cmp[grp_of == g]]), numeric(1))
+        gap <- grid::unit(GROUP_BAR_GAP, "pt")
+        # On the side of the comparison names: beyond the names
+        offset <- if (groups_side_abs %in% c("bottom", "right")) {
+            gap
+        } else {
+            name_room <- GROUP_BAR_GAP + group.bar.width + GROUP_BAR_TEXT_GAP + 1
+            grid::unit(name_room, "pt") +
+                label_extent(unname(cmp_text), sz$small, angle = if (upright) 0 else 45,
+                             across = if (flip) "width" else "height") +
+                gap
+        }
+        p <- p + group_bar_layer(gb, side = groups_side_abs, width = group.bar.width, offset = offset)
+    }
+
+    # Comparison axis: one unit per comparison; each panel spans its own
+    n_per <- if (is.null(grp_of)) length(cmp) else as.vector(table(droplevels(grp_of)))
+    if (is.null(grp_of)) {
+        blank <- data.frame(pos = range(pos) + c(-0.5, 0.5), logfc = 0)
+    } else {
+        blank <- do.call(rbind, lapply(levels(droplevels(grp_of)), function(g) {
+            data.frame(pos = range(pos[cmp[grp_of == g]]) + c(-0.5, 0.5), logfc = 0,
+                       group = factor(g, levels = levels(droplevels(grp_of))))
+        }))
+    }
+    name_margin <- group_bar_margin(if (flip) "left" else "top", group.bar.width)
+    cmp_axis <- function(fun, position) {
+        fun(breaks = unname(pos[cmp]), labels = unname(cmp_text[cmp]), position = position,
+            expand = expansion(0))
+    }
+    p <- p + geom_blank(data = blank, aes(x = if (flip) .data$logfc else .data$pos,
+                                          y = if (flip) .data$pos else .data$logfc), inherit.aes = FALSE)
+    if (!flip) {
+        p <- p +
+            cmp_axis(scale_x_continuous, "top") +
+            # oob_keep: values are never removed (no capping)
+            scale_y_continuous(limits = vlim, expand = expansion(0), oob = scales::oob_keep) +
+            labs(x = NULL, y = quote(log[2] ~ "fold change"))
+    } else {
+        p <- p +
+            cmp_axis(scale_y_continuous, "left") +
+            scale_x_continuous(limits = vlim, expand = expansion(0), oob = scales::oob_keep) +
+            labs(x = quote(log[2] ~ "fold change"), y = NULL)
+    }
+    # A long last name, turned 45 degrees, reaches right of the panel
+    right_margin <- if (!upright) {
+        max(0.2, nchar(cmp_text[cmp[length(cmp)]]) * 0.55 * sz$small / 72 * 0.71 - cell.width / 2)
+    } else {
+        0.2
     }
     p <- p +
-        geom_blank(data = blank) +
-        # Column names are in the bands when they fit; otherwise under the
-        # columns (set below)
-        scale_x_continuous(
-            breaks = if (fits || !is.null(grp_of)) NULL else seq_along(cmp),
-            labels = if (fits || !is.null(grp_of)) NULL else unname(band_text[cmp]),
-            expand = expansion(0)
-        ) +
-        scale_y_continuous(limits = ylim, expand = expansion(0)) +
-        labs(x = NULL, y = quote(log[2] ~ "fold change")) +
         theme_bioToolkit("axis", bg = bg) +
-        panel_size_theme(n_cols * cell.width, panel.height, panel.spacing = 0.1) +
+        (if (!flip) {
+            panel_size_theme(n_per * cell.width, panel.height, panel.spacing = 0.1)
+        } else {
+            panel_size_theme(panel.width, n_per * cell.height, panel.spacing = 0.1)
+        }) +
+        coord_cartesian(clip = "off") +
+        theme(
+            legend.position = legend.position,
+            legend.title = element_text(size = sz$small),
+            plot.margin = margin(0.2, right_margin, 0.2, 0.2, "in"),
+            strip.placement = "outside",
+            strip.switch.pad.grid = unit(0, "pt"),
+            strip.clip = "off",
+            strip.text.x.top = element_text(size = sz$small, face = "bold",
+                                            margin = group_bar_margin("top", group.bar.width)),
+            strip.text.x.bottom = element_text(size = sz$small, face = "bold",
+                                               margin = group_bar_margin("bottom", group.bar.width)),
+            strip.text.y.left = element_text(size = sz$small, face = "bold", angle = 0, hjust = 1,
+                                             margin = group_bar_margin("left", group.bar.width)),
+            strip.text.y.right = element_text(size = sz$small, face = "bold", angle = 0, hjust = 0,
+                                              margin = group_bar_margin("right", group.bar.width))
+        )
+    p <- p + if (!flip) {
         theme(
             axis.line.x = element_blank(),
             axis.ticks.x = element_blank(),
-            axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-            # A long first column name, rotated, reaches left of the y-axis
-            plot.margin = margin(0.2, 0.2, 0.2,
-                                 max(0.2, nchar(band_text[cmp[1]]) * 0.55 * sz$small / 72 * 0.71 -
-                                         cell.width / 2 - 0.45), "in"),
-            legend.position = legend.position,
-            legend.title = element_text(size = sz$small)
+            axis.text.x.top = element_text(
+                angle = if (upright) 0 else 45,
+                hjust = if (upright) 0.5 else 0,
+                vjust = 0,
+                margin = name_margin
+            )
         )
-    if (!fits && !is.null(grp_of)) {
-        # Free x scales restart at 1 in each group's panel, so the names are
-        # drawn as text under each panel instead of axis labels
-        labs_df <- data.frame(x = unname(pos[cmp]), group = grp_of, label = unname(band_text[cmp]))
-        p <- p + geom_text(data = labs_df, aes(x = .data$x, y = ylim[1], label = .data$label),
-                           inherit.aes = FALSE, angle = 45, hjust = 1, vjust = 1,
-                           nudge_y = -0.03 * unit, size = pt_to_size(sz$small)) +
-            coord_cartesian(clip = "off") +
-            theme(plot.margin = margin(0.2, 0.2, max(nchar(band_text)) * 0.45 * sz$small / 72 + 0.2, 0.2, "in"))
+    } else {
+        theme(
+            axis.line.y = element_blank(),
+            axis.ticks.y = element_blank(),
+            axis.text.y.left = element_text(hjust = 1, margin = name_margin)
+        )
     }
     if (!is.null(grp_of)) {
-        p <- p + facet_grid(cols = vars(.data$group), scales = "free_x", space = "free_x") +
-            theme(strip.text = element_text(size = sz$small, face = "bold"))
+        p <- p + if (!flip) {
+            facet_grid(cols = vars(.data$group), scales = "free_x", space = "free_x",
+                       switch = if (groups_side_abs == "bottom") "x")
+        } else {
+            facet_grid(rows = vars(.data$group), scales = "free_y", space = "free_y",
+                       switch = if (groups_side_abs == "left") "y")
+        }
     }
+    df$x <- df$pos
     src <- df[, intersect(c("group", "comparison", "feature", "x", "logfc", "padj", "direction",
                             "n_shared", "labelled"), names(df))]
     attr(p, "source_data") <- src

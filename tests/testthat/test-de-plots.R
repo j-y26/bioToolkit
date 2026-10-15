@@ -19,9 +19,11 @@ test_that("plot_de_dots picks top genes and rings significant results", {
     expect_true(all(c("Cd3e", "Ms4a1") %in% src$feature))
     expect_equal(nrow(src), length(unique(src$feature)) * 3)
     expect_equal(src$significant, !is.na(src$padj) & src$padj < 0.05)
-    # Faded and ringed layers, explained by one titled legend that spells out
-    # the cutoffs
-    expect_equal(sum(vapply(p$layers, function(l) inherits(l$geom, "GeomPoint"), logical(1))), 2)
+    # Comparison markers (dots, by default), faded and ringed layers; the
+    # significance explained by one titled legend that spells out the cutoffs
+    expect_equal(sum(vapply(p$layers, function(l) inherits(l$geom, "GeomPoint"), logical(1))), 3)
+    p_none <- suppressMessages(plot_de_dots(de, n = 2, comparison.marker = "none"))
+    expect_equal(sum(vapply(p_none$layers, function(l) inherits(l$geom, "GeomPoint"), logical(1))), 2)
     expect_equal(p$scales$get_scales("alpha")$name, "Significance")
     expect_equal(p$scales$get_scales("colour")$name, "Significance")
     expect_equal(significance_labels(0.05, 1), c("padj < 0.05\nand |log2FC| > 1", "Not significant"))
@@ -43,11 +45,34 @@ test_that("plot_de_dots draws gene groups and comparison groups", {
     de <- multi_de_fixture()
     p <- suppressMessages(plot_de_dots(de, features = list(T = "Cd3e", B = c("Ms4a1", "Cd68")),
                                        groups = c(A = "g1", B = "g1", C = "g2")))
-    expect_equal(levels(p$data$x_group), c("T", "B"))
+    # The comparison markers are a column facet of their own (".strip")
+    expect_equal(setdiff(levels(p$data$x_group), ".strip"), c("T", "B"))
     expect_equal(levels(p$data$y_group), c("g1", "g2"))
+    # Gene groups and comparison groups are marked by bars, black by default
+    bars <- Filter(function(l) inherits(l$geom, "GeomGroupBar"), p$layers)
+    expect_length(bars, 2)
+    expect_equal(bars[[1]]$geom_params$side, "top")
+    expect_equal(bars[[2]]$geom_params$side, "right")
+    expect_true(all(bars[[1]]$data$fill == "black"))
+    p2 <- suppressMessages(plot_de_dots(de, features = list(T = "Cd3e", B = c("Ms4a1", "Cd68")),
+                                        groups = c(A = "g1", B = "g1", C = "g2"),
+                                        groups.cols = c(g1 = "red", g2 = "blue"), groups.side = "labels"))
+    bars2 <- Filter(function(l) inherits(l$geom, "GeomGroupBar"), p2$layers)
+    expect_equal(bars2[[2]]$geom_params$side, "left")
+    expect_equal(bars2[[2]]$data$fill, c("red", "blue"))
+    expect_no_error(ggplot2::ggplotGrob(p2))
 })
 
-test_that("plot_multi_volcano counts, band and offsets", {
+test_that("plot_de_dots colour limits reach each side's own extreme", {
+    de <- multi_de_fixture()
+    p <- suppressMessages(plot_de_dots(de, features = c("Cd3e", "Ms4a1")))
+    lim <- p$scales$get_scales("fill")$limits
+    sig <- attr(p, "source_data")
+    sig <- sig[sig$significant, ]
+    expect_equal(lim, range(sig$logfc))
+})
+
+test_that("plot_multi_volcano counts, strips, cutoff lines and offsets", {
     de <- multi_de_fixture()
     p <- suppressMessages(plot_multi_volcano(de, logfc.cutoff = 1, seed = 1))
     src <- attr(p, "source_data")
@@ -58,17 +83,51 @@ test_that("plot_multi_volcano counts, band and offsets", {
         inherits(l$geom, "GeomText") && identical(l$aes_params$colour, "firebrick4")
     }, logical(1)))[1]]]
     expect_equal(as.numeric(counts$label), as.vector(expected_up))
-    # Band spans exactly +-logfc.cutoff
-    band <- b$data[[which(vapply(p$layers, function(l) inherits(l$geom, "GeomRect"), logical(1)))]]
-    expect_equal(unique(band$ymax), 1)
-    expect_equal(unique(band$ymin), -1)
+    # No band: dashed lines at +-logfc.cutoff, and a strip per comparison
+    expect_false(any(vapply(p$layers, function(l) inherits(l$geom, "GeomRect"), logical(1))))
+    cut <- Filter(function(l) inherits(l$geom, "GeomHline"), p$layers)[[1]]
+    expect_equal(sort(cut$data$yintercept), c(-1, 1))
+    strips <- Filter(function(l) inherits(l$geom, "GeomGroupBar"), p$layers)[[1]]
+    expect_equal(strips$geom_params$side, "top")
+    expect_equal(strips$data$fill, unname(bt_palette("scanpy-20", 3)))
+    # Comparison names on top
+    expect_equal(b$layout$panel_params[[1]]$x$get_labels(), c("A", "B", "C"))
     # Points stay within their column and are reproducible
     col <- as.integer(src$comparison)
     expect_true(all(abs(src$x - col) <= 0.4 + 1e-9))
     p2 <- suppressMessages(plot_multi_volcano(de, logfc.cutoff = 1, seed = 1))
     expect_equal(attr(p2, "source_data")$x, src$x)
-    # Only DE genes unless show.ns
-    expect_true(all(src$direction != "ns"))
+    # Non-significant genes are drawn (in grey) by default, not with show.ns = FALSE
+    expect_true(any(src$direction == "ns"))
+    p3 <- suppressMessages(plot_multi_volcano(de, logfc.cutoff = 1, show.ns = FALSE))
+    expect_true(all(attr(p3, "source_data")$direction != "ns"))
+    # band.cols is the deprecated name of comparison.cols
+    expect_warning(suppressMessages(plot_multi_volcano(de, band.cols = c(A = "red", B = "blue", C = "green"))),
+                   "deprecated")
+})
+
+test_that("plot_multi_volcano colour limits are trimmed to each direction", {
+    de <- multi_de_fixture()
+    p <- suppressMessages(plot_multi_volcano(de, logfc.cutoff = 1))
+    src <- attr(p, "source_data")
+    lim <- p$scales$get_scales("colour")$limits
+    up <- -log10(src$padj[src$direction == "up"])
+    down <- -log10(src$padj[src$direction == "down"])
+    expect_lte(lim[2], max(up) + 1e-9)
+    expect_gte(lim[1], -max(down) - 1e-9)
+})
+
+test_that("plot_multi_volcano flips comparisons into rows", {
+    de <- multi_de_fixture()
+    p <- suppressMessages(plot_multi_volcano(de, logfc.cutoff = 1, flip = TRUE, label = "none"))
+    b <- ggplot2::ggplot_build(p)
+    # First comparison at the top; log2 fold change on x
+    y <- b$layout$panel_params[[1]]$y
+    expect_equal(y$get_labels()[order(-y$get_breaks())], c("A", "B", "C"))
+    strips <- Filter(function(l) inherits(l$geom, "GeomGroupBar"), p$layers)[[1]]
+    expect_equal(strips$geom_params$side, "left")
+    expect_true(inherits(Filter(function(l) inherits(l$geom, "GeomVline"), p$layers)[[1]]$geom, "GeomVline"))
+    expect_no_warning(ggplot2::ggplotGrob(p))
 })
 
 test_that("plot_multi_volcano labels per column and orders comparisons", {
@@ -81,6 +140,24 @@ test_that("plot_multi_volcano labels per column and orders comparisons", {
     n_de <- table(attr(p2, "source_data")$comparison)
     expect_equal(levels(attr(p2, "source_data")$comparison), names(sort(n_de, decreasing = TRUE)))
     expect_error(suppressMessages(plot_multi_volcano(de$A)), "several comparisons")
+})
+
+test_that("plot_multi_volcano names the comparisons of grouped panels", {
+    de <- multi_de_fixture()
+    names(de) <- c("First long comparison", "Second long comparison", "Third long comparison")
+    groups <- c("First long comparison" = "G2", "Second long comparison" = "G1",
+                "Third long comparison" = "G2")
+    p <- suppressMessages(plot_multi_volcano(de, groups = groups, logfc.cutoff = 1, label = "none"))
+    b <- ggplot2::ggplot_build(p)
+    # Each group's panel names its own comparisons (comparisons of a group
+    # together; groups in their order of appearance)
+    labs <- lapply(b$layout$panel_params, function(pp) pp$x$get_labels()[!is.na(pp$x$get_breaks())])
+    expect_equal(labs[[1]], c("First long comparison", "Third long comparison"))
+    expect_equal(labs[[2]], "Second long comparison")
+    # Groups: black bars at the bottom (opposite the names) by default
+    bars <- Filter(function(l) inherits(l$geom, "GeomGroupBar"), p$layers)
+    expect_equal(bars[[2]]$geom_params$side, "bottom")
+    expect_no_warning(ggplot2::ggplotGrob(p))
 })
 
 test_that("multi_volcano_offsets: sina width follows the density", {

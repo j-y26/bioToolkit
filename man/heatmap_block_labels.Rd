@@ -4,7 +4,7 @@
 \alias{heatmap_block_labels}
 \title{Names of the blocks of columns, as the facet strips of the top row}
 \usage{
-heatmap_block_labels(cl, sz)
+heatmap_block_labels(cl, sz, bar.width = 3.5)
 }
 \description{
 Turned upright when a name is wider than its block (estimated from the

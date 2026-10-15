@@ -23,6 +23,7 @@ plot_fc_quadrant(
   correlation = c("spearman", "pearson", "none"),
   cor.on = c("all", "significant"),
   diagonal = TRUE,
+  trend = FALSE,
   equal.axes = TRUE,
   label = c("top", "selected", "none"),
   label.n = 5,
@@ -92,6 +93,13 @@ every feature drawn) or "significant" (significant in x or
 y)}
 
 \item{diagonal}{Whether to draw the y = x line (dashed), default TRUE}
+
+\item{trend}{Whether to draw a least-squares line of y on x with its 95\%
+confidence band, fitted on the features of the correlation
+(`cor.on`), default FALSE. Both fold changes are noisy
+estimates, which biases the slope toward 0 (regression
+dilution): the line shows the trend, but its slope is not the
+ratio of the effects}
 
 \item{equal.axes}{Whether x and y have the same range, symmetric around 0
 (default TRUE), so that the diagonal is the line of equal

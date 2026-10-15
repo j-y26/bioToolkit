@@ -4,7 +4,7 @@
 \alias{block_label_theme}
 \title{Turn block (split) labels upright when they are wider than their block}
 \usage{
-block_label_theme(d, flip, cell.width, sz)
+block_label_theme(d, flip, cell.width, sz, side = "top", bar.width = 3.5)
 }
 \arguments{
 \item{d}{Long table of one feature}
@@ -14,6 +14,10 @@ block_label_theme(d, flip, cell.width, sz)
 \item{cell.width}{Width of one violin's slot}
 
 \item{sz}{Sizes from \code{theme_sizes()}}
+
+\item{side}{Side of the block names ("top" or "bottom" when not flipped)}
+
+\item{bar.width}{Thickness of the block bars in points}
 }
 \value{
 A theme

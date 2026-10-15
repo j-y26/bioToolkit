@@ -2,42 +2,52 @@
 % Please edit documentation in R/single_cell_visualize.R
 \name{manipulate_sc_plot}
 \alias{manipulate_sc_plot}
-\title{Helper to manipulate ggplots using Seurat's patchwork functions}
+\title{Restyle a single ggplot made by Seurat}
 \usage{
 manipulate_sc_plot(
   plot,
-  remove_axes = FALSE,
-  remove_legend = FALSE,
-  remove_grid = FALSE,
-  restore_legend = FALSE,
-  legend_position = NULL,
-  legend_title = NULL,
-  legend_title_size = 12,
-  legend_title_bold = FALSE
+  remove.axes = FALSE,
+  remove.legend = FALSE,
+  remove.grid = FALSE,
+  restore.legend = FALSE,
+  legend.position = NULL,
+  legend.title = NULL,
+  legend.title.size = 12,
+  legend.title.bold = TRUE,
+  ...
 )
 }
 \arguments{
 \item{plot}{A single ggplot object}
 
-\item{remove_axes}{Whether to remove the axes, default is FALSE}
+\item{remove.axes}{Whether to remove the axes, default is FALSE}
 
-\item{remove_legend}{Whether to remove the legend, default is FALSE}
+\item{remove.legend}{Whether to remove the legend, default is FALSE}
 
-\item{remove_grid}{Whether to remove the grid, default is FALSE}
+\item{remove.grid}{Whether to remove the grid, default is FALSE}
 
-\item{restore_legend}{Whether to restore the legend, default is FALSE}
+\item{restore.legend}{Whether to restore the legend, default is FALSE}
 
-\item{legend_position}{The position of the legend, default is NULL (meaning no change)}
+\item{legend.position}{The position of the legend, default is NULL (meaning
+no change)}
 
-\item{legend_title}{The title of the legend, default is NULL}
+\item{legend.title}{The title of the legend, default is NULL}
 
-\item{legend_title_size}{The size of the legend title, default is 12}
+\item{legend.title.size}{The size of the legend title, default is 12}
 
-\item{legend_title_bold}{Whether to bold the legend title, default is FALSE}
+\item{legend.title.bold}{Whether to bold the legend title, default is TRUE}
+
+\item{...}{Deprecated snake_case names of the arguments above (e.g.
+`remove_axes`), accepted with a warning; renamed to dot.case
+in 0.10.0}
 }
 \value{
 a ggplot object with the axes, legend, and grid manipulated
 }
 \description{
-Only valid for individual ggplot objects
+Removes the axes, legend or grid of one ggplot (e.g. from
+             \code{Seurat::DimPlot()}), restores a hidden legend, or sets
+             the legend position and title. Used by
+             \code{\link{format_sc_plots}} on each plot of a list; only
+             valid for individual ggplot objects.
 }

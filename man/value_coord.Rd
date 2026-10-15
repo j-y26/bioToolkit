@@ -4,7 +4,7 @@
 \alias{value_coord}
 \title{Coordinates of a violin or ridge panel, zoomed to `y.max`}
 \usage{
-value_coord(flip, top)
+value_coord(flip, top, clip = "off")
 }
 \arguments{
 \item{flip}{Whether the value axis is x}

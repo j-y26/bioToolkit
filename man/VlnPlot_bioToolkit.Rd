@@ -9,6 +9,9 @@ VlnPlot_bioToolkit(
   features,
   group.by = NULL,
   split.by = NULL,
+  split.by.cols = NULL,
+  split.by.side = c("opposite", "labels"),
+  group.bar.width = 3.5,
   cells = NULL,
   assay = NULL,
   slot = "data",
@@ -58,6 +61,17 @@ labelled block of violins per level, e.g. `group.by =
 within each cell type. Default is NULL. (Seurat's
 `split.by` dodges violins instead)}
 
+\item{split.by.cols}{Colours of the bars marking the `split.by` blocks:
+NULL (default) for black bars, a qualitative palette
+name, or colours named by level of `split.by`}
+
+\item{split.by.side}{Side of the `split.by` blocks: "opposite" (default;
+opposite the group names: on top, or on the right with
+`flip = TRUE`) or "labels" (beyond the group names)}
+
+\item{group.bar.width}{Thickness of the `split.by` bars in points, default
+is 3.5}
+
 \item{cells}{Cells to use, as names or indices. If NULL (default), all}
 
 \item{assay}{Assay to read genes from. If NULL (default), the default
@@ -85,8 +99,9 @@ features (e.g. "mito_fraction"). Default is FALSE}
 \item{y.max}{Top of the value axis: a number, a quantile of each feature's
 values such as "q99" (zooms past a few extreme cells), or
 NULL (default) for the full range. Only the view is cut:
-violins and boxes are computed from all cells. One value for
-all features, or a vector named by feature}
+violins and boxes are computed from all cells and cut at the
+top of the axis, and points above it are not drawn. One value
+for all features, or a vector named by feature}
 
 \item{zeros}{How cells with a value of 0 are handled for genes: "include"
 (default, as Seurat), "exclude" (violins of the cells above

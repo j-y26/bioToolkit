@@ -29,7 +29,7 @@
 #      (`draw = "cells"`, the look of the feature plots), masked cells in
 #      grey; or the grid itself as a raster over grey cells
 #      (`draw = "raster"`). Diverging palette (default "blue-magenta"),
-#      symmetric around 0, one scale for all panels.
+#      centred on 0 (each side to its own extreme), one scale for all panels.
 #
 # `split.by` is the condition column: one panel per compared level against
 # `reference`, as DimPlot_bioToolkit()'s panels per level.
@@ -100,8 +100,10 @@
 #'             "blue-magenta", a palette name, or colours from low to high,
 #'             e.g. `c(low, mid, high)`
 #'
-#' @param limits The colour scale runs from -`limits` to `limits`. If NULL
-#'               (default), the largest absolute value drawn
+#' @param limits Cutoff of the colour scale: it runs from -`limits` to
+#'               `limits`, each end trimmed to the most extreme value drawn on
+#'               its side, so that it gets the full colour. If NULL (default),
+#'               from the lowest to the highest value drawn, centred on 0
 #'
 #' @param na.value Colour of masked cells, default is "grey88"
 #'
@@ -129,6 +131,10 @@
 #'                     the reference
 #'
 #' @param ncol Number of columns of panels. If NULL (default), all in one row
+#'
+#' @param arrow.panels Panels that get the dimension arrows: "bottom.left"
+#'                     (default), "all", "left", "right", "top", "bottom" or
+#'                     "none", as in \code{\link{DimPlot_bioToolkit}}
 #'
 #' @param panel.width,panel.height Size of each panel in inches, default 4;
 #'                                 `panel.height` defaults to `panel.width`
@@ -216,6 +222,7 @@ DensityDiffPlot_bioToolkit <- function(
     legend.position = c("right", "left", "top", "bottom", "none"),
     legend.title = NULL,
     ncol = NULL,
+    arrow.panels = c("bottom.left", "all", "left", "right", "top", "bottom", "none"),
     panel.width = 4,
     panel.height = panel.width,
     panel.spacing = 0.1,
@@ -238,7 +245,8 @@ DensityDiffPlot_bioToolkit <- function(
         stop("`limits` must be NULL or a single positive number", call. = FALSE)
     }
     if (length(split.by) != 1) stop("`split.by` must be a single metadata column", call. = FALSE)
-    arrow_args <- list(...)
+    arrow.panels <- match.arg(arrow.panels)
+    arrow_args <- resolve_arrow_args(list(...), "DensityDiffPlot_bioToolkit")
     dims <- resolve_dims(dims, reduction)
     sizes <- theme_sizes()
 
@@ -328,8 +336,9 @@ DensityDiffPlot_bioToolkit <- function(
         }))
     }
     drawn <- if (draw == "cells") cells_all$value else grid_all$value
-    lim <- if (is.null(limits)) max(abs(drawn), na.rm = TRUE) else limits
-    if (!is.finite(lim) || lim == 0) lim <- 1
+    # Centred on 0, each end the cutoff or the extreme drawn on that side
+    # (diverging_limits(); user decision 2026-10-14)
+    lim <- if (is.null(limits)) diverging_limits(drawn) else diverging_limits(drawn, -limits, limits)
 
     # Plot ----------------------------------------------------------------------------------------
     n_panels <- length(panels)
@@ -372,8 +381,8 @@ DensityDiffPlot_bioToolkit <- function(
     p <- p +
         scale_colour_gradientn(
             colours = resolve_continuous_palette(cols, diverging = TRUE),
-            limits = c(-lim, lim), oob = scales::oob_squish, na.value = "transparent",
-            aesthetics = c("colour", "fill"), name = legend.title,
+            limits = lim, rescaler = rescale_diverging(0), oob = scales::oob_squish, na.value = "transparent",
+            aesthetics = c("colour", "fill"), name = bold_title(legend.title),
             guide = guide_colourbar(
                 direction = if (vertical) "vertical" else "horizontal",
                 theme = theme(
@@ -405,8 +414,14 @@ DensityDiffPlot_bioToolkit <- function(
         p <- p + group_label_layer(lab_df, by_panel = TRUE, label.size = label.size,
                                    label.color = label.color, halo.color = halo_colour(bg), seed = seed)
     }
-    p <- add_reduction_arrows(p, reduction = reduction, labels = dims$labels, arrow_args = arrow_args,
-                              panel = panel_lv[layout$bottom_left])
+    idx <- arrow_panel_index(n_panels, layout$ncol, layout$nrow, layout$by.row, arrow.panels)
+    p <- add_reduction_arrows(
+        p,
+        reduction = reduction,
+        labels = dims$labels,
+        arrow_args = arrow_args,
+        panel = panel_lv[idx]
+    )
     attr(p, "source_data") <- if (draw == "cells") cells_all else grid_all
     p
 }

@@ -25,6 +25,9 @@ DoHeatmap_bioToolkit(
   cols = NULL,
   label.features = NULL,
   label.side = c("right", "left"),
+  feature.group.cols = NULL,
+  split.by.cols = NULL,
+  group.bar.width = 3.5,
   italic.genes = TRUE,
   panel.width = 6,
   cell.width = 0.18,
@@ -121,6 +124,19 @@ none; or a few features, named with leader lines}
 
 \item{label.side}{Side of the feature names: "right" (default) or "left".
 Names of blocks of features are on the other side}
+
+\item{feature.group.cols}{Colours of the bars marking the blocks of
+features (a named list of `features`): NULL
+(default) for black bars, a qualitative palette
+name, or colours named by block}
+
+\item{split.by.cols}{Colours of the bars marking the blocks of columns
+(`split.by`, or the groups without it): NULL (default)
+for black bars, a qualitative palette name, or colours
+named by block}
+
+\item{group.bar.width}{Thickness of the block bars in points, default is
+3.5}
 
 \item{italic.genes}{Whether gene names are set in italics, default is TRUE
 (genomic regions such as peaks never are)}

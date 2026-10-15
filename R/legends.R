@@ -170,3 +170,114 @@ print.bt_legend <- function(x,
     grid::grid.draw(x)
     invisible(x)
 }
+
+
+# Legend blocks (revision of 2026-10-14)
+# ---------------------------------------
+# Legends of several plots arranged in columns, e.g. the colour bars of the
+# panels of plot_enrichment_dots() in one column and their size legends in
+# the next, each column in panel order. Like extract_legend(), the legends
+# are built from their plots on the device they are drawn on (in
+# makeContent()), so that their text fits whatever the file format; the
+# size used for the layout is measured once on a PDF device, with some room
+# to spare.
+
+
+#' A block of legends in columns
+#'
+#' @param columns A list of columns, each a list of ggplots whose legends are
+#'                stacked top to bottom
+#'
+#' @param gap Gap between legends and between columns, in inches
+#'
+#' @return A grob (class `bt_legend_block`), its legends built when drawn
+#'
+#' @keywords internal
+legend_block_grob <- function(columns,
+                              gap = 0.15) {
+    columns <- Filter(length, columns)
+    grid::gTree(columns = columns, gap = gap, cl = "bt_legend_block")
+}
+
+
+#' Legends of a legend block, built and placed on the current device
+#'
+#' @param x A legend block
+#'
+#' @return A list of `grobs` (legends in viewports, top-left aligned),
+#'         `width` and `height` of the block, in inches
+#'
+#' @keywords internal
+legend_block_layout <- function(x) {
+    kids <- list()
+    x0 <- 0
+    height <- 0
+    for (col in x$columns) {
+        legends <- lapply(col, function(p) legend_gtable(p)$legend)
+        ws <- vapply(legends, function(l) grid::convertWidth(grid::grobWidth(l), "in", valueOnly = TRUE),
+                     numeric(1))
+        hs <- vapply(legends, function(l) grid::convertHeight(grid::grobHeight(l), "in", valueOnly = TRUE),
+                     numeric(1))
+        y0 <- 0
+        for (k in seq_along(legends)) {
+            vp <- grid::viewport(
+                x = grid::unit(x0, "in"),
+                y = grid::unit(1, "npc") - grid::unit(y0, "in"),
+                width = grid::unit(ws[k], "in"),
+                height = grid::unit(hs[k], "in"),
+                just = c("left", "top")
+            )
+            kids <- c(kids, list(grid::grobTree(legends[[k]], vp = vp)))
+            y0 <- y0 + hs[k] + x$gap
+        }
+        height <- max(height, y0 - x$gap)
+        x0 <- x0 + max(ws) + x$gap
+    }
+    list(grobs = kids, width = x0 - x$gap, height = height)
+}
+
+
+#' @importFrom grid makeContent
+#' @export
+makeContent.bt_legend_block <- function(x) {
+    grid::setChildren(x, do.call(grid::gList, legend_block_layout(x)$grobs))
+}
+
+
+#' A ggplot of fixed width holding a legend block at its top left
+#'
+#' Only the width is fixed: placed in a patchwork over several rows of
+#' fixed-size panels, the figure takes their height.
+#'
+#' @param block A legend block (\code{legend_block_grob()})
+#'
+#' @param pad Room left of the legends, in inches
+#'
+#' @return A ggplot object, with the block's measured height (inches, PDF
+#'         metrics plus 5%) as attribute `block_height`
+#'
+#' @keywords internal
+legend_block_figure <- function(block,
+                                pad = 0.15) {
+    # Measured on a PDF device; 5% more, so that other devices' fonts fit
+    grDevices::pdf(NULL)
+    size <- tryCatch(legend_block_layout(block), finally = grDevices::dev.off())
+    placed <- grid::grobTree(block, vp = grid::viewport(
+        x = grid::unit(pad, "in"),
+        width = grid::unit(1, "npc") - grid::unit(pad, "in"),
+        just = "left"
+    ))
+    fig <- ggplot(data.frame(x = c(0, 1), y = c(0, 1)), aes(x = .data$x, y = .data$y)) +
+        geom_blank() +
+        annotation_custom(placed, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+        scale_x_continuous(expand = expansion(0)) +
+        scale_y_continuous(expand = expansion(0)) +
+        coord_cartesian(clip = "off") +
+        theme_void() +
+        theme(
+            panel.widths = grid::unit(size$width * 1.05 + pad, "in"),
+            plot.margin = margin(0, 0, 0, 0)
+        )
+    attr(fig, "block_height") <- size$height * 1.05
+    fig
+}

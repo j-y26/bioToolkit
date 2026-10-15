@@ -5,45 +5,56 @@
 \title{Calculate ranks of genes for differential expression analysis}
 \usage{
 rank_de_genes(
-  de_results,
-  de_method = "edgeR",
-  pvalue_col = NULL,
-  log2fc_col = NULL
+  data,
+  method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+  padj.col = NULL,
+  logfc.col = NULL,
+  ...
 )
 }
 \arguments{
-\item{de_results}{A data frame containing the results of differential
-expression analysis. The data frame should have at least
-a column for log2 fold change and a column for (adjusted)
-p-value.}
+\item{data}{A data frame of DE results with a log2 fold change and an
+adjusted p-value column (edgeR, DESeq2, limma or Seurat
+results, or any table with the columns given)}
 
-\item{de_method}{The method used for differential expression analysis.
-Must be one of "edgeR" or "DESeq2". Default is "edgeR".
-Use this argument to automatically set the column names
-for log2 fold change and adjusted P-value. If provided value
-is not "edgeR" or "DESeq2", the user must provide both the
-column names for log2 fold change and P-value using the
-\code{log2fc_col} and \code{pvalue_col} arguments,
-respectively.}
+\item{method}{The tool that produced the results: "auto" (default) detects
+it from the column names, as \code{\link{standardize_de}}
+does; or one of "edgeR", "DESeq2", "limma" and "seurat"}
 
-\item{pvalue_col}{The name of the column in \code{de_results} that contains
-the p-values. If not NULL, overrides the default column
-name based on \code{de_method}.}
+\item{padj.col}{Column of the (adjusted) p-values used for the ranking. If
+NULL (default), taken from `method` (e.g. "FDR" for edgeR,
+"padj" for DESeq2)}
 
-\item{log2fc_col}{The name of the column in \code{de_results} that contains
-the log2 fold changes.}
+\item{logfc.col}{Column of the log2 fold changes. If NULL (default), taken
+from `method`}
+
+\item{...}{Deprecated names of the arguments (`de_results`, `de_method`,
+`pvalue_col`, `log2fc_col`), accepted with a warning; renamed in
+0.10.0}
 }
 \value{
-A data frame with the addition of the following columns:
+The input data frame, ordered by rank, with two added columns:
          \item{piValue}{The pi-value of the gene}
          \item{rank}{The rank of the gene based on the pi-value}
 }
 \description{
-This function calculates ranks of genes based on the
-             differential expression analysis results for RNA-seq data.
-             The pi-value is calculated using the following formula:
-             \deqn{pi = -log10(p) * sign(log2fc)}
-             where \eqn{p} is the (adjusted) p-value and \eqn{log2fc} is the
-             log2 fold change. The rank is then calculated based on the
-             pi-value.
+Ranks the genes of a DE table by a signed significance score,
+             the pi-value:
+             \deqn{pi = -log10(padj) * sign(logFC)}
+             so that significantly up-regulated genes come first and
+             significantly down-regulated genes last; a ranking for GSEA
+             (see \code{\link{generate_de_rank_file}}).
+}
+\details{
+Ties are common among genes with the same adjusted p-value (e.g.
+         many non-significant genes at padj = 1); they are broken by row
+         order (`ties.method = "first"`).
+}
+\examples{
+de <- data.frame(
+    logFC = c(2.1, -1.4, 0.2), PValue = c(1e-8, 1e-4, 0.6),
+    FDR = c(3e-8, 2e-4, 0.6), row.names = c("ISG15", "CD3E", "ACTB")
+)
+rank_de_genes(de)
+
 }

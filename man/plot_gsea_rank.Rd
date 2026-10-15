@@ -15,6 +15,11 @@ plot_gsea_rank(
   cols = NULL,
   metric.title = "Ranked\\nmetric",
   show.metric = TRUE,
+  band = c("metric", "none"),
+  label = c("leading.edge", "selected", "none"),
+  label.n = 5,
+  label.features = NULL,
+  italic.genes = TRUE,
   panel.width = 3,
   panel.heights = c(1.3, 0.32, 0.55),
   bg = "transparent",
@@ -62,6 +67,34 @@ positions, default is TRUE. It is the same for every
 gene set of a comparison (the ranked list), so it can be
 left out of all but one figure}
 
+\item{band}{What the band under the gene positions shows: "metric"
+(default) or "none". The band is the ranking metric along the
+list, as in the GSEA desktop plot: magenta where genes rank up
+(metric above 0), white around 0, blue where they rank down,
+saturating at the 95th percentile of |metric|. It is the same
+for every gene set of a comparison and shows where the list
+turns from up- to down-ranked genes. (The band of
+\code{enrichplot::gseaplot2()} is different: it colours eight
+stretches of the list holding equal shares of the set's genes,
+by a count taken from the other end of the list, and encodes
+no value at the rank where it is drawn.)}
+
+\item{label}{Genes named on the plot, with an arrow to their ticks:
+"leading.edge" (default; the first `label.n` genes of the
+leading edge, counted from the end of the list the set is
+enriched at), "selected" (`label.features`) or "none". The
+leading edge is the set's genes ranked before the peak of a
+positive score (after the peak of a negative one), as in GSEA,
+fgsea and clusterProfiler. Named genes have taller ticks in
+the line colour}
+
+\item{label.n}{Number of leading-edge genes named, default is 5}
+
+\item{label.features}{Genes named with `label = "selected"`, matched
+exactly}
+
+\item{italic.genes}{Whether gene names are set in italics, default is TRUE}
+
 \item{panel.width}{Width of the panels in inches, default is 3}
 
 \item{panel.heights}{Heights of the running score, gene position and
@@ -76,7 +109,8 @@ metric panels in inches, default is
 \value{
 A patchwork object; its source data
         (\code{\link{export_source_data}}) hold one row per gene: `rank`,
-        `gene`, `metric`, `running_es` and `in_set`
+        `gene`, `metric`, `running_es`, `in_set`, `leading_edge` and
+        `labelled`
 }
 \description{
 Draws the running enrichment score of one gene set along the

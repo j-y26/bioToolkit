@@ -19,7 +19,11 @@
 #   fractions (% axis) and expression (linear axis).
 # * `y.max` (Seurat's name) zooms the value axis to a number or a quantile
 #   ("q99") of the values: densities and boxes are still computed from all
-#   cells (coord_cartesian()), unlike scale limits, which drop cells.
+#   cells (coord_cartesian()), unlike scale limits, which drop cells. The
+#   panels are not clipped (the split.by bars sit outside them), so violins
+#   and boxes are cut at the top themselves (`GeomViolinTop`,
+#   `GeomBoxplotTop`) and points above it are not drawn (2026-10-14; they
+#   used to run past the axis).
 # * Genes are sparse: most cells of a group may have 0, and the violin is
 #   then a spike at 0. `zeros = "exclude"` draws the cells above 0 only;
 #   "annotate" also prints the % of cells above 0 for each group.
@@ -27,7 +31,9 @@
 #   the violins, compared with each other and filled with the group colours
 #   (as in DimPlot_bioToolkit()); `split.by` gives labelled blocks of violins
 #   with gaps, like facets (e.g. group.by = "condition", split.by =
-#   "cell_type"). Seurat's dodged violins are not drawn.
+#   "cell_type"), each marked by a bar and its name (R/group_bars.R), by
+#   default opposite the group names (`split.by.side`). Seurat's dodged
+#   violins are not drawn.
 # * Orientation: `flip = FALSE` draws vertical violins (groups on x);
 #   `flip = TRUE` horizontal ones (groups on y, the first at the top). The
 #   meaning of `flip` is that of DotPlot_bioToolkit(); Seurat's `flip` only
@@ -71,6 +77,17 @@
 #'                 within each cell type. Default is NULL. (Seurat's
 #'                 `split.by` dodges violins instead)
 #'
+#' @param split.by.cols Colours of the bars marking the `split.by` blocks:
+#'                      NULL (default) for black bars, a qualitative palette
+#'                      name, or colours named by level of `split.by`
+#'
+#' @param split.by.side Side of the `split.by` blocks: "opposite" (default;
+#'                      opposite the group names: on top, or on the right with
+#'                      `flip = TRUE`) or "labels" (beyond the group names)
+#'
+#' @param group.bar.width Thickness of the `split.by` bars in points, default
+#'                        is 3.5
+#'
 #' @param cells Cells to use, as names or indices. If NULL (default), all
 #'
 #' @param assay Assay to read genes from. If NULL (default), the default
@@ -98,8 +115,9 @@
 #' @param y.max Top of the value axis: a number, a quantile of each feature's
 #'              values such as "q99" (zooms past a few extreme cells), or
 #'              NULL (default) for the full range. Only the view is cut:
-#'              violins and boxes are computed from all cells. One value for
-#'              all features, or a vector named by feature
+#'              violins and boxes are computed from all cells and cut at the
+#'              top of the axis, and points above it are not drawn. One value
+#'              for all features, or a vector named by feature
 #'
 #' @param zeros How cells with a value of 0 are handled for genes: "include"
 #'              (default, as Seurat), "exclude" (violins of the cells above
@@ -195,6 +213,9 @@ VlnPlot_bioToolkit <- function(
     features,
     group.by = NULL,
     split.by = NULL,
+    split.by.cols = NULL,
+    split.by.side = c("opposite", "labels"),
+    group.bar.width = 3.5,
     cells = NULL,
     assay = NULL,
     slot = "data",
@@ -224,6 +245,8 @@ VlnPlot_bioToolkit <- function(
     bg = "transparent"
 ) {
     zeros <- match.arg(zeros)
+    split.by.side <- match.arg(split.by.side)
+    check_bar_width(group.bar.width)
     if (!(is.numeric(pt.n) && length(pt.n) == 1 && pt.n >= 0)) {
         stop("`pt.n` must be a single number >= 0", call. = FALSE)
     }
@@ -243,15 +266,39 @@ VlnPlot_bioToolkit <- function(
     pts_cells <- if (pt.n > 0) sample_per_unit(dd$cells, pt.n, seed) else character(0)
     n_points <- length(pts_cells) * length(features)
     layer_fun <- points_layer_fun(raster, n_points, 2000, raster.dpi)
+    # Side of the split.by blocks (bars and names): opposite the group names
+    # (top, or right when flipped) by default
+    split_side <- if (!flip) {
+        if (split.by.side == "opposite") "top" else "bottom"
+    } else {
+        if (split.by.side == "opposite") "right" else "left"
+    }
+    split_cols <- if (!is.null(dd$long$split)) {
+        group_bar_colours(split.by.cols, levels(droplevels(as.factor(dd$long$split))), "split.by.cols")
+    }
 
     plots <- lapply(seq_along(features), function(i) {
         f <- features[i]
         d <- dd$long[dd$long$feature == f, , drop = FALSE]
         first <- i == 1
         last <- i == length(features)
+        # Top of the value axis (y.max), on the scale it is drawn on
+        top <- value_limit(y.max, f, d$value[d$drawn])
+        pts <- d[d$drawn & d$cell %in% pts_cells, , drop = FALSE]
+        if (!is.na(top)) pts <- pts[pts$value <= top, , drop = FALSE]
+        # Stacked panels show the split.by blocks once, on the panel at their
+        # side (the first or last); the others have no block names (each
+        # side's element is set, so each is blanked)
+        show_split <- !stack || (if (split_side %in% c("top", "left")) first else last)
+        no_strip_text <- theme(
+            strip.text.x.top = element_blank(),
+            strip.text.x.bottom = element_blank(),
+            strip.text.y.left = element_blank(),
+            strip.text.y.right = element_blank()
+        )
         p <- violin_panel(
             d = d,
-            pts = d[d$drawn & d$cell %in% pts_cells, , drop = FALSE],
+            pts = pts,
             group_cols = group_cols,
             flip = flip,
             box = box,
@@ -261,17 +308,22 @@ VlnPlot_bioToolkit <- function(
             adjust = adjust,
             layer_fun = layer_fun,
             seed = seed,
-            annotate = zeros == "annotate" && dd$is_gene[[f]]
+            annotate = zeros == "annotate" && dd$is_gene[[f]],
+            top = if (is.na(top)) NA_real_ else if (log[[f]]) log10(top) else top,
+            split_side = split_side
         )
         title <- feature_title(f, italic.genes && dd$is_gene[[f]], bold = !stack)
         p <- p +
             value_scale(if (flip) "x" else "y", log[[f]], percent[[f]], n.breaks = if (stack) 3 else 5,
                         far = if (zeros == "annotate" && dd$is_gene[[f]]) 0.2 else 0.05) +
-            value_coord(flip, value_limit(y.max, f, d$value[d$drawn])) +
-            group_axis_theme(flip, sz) +
+            value_coord(flip, top) +
+            group_axis_theme(flip, sz, group.bar.width) +
             theme(legend.position = legend.position)
         p <- p + distribution_size_theme(d, flip, cell.width, cell.height, panel.width, panel.height) +
-            block_label_theme(d, flip, cell.width, sz)
+            block_label_theme(d, flip, cell.width, sz, split_side, group.bar.width)
+        if (!is.null(d$split) && show_split) {
+            p <- p + split_bar_layer(d, flip, split_side, split_cols, group.bar.width, sz)
+        }
         # Margins: none between stacked panels (they touch), the theme's
         # otherwise; more on the left when the first group label is long
         margins <- if (stack) c(1, 2, 1, 2) else rep(0.2 * 72 / 2.54, 4)
@@ -286,17 +338,15 @@ VlnPlot_bioToolkit <- function(
             p <- p + labs(x = NULL, y = title) +
                 theme(axis.title.y = element_text(angle = 0, vjust = 0.5, hjust = 1, size = sz$base))
             if (!last) p <- p + theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
-            if (!first) p <- p + theme(strip.text.x = element_blank())
+            if (!show_split) p <- p + no_strip_text
         } else {
             # Columns of features: the name above, set upright; group names
             # left of the first column, block names left of it too
             p <- p + labs(x = NULL, y = NULL, title = title) +
                 theme(plot.title = element_text(angle = 90, hjust = 0, vjust = 0.5, size = sz$base,
                                                 face = "plain"))
-            if (!first) {
-                p <- p + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-                               strip.text.y = element_blank())
-            }
+            if (!first) p <- p + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+            if (!show_split) p <- p + no_strip_text
         }
         p <- p + theme_bg(bg)
         attr(p, "source_data") <- distribution_source(d, dd$assay)
@@ -399,6 +449,7 @@ RidgePlot_bioToolkit <- function(
     plots <- lapply(features, function(f) {
         d <- dd$long[dd$long$feature == f, , drop = FALSE]
         annotate <- zeros == "annotate" && dd$is_gene[[f]]
+        x_top <- value_limit(y.max, f, d$value[d$drawn])
         p <- ridge_panel(d, group_cols, log[[f]], adjust, overlap, annotate = annotate)
         rows <- attr(p, "ridge_rows")
         n <- length(rows$labels)
@@ -411,7 +462,7 @@ RidgePlot_bioToolkit <- function(
             value_scale("x", log[[f]], percent[[f]], n.breaks = 5, far = if (annotate) 0.15 else 0.05) +
             scale_y_continuous(breaks = seq_len(n), labels = rows$labels, limits = c(1 - low, n + high),
                                expand = expansion(0)) +
-            value_coord(TRUE, value_limit(y.max, f, d$value[d$drawn])) +
+            value_coord(TRUE, x_top) +
             theme_bioToolkit("axis", bg = bg) +
             panel_size_theme(panel.width, (n - 1 + low + high) * cell.height) +
             labs(title = feature_title(f, italic.genes && dd$is_gene[[f]], bold = TRUE), x = NULL, y = NULL) +
@@ -590,6 +641,12 @@ feature_title <- function(f,
 #'
 #' @param annotate Whether to print the \% of cells above 0 per group
 #'
+#' @param top Top of the value axis on the scale it is drawn on (log10 for a
+#'            log axis), where violins and boxes are cut; NA for none
+#'
+#' @param split_side Side of the split.by block names: "top" / "bottom"
+#'                   (vertical violins) or "left" / "right" (horizontal)
+#'
 #' @return A ggplot object (no scales for the value axis yet)
 #'
 #' @keywords internal
@@ -604,7 +661,9 @@ violin_panel <- function(d,
                          adjust,
                          layer_fun,
                          seed,
-                         annotate) {
+                         annotate,
+                         top = NA_real_,
+                         split_side = if (flip) "right" else "top") {
     lw <- pt_to_linewidth(theme_sizes()$line)
     # Horizontal violins list the first group at the top
     group_lv <- levels(droplevels(d$group))
@@ -623,11 +682,24 @@ violin_panel <- function(d,
     # A density needs two cells: groups with fewer get their box and points
     # only
     n_drawn <- stats::ave(seq_len(nrow(dv)), dv$group, if (is.null(dv$split)) 1 else dv$split, FUN = length)
+    # Violins (and boxes) are cut at `top` by their geoms, the panel being
+    # unclipped
+    violins <- geom_violin(
+        aes(fill = .data$group),
+        data = dv[n_drawn >= 2, , drop = FALSE],
+        scale = "width",
+        width = 0.88,
+        colour = NA,
+        alpha = 0.9,
+        trim = TRUE,
+        adjust = adjust,
+        orientation = if (flip) "y" else "x"
+    )
+    violins$geom <- GeomViolinTop
+    violins$geom_params$top <- top
     p <- ggplot(dv, map) +
         geom_blank(data = blank) +
-        geom_violin(aes(fill = .data$group), data = dv[n_drawn >= 2, , drop = FALSE], scale = "width",
-                    width = 0.88, colour = NA, alpha = 0.9, trim = TRUE, adjust = adjust,
-                    orientation = if (flip) "y" else "x")
+        violins
     if (nrow(pts) > 0) {
         jitter <- if (flip) {
             position_jitter(width = 0, height = 0.13, seed = seed)
@@ -639,8 +711,18 @@ violin_panel <- function(d,
     }
     if (box) {
         # coef = 0: no whiskers, the box only (quartiles and median)
-        p <- p + geom_boxplot(width = box.width, outlier.shape = NA, fill = "white", colour = "grey15",
-                              linewidth = lw, coef = 0, orientation = if (flip) "y" else "x")
+        boxes <- geom_boxplot(
+            width = box.width,
+            outlier.shape = NA,
+            fill = "white",
+            colour = "grey15",
+            linewidth = lw,
+            coef = 0,
+            orientation = if (flip) "y" else "x"
+        )
+        boxes$geom <- GeomBoxplotTop
+        boxes$geom_params$top <- top
+        p <- p + boxes
     }
     if (annotate) {
         keys <- c("group", if (!is.null(d$split)) "split")
@@ -658,10 +740,22 @@ violin_panel <- function(d,
     }
     p <- p + scale_fill_manual(values = group_cols, drop = TRUE, guide = guide_legend(reverse = flip))
     if (!is.null(d$split)) {
+        # Block names on top / right by default; at the bottom / left on the
+        # side of the group names
         p <- p + if (flip) {
-            facet_grid(rows = vars(.data$split), scales = "free_y", space = "free_y", switch = "y")
+            facet_grid(
+                rows = vars(.data$split),
+                scales = "free_y",
+                space = "free_y",
+                switch = if (split_side == "left") "y"
+            )
         } else {
-            facet_grid(cols = vars(.data$split), scales = "free_x", space = "free_x")
+            facet_grid(
+                cols = vars(.data$split),
+                scales = "free_x",
+                space = "free_x",
+                switch = if (split_side == "bottom") "x"
+            )
         }
     }
     p <- p + if (flip) {
@@ -813,10 +907,74 @@ value_limit <- function(y.max,
 #'
 #' @keywords internal
 value_coord <- function(flip,
-                        top) {
+                        top,
+                        clip = "off") {
     lim <- if (is.na(top)) NULL else c(NA, top)
-    if (flip) coord_cartesian(xlim = lim, clip = "off") else coord_cartesian(ylim = lim, clip = "off")
+    if (flip) coord_cartesian(xlim = lim, clip = clip) else coord_cartesian(ylim = lim, clip = clip)
 }
+
+
+#' Cut a density (violin) at the top of the value axis
+#'
+#' @param d Rows of one violin after the stat (`y` sorted or not, with
+#'          `violinwidth`), in the orientation of `flip_data()`
+#'
+#' @param top Top of the axis, on the scale drawn
+#'
+#' @return The rows up to `top`, closed by a row at `top` with the width
+#'         interpolated there
+#'
+#' @keywords internal
+cut_density <- function(d,
+                        top) {
+    d <- d[order(d$y), , drop = FALSE]
+    keep <- d$y <= top
+    if (all(keep)) return(d)
+    if (!any(keep)) return(d[0, , drop = FALSE])
+    edge <- d[max(which(keep)), , drop = FALSE]
+    edge$violinwidth <- stats::approx(d$y, d$violinwidth, xout = top, ties = mean)$y
+    edge$y <- top
+    rbind(d[keep, , drop = FALSE], edge)
+}
+
+
+# Violins and boxes cut at the top of the value axis (`top`, on the scale
+# drawn; NA for none). The panels of a violin plot are not clipped (the
+# split.by bars sit outside them), so without this a violin taller than a
+# lowered `y.max` would run past the axis
+GeomViolinTop <- ggproto("GeomViolinTop", GeomViolin,
+    extra_params = c(GeomViolin$extra_params, "top"),
+    setup_data = function(data, params) {
+        data <- GeomViolin$setup_data(data, params)
+        top <- params$top
+        if (is.null(top) || is.na(top) || nrow(data) == 0) return(data)
+        flipped <- isTRUE(data$flipped_aes[1])
+        data <- flip_data(data, flipped)
+        # One violin per group and panel (group ids repeat across facets)
+        parts <- split(data, list(data$PANEL, data$group), drop = TRUE)
+        data <- do.call(rbind, lapply(parts, cut_density, top = top))
+        rownames(data) <- NULL
+        flip_data(data, flipped)
+    }
+)
+
+GeomBoxplotTop <- ggproto("GeomBoxplotTop", GeomBoxplot,
+    extra_params = c(GeomBoxplot$extra_params, "top"),
+    setup_data = function(data, params) {
+        data <- GeomBoxplot$setup_data(data, params)
+        top <- params$top
+        if (is.null(top) || is.na(top) || nrow(data) == 0) return(data)
+        flipped <- isTRUE(data$flipped_aes[1])
+        data <- flip_data(data, flipped)
+        # A box (or part of it) above the top is cut there; one wholly above
+        # it is not drawn
+        data <- data[data$lower <= top, , drop = FALSE]
+        for (v in intersect(c("ymin", "lower", "middle", "upper", "ymax", "ymax_final"), names(data))) {
+            data[[v]] <- pmin(data[[v]], top)
+        }
+        flip_data(data, flipped)
+    }
+)
 
 
 #' Theme of the group axis of a violin plot
@@ -829,15 +987,87 @@ value_coord <- function(flip,
 #'
 #' @keywords internal
 group_axis_theme <- function(flip,
-                             sz) {
+                             sz,
+                             bar.width = 3.5) {
+    block_text <- function(side, ...) {
+        element_text(size = sz$small, face = "bold", margin = group_bar_margin(side, bar.width), ...)
+    }
     th <- theme_bioToolkit("axis") +
-        theme(strip.placement = "outside",
-              strip.text.x.top = element_text(size = sz$small, face = "bold", margin = margin(b = 3)),
-              strip.text.y.left = element_text(size = sz$small, face = "bold", angle = 0, hjust = 1,
-                                               margin = margin(r = 3)),
-              panel.spacing = unit(0.08, "in"))
+        theme(
+            # Block names beyond their bars (R/group_bars.R); on the side of
+            # the group names, outside them
+            strip.placement = "outside",
+            strip.switch.pad.grid = unit(0, "pt"),
+            strip.clip = "off",
+            strip.text.x.top = block_text("top"),
+            strip.text.x.bottom = block_text("bottom"),
+            strip.text.y.left = block_text("left", angle = 0, hjust = 1),
+            strip.text.y.right = block_text("right", angle = 0, hjust = 0),
+            panel.spacing = unit(0.08, "in"),
+            # Known label margins, so that a bar beyond the labels can be
+            # placed (split_bar_layer())
+            axis.text.x = element_text(margin = margin(t = 2)),
+            axis.text.y = element_text(margin = margin(r = 2))
+        )
     if (!flip) th <- th + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
     th
+}
+
+
+#' Bars marking the split.by blocks of a violin plot
+#'
+#' @param d Long table of one feature
+#'
+#' @param flip Whether violins are horizontal
+#'
+#' @param side Side of the bars
+#'
+#' @param cols Bar colours named by block
+#'
+#' @param width Thickness of the bars in points
+#'
+#' @param sz Sizes from \code{theme_sizes()}
+#'
+#' @return A ggplot2 layer
+#'
+#' @keywords internal
+split_bar_layer <- function(d,
+                            flip,
+                            side,
+                            cols,
+                            width,
+                            sz) {
+    d$split <- droplevels(as.factor(d$split))
+    blocks <- levels(d$split)
+    group_lv <- levels(droplevels(d$group))
+    # Horizontal violins list the first group at the top (violin_panel())
+    lv <- if (flip) rev(group_lv) else group_lv
+    ends <- lapply(blocks, function(b) {
+        g <- intersect(lv, as.character(d$group[d$split == b]))
+        c(g[1], g[length(g)])
+    })
+    first <- factor(vapply(ends, `[`, "", 1), levels = lv)
+    last <- factor(vapply(ends, `[`, "", 2), levels = lv)
+    bars <- data.frame(split = factor(blocks, levels = blocks), fill = unname(cols[blocks]))
+    if (flip) {
+        bars$y <- first
+        bars$yend <- last
+    } else {
+        bars$x <- first
+        bars$xend <- last
+    }
+    gap <- grid::unit(GROUP_BAR_GAP, "pt")
+    # On the side of the group names, beyond the ticks and the names
+    offset <- if (side %in% c("top", "right")) {
+        gap
+    } else {
+        labels <- unique(as.character(d$group))
+        grid::unit(sz$small / 3 + 2, "pt") +
+            label_extent(labels, sz$small, angle = if (flip) 0 else 45,
+                         across = if (flip) "width" else "height") +
+            gap
+    }
+    group_bar_layer(bars, side = side, width = width, offset = offset)
 }
 
 
@@ -868,20 +1098,32 @@ pct_label <- function(x) {
 #'
 #' @param sz Sizes from \code{theme_sizes()}
 #'
+#' @param side Side of the block names ("top" or "bottom" when not flipped)
+#'
+#' @param bar.width Thickness of the block bars in points
+#'
 #' @return A theme
 #'
 #' @keywords internal
 block_label_theme <- function(d,
                               flip,
                               cell.width,
-                              sz) {
+                              sz,
+                              side = "top",
+                              bar.width = 3.5) {
     if (flip || is.null(d$split)) return(theme())
     blocks <- split(as.character(d$group), droplevels(as.factor(d$split)))
     widths <- vapply(blocks, function(x) length(unique(x)), integer(1)) * cell.width
     label_w <- nchar(names(blocks)) * 0.6 * sz$small / 72
     if (!any(label_w > widths + 0.08)) return(theme())
-    theme(strip.text.x.top = element_text(size = sz$small, face = "bold", angle = 90, hjust = 0,
-                                          margin = margin(b = 3)))
+    upright <- element_text(
+        size = sz$small,
+        face = "bold",
+        angle = 90,
+        hjust = if (side == "top") 0 else 1,
+        margin = group_bar_margin(side, bar.width)
+    )
+    if (side == "top") theme(strip.text.x.top = upright) else theme(strip.text.x.bottom = upright)
 }
 
 

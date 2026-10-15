@@ -25,6 +25,11 @@ dot_grid_plot(
   strip.style = "strip",
   cell.width = 0.18,
   cell.height = 0.18,
+  x.group.side = "opposite",
+  y.group.side = "opposite",
+  x.group.cols = NULL,
+  y.group.cols = NULL,
+  bar.width = 3.5,
   legend.position = "right",
   bg = "transparent"
 )
@@ -54,7 +59,8 @@ drawn at the nearest end}
 \item{fill.colours}{Colours of the fill scale, from low to high}
 
 \item{fill.limits}{Limits of the fill scale; values beyond get the colour of
-the nearest end}
+the nearest end. For a diverging scale they need not be
+symmetric (see \code{diverging_limits()})}
 
 \item{fill.center}{Centre of a diverging fill scale, or NULL for a
 sequential one}
@@ -76,6 +82,16 @@ rows (one per row, left of the grid), or NULL for none}
 dot per row or column)}
 
 \item{cell.width, cell.height}{Size of one column / row in inches}
+
+\item{x.group.side, y.group.side}{Side of the column / row groups: "opposite"
+(default; opposite the tick labels: top /
+right) or "labels" (beyond the labels:
+bottom / left)}
+
+\item{x.group.cols, y.group.cols}{Colours of the group bars, named by group;
+NULL for black}
+
+\item{bar.width}{Thickness of the group bars in points}
 
 \item{legend.position}{Position of the legends}
 

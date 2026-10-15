@@ -15,12 +15,16 @@ plot_multi_volcano(
   groups = NULL,
   padj.cutoff = 0.05,
   logfc.cutoff = 1,
-  show.ns = FALSE,
+  show.ns = TRUE,
   layout = c("sina", "pvalue", "jitter"),
   color.by = c("padj", "direction", "sharing"),
   cols = NULL,
-  band.cols = NULL,
-  band.labels = NULL,
+  comparison.cols = NULL,
+  comparison.labels = NULL,
+  groups.cols = NULL,
+  groups.side = c("opposite", "labels"),
+  group.bar.width = 3.5,
+  flip = FALSE,
   label = c("top", "selected", "none"),
   label.n = 3,
   label.features = NULL,
@@ -33,10 +37,13 @@ plot_multi_volcano(
   raster = NULL,
   raster.dpi = 1000,
   cell.width = 0.6,
+  cell.height = cell.width,
   panel.height = 3.5,
+  panel.width = panel.height,
   legend.position = "right",
   bg = "transparent",
-  seed = 42
+  seed = 42,
+  ...
 )
 }
 \arguments{
@@ -57,8 +64,9 @@ below `padj.cutoff` (default 0.05) and its
 absolute log2 fold change above
 `logfc.cutoff` (default 1)}
 
-\item{show.ns}{Whether to draw non-significant genes too, faint and under
-the band, default is FALSE}
+\item{show.ns}{Whether to draw non-significant genes too, in grey under
+the DE genes as in \code{\link{plot_volcano}}, default is
+TRUE}
 
 \item{layout}{How points spread across their column: "sina" (default;
 as wide as the density of genes at that fold change, so the
@@ -85,13 +93,32 @@ high. NULL (default) uses "blue-magenta" without its pale
 centre, `c(up = "firebrick4", down = "midnightblue")` and
 "plasma_r"}
 
-\item{band.cols}{Colours of the bands, one per comparison: NULL (default;
-the default group palette), a qualitative palette name, or
-colours named by comparison}
+\item{comparison.cols}{Colours of the comparison strips (a bar along
+each column, or row when flipped): NULL (default;
+the default group palette, "scanpy-20"), a
+qualitative palette name, or colours named by
+comparison (e.g. the cell type colours of an
+embedding)}
 
-\item{band.labels}{Display names of the comparisons, named by comparison.
-Names are written in the bands when they fit, otherwise
-under the columns}
+\item{comparison.labels}{Display names of the comparisons, named by
+comparison, written beyond the strips (turned 45
+degrees when wider than a column)}
+
+\item{groups.cols}{Colours of the bars marking the `groups` of comparisons:
+NULL (default) for black bars, a qualitative palette
+name, or colours named by group}
+
+\item{groups.side}{Side of the `groups`: "opposite" (default; opposite the
+comparison names: at the bottom, or on the right when
+flipped) or "labels" (beyond the comparison names)}
+
+\item{group.bar.width}{Thickness of the comparison strips and group bars in
+points, default is 3.5}
+
+\item{flip}{Whether to list the comparisons as rows, with log2 fold change
+on the x-axis (down-regulated genes on the left, up on the
+right) and the comparison names on the left, default is FALSE
+(comparisons as columns, names on top)}
 
 \item{label}{Which genes to label: "top" (default; the `label.n` most
 significant genes per column and direction, plus
@@ -121,7 +148,7 @@ TRUE}
 
 \item{alpha}{Point opacity, default is 0.8}
 
-\item{raster}{Whether to rasterize the points (labels, bands and text stay
+\item{raster}{Whether to rasterize the points (labels, strips and text stay
 vector): NULL (default) rasterizes above 5,000 points, or
 TRUE / FALSE}
 
@@ -129,7 +156,14 @@ TRUE / FALSE}
 
 \item{cell.width}{Width of one column in inches, default is 0.6}
 
-\item{panel.height}{Height of the panel in inches, default is 3.5}
+\item{cell.height}{Height of one row in inches when flipped, default is
+`cell.width`}
+
+\item{panel.height}{Height of the panel (the log2 fold change axis) in
+inches, default is 3.5}
+
+\item{panel.width}{Width of the panel (the log2 fold change axis) in inches
+when flipped, default is `panel.height`}
 
 \item{legend.position}{Position of the legend, default is "right"}
 
@@ -137,6 +171,10 @@ TRUE / FALSE}
 
 \item{seed}{Random seed for the spread of points and label placement,
 default is 42}
+
+\item{...}{`band.cols` and `band.labels`, the names of `comparison.cols`
+and `comparison.labels` before 0.11.0, accepted with a
+deprecation warning}
 }
 \value{
 A ggplot object
@@ -144,11 +182,12 @@ A ggplot object
 \description{
 Summarizes genome-wide DE results of many comparisons in one
              figure (e.g. condition B vs A within each cell type): one
-             column of DE genes per comparison, at their log2 fold change,
-             with a coloured band at 0 spanning exactly
-             +-`logfc.cutoff` (the non-significant zone), the numbers of up-
-             and down-regulated genes above and below each column, and the
-             top genes labelled. An improved version of the plot made
+             column of genes per comparison, at their log2 fold change
+             (non-significant genes in grey, the cutoffs as dashed lines),
+             each comparison marked by a coloured strip and its name on
+             top, the numbers of up- and down-regulated genes above and
+             below each column, and the top genes labelled. `flip = TRUE`
+             lists the comparisons as rows. An improved version of the plot made
              popular by scRNAtoolVis' \code{jjVolcano()}: colour carries
              the significance (or how many comparisons share a gene)
              rather than repeating the direction, points are spread by
@@ -156,7 +195,10 @@ Summarizes genome-wide DE results of many comparisons in one
              distribution, and no value is capped.
 }
 \details{
-The source data (\code{\link{export_source_data}}) hold one row
+Comparisons play the part of `group.by` in the single-cell plots
+         (the units compared, marked by colour) and `groups` that of
+         `split.by` (higher-level blocks, marked by a bar and a name).
+         The source data (\code{\link{export_source_data}}) hold one row
          per drawn gene with its comparison, x position, log2 fold change,
          adjusted p-value, direction, the number of comparisons it is DE in
          (`n_shared`) and whether it is labelled.

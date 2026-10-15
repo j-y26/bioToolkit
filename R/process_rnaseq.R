@@ -1,123 +1,181 @@
 # Common functionalities for processing RNA-seq data
 
+#' Columns of a DE table used by the DE table helpers
+#'
+#' Finds the log2 fold change and adjusted p-value columns of a DE table for
+#' \code{rank_de_genes()}, \code{generate_de_rank_file()} and
+#' \code{filter_de_genes()}, from the same presets as
+#' \code{\link{standardize_de}}: columns given explicitly win; otherwise they
+#' come from `method`, detected from the column names when "auto".
+#'
+#' @param data A DE table
+#'
+#' @param method "auto", "edgeR", "DESeq2", "limma" or "seurat" (case is
+#'               ignored, as the old `de_method` argument did)
+#'
+#' @param logfc.col,padj.col Columns given by the user, or NULL
+#'
+#' @return A named character vector with `logfc` and `padj`
+#'
+#' @keywords internal
+de_helper_columns <- function(data,
+                              method,
+                              logfc.col,
+                              padj.col) {
+    methods <- c("auto", names(DE_COLUMN_PRESETS))
+    # The default (the whole vector) means "auto"; matching ignores case so
+    # that the old de_method = "deseq2" keeps working
+    method <- if (length(method) > 1) "auto" else methods[match(tolower(method), tolower(methods))]
+    if (is.na(method)) {
+        stop("`method` must be one of ", paste0("\"", methods, "\"", collapse = ", "), call. = FALSE)
+    }
+    if (!is.data.frame(data)) data <- as.data.frame(data)
+    if (method == "auto" && !(!is.null(logfc.col) && !is.null(padj.col))) {
+        # Only the two columns used here need to be present (a trimmed edgeR
+        # table with logFC and FDR is enough, as before 0.10.0)
+        found <- names(Filter(function(p) all(p[c("logfc", "padj")] %in% names(data)), DE_COLUMN_PRESETS))
+        if (length(found) == 0) {
+            stop("Could not detect the DE method from the columns of `data`; ",
+                 "set `method` or `logfc.col` and `padj.col`", call. = FALSE)
+        }
+        method <- found[1]
+        message("Detected ", method, " results (",
+                paste(DE_COLUMN_PRESETS[[method]][c("logfc", "padj")], collapse = ", "), ")")
+    }
+    preset <- if (method == "auto") c(logfc = NA, padj = NA) else DE_COLUMN_PRESETS[[method]]
+    cols <- c(logfc = logfc.col %||% unname(preset[["logfc"]]),
+              padj = padj.col %||% unname(preset[["padj"]]))
+    if (anyNA(cols)) stop("Set both `logfc.col` and `padj.col`", call. = FALSE)
+    missing <- setdiff(cols, names(data))
+    if (length(missing)) {
+        stop("Column ", paste0("'", missing, "'", collapse = ", "), " not found in `data`", call. = FALSE)
+    }
+    cols
+}
+
+
+# Old (before 0.10.0) -> new argument names of the DE table helpers
+DE_HELPER_ARG_RENAMES <- c(
+    de_results = "data",
+    de_method = "method",
+    pvalue_col = "padj.col",
+    log2fc_col = "logfc.col",
+    log2fc_min = "logfc.cutoff",
+    pvalue_max = "padj.cutoff",
+    save_file = "file"
+)
+
+
 #' @title Calculate ranks of genes for differential expression analysis
 #'
-#' @description This function calculates ranks of genes based on the
-#'              differential expression analysis results for RNA-seq data.
-#'              The pi-value is calculated using the following formula:
-#'              \deqn{pi = -log10(p) * sign(log2fc)}
-#'              where \eqn{p} is the (adjusted) p-value and \eqn{log2fc} is the
-#'              log2 fold change. The rank is then calculated based on the
-#'              pi-value.
+#' @description Ranks the genes of a DE table by a signed significance score,
+#'              the pi-value:
+#'              \deqn{pi = -log10(padj) * sign(logFC)}
+#'              so that significantly up-regulated genes come first and
+#'              significantly down-regulated genes last; a ranking for GSEA
+#'              (see \code{\link{generate_de_rank_file}}).
 #'
-#' @param de_results A data frame containing the results of differential
-#'                   expression analysis. The data frame should have at least
-#'                   a column for log2 fold change and a column for (adjusted)
-#'                   p-value.
+#' @param data A data frame of DE results with a log2 fold change and an
+#'             adjusted p-value column (edgeR, DESeq2, limma or Seurat
+#'             results, or any table with the columns given)
 #'
-#' @param de_method The method used for differential expression analysis.
-#'                  Must be one of "edgeR" or "DESeq2". Default is "edgeR".
-#'                  Use this argument to automatically set the column names
-#'                  for log2 fold change and adjusted P-value. If provided value
-#'                  is not "edgeR" or "DESeq2", the user must provide both the
-#'                  column names for log2 fold change and P-value using the
-#'                  \code{log2fc_col} and \code{pvalue_col} arguments,
-#'                  respectively.
+#' @param method The tool that produced the results: "auto" (default) detects
+#'               it from the column names, as \code{\link{standardize_de}}
+#'               does; or one of "edgeR", "DESeq2", "limma" and "seurat"
 #'
-#' @param pvalue_col The name of the column in \code{de_results} that contains
-#'                   the p-values. If not NULL, overrides the default column
-#'                   name based on \code{de_method}.
+#' @param padj.col Column of the (adjusted) p-values used for the ranking. If
+#'                 NULL (default), taken from `method` (e.g. "FDR" for edgeR,
+#'                 "padj" for DESeq2)
 #'
-#' @param log2fc_col The name of the column in \code{de_results} that contains
-#'                   the log2 fold changes.
+#' @param logfc.col Column of the log2 fold changes. If NULL (default), taken
+#'                  from `method`
+#'
+#' @param ... Deprecated names of the arguments (`de_results`, `de_method`,
+#'            `pvalue_col`, `log2fc_col`), accepted with a warning; renamed in
+#'            0.10.0
+#'
+#' @details Ties are common among genes with the same adjusted p-value (e.g.
+#'          many non-significant genes at padj = 1); they are broken by row
+#'          order (`ties.method = "first"`).
 #'
 #' @export
 #'
-#' @return A data frame with the addition of the following columns:
+#' @return The input data frame, ordered by rank, with two added columns:
 #'          \item{piValue}{The pi-value of the gene}
 #'          \item{rank}{The rank of the gene based on the pi-value}
 #'
+#' @examples
+#' de <- data.frame(
+#'     logFC = c(2.1, -1.4, 0.2), PValue = c(1e-8, 1e-4, 0.6),
+#'     FDR = c(3e-8, 2e-4, 0.6), row.names = c("ISG15", "CD3E", "ACTB")
+#' )
+#' rank_de_genes(de)
+#'
 rank_de_genes <- function(
-    de_results,
-    de_method = "edgeR",
-    pvalue_col = NULL,
-    log2fc_col = NULL) {
-  # Set column names based on the method used, case-insensitive
-  de_method <- tolower(de_method)
-  if (de_method == "edger" && is.null(pvalue_col) && is.null(log2fc_col)) {
-    pvalue_col <- PVAL_COL_EDGER
-    log2fc_col <- FC_COL_EDGER
-  } else if (de_method == "deseq2" && is.null(pvalue_col) && is.null(log2fc_col)) {
-    pvalue_col <- PVAL_COL_DESEQ2
-    log2fc_col <- FC_COL_DESEQ2
-  } else if (is.null(pvalue_col) || is.null(log2fc_col)) {
-    stop("Please provide both the column names for log2 fold change and p-value.")
-  }
+    data,
+    method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+    padj.col = NULL,
+    logfc.col = NULL,
+    ...) {
+  # Old argument names (before 0.10.0) are mapped to the new ones
+  list2env(renamed_args(list(...), DE_HELPER_ARG_RENAMES[1:4], "rank_de_genes",
+                        names(match.call())), environment())
+  cols <- de_helper_columns(data, method, logfc.col, padj.col)
 
   # Calculate pi-value
-  de_results$piValue <- -log10(de_results[[pvalue_col]]) * sign(de_results[[log2fc_col]])
+  data$piValue <- -log10(data[[cols[["padj"]]]]) * sign(data[[cols[["logfc"]]]])
 
   # Rank genes based on pi-value, from max to min
-  de_results$rank <- rank(-de_results$piValue, ties.method = "first")
+  data$rank <- rank(-data$piValue, ties.method = "first")
 
   # re-order the rows based on rank
-  de_results <- de_results[order(de_results$rank), ]
+  data <- data[order(data$rank), ]
 
-  return(de_results)
+  return(data)
 }
 
 
 #' @title Generate rank file for GSEA
 #'
-#' @description This function generates a rank file for Gene Set Enrichment
-#'              Analysis (GSEA) based on the differential expression analysis
-#'              results. The rank file contains the gene names and their ranks,
-#'              which is the pi-value. Higher pi-values indicate higher
-#'              rank.
+#' @description Ranks the genes of a DE table by their pi-value (see
+#'              \code{\link{rank_de_genes}}) and returns, and optionally
+#'              writes, the two-column table read by the GSEA desktop
+#'              application (`.rnk`). For fgsea, use
+#'              `setNames(rnk$rank, rnk$GeneName)`.
 #'
-#' @param de_results A data frame containing the results of differential
-#'                   expression analysis. The data frame should have at least
-#'                   a column for log2 fold change and a column for (adjusted)
-#'                   p-value.
+#' @param file Path of the tab-separated rank file to write. Default is NULL
+#'             (nothing written)
 #'
-#' @param save_file The name of the file to save the rank file. Default is NULL.
-#'                  If NULL, the rank file will not be saved to disk.
+#' @param ... Deprecated names of the arguments (`de_results`, `save_file`,
+#'            `de_method`, `pvalue_col`, `log2fc_col`), accepted with a
+#'            warning; renamed in 0.10.0
 #'
-#' @param de_method The method used for differential expression analysis.
-#'                  Must be one of "edgeR" or "DESeq2". Default is "edgeR".
-#'                  Use this argument to automatically set the column names
-#'                  for log2 fold change and adjusted P-value. If provided value
-#'                  is not "edgeR" or "DESeq2", the user must provide both the
-#'                  column names for log2 fold change and P-value using the
-#'                  \code{log2fc_col} and \code{pvalue_col} arguments,
-#'                  respectively.
-#'
-#' @param pvalue_col The name of the column in \code{de_results} that contains
-#'                   the p-values. If not NULL, overrides the default column
-#'                   name based on \code{de_method}.
-#'
-#' @param log2fc_col The name of the column in \code{de_results} that contains
-#'                   the log2 fold changes.
+#' @inheritParams rank_de_genes
 #'
 #' @export
 #'
-#' @return A data frame with the addition of the following columns:
-#'          \item{piValue}{The pi-value of the gene}
-#'          \item{rank}{The rank of the gene based on the pi-value}
-#'         And if \code{save_file} is not NULL, a rank file will be saved to disk.
+#' @return A data frame with columns `GeneName` (the row names of `data`) and
+#'         `rank` (the pi-value), from highest to lowest; written to `file`
+#'         when given
 #'
 #' @importFrom utils write.table
 #' @import dplyr
 #' @importFrom tibble rownames_to_column
 #'
 generate_de_rank_file <- function(
-    de_results,
-    save_file = NULL,
-    de_method = "edgeR",
-    pvalue_col = NULL,
-    log2fc_col = NULL) {
+    data,
+    file = NULL,
+    method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+    padj.col = NULL,
+    logfc.col = NULL,
+    ...) {
+  # Old argument names (before 0.10.0) are mapped to the new ones
+  list2env(renamed_args(list(...), DE_HELPER_ARG_RENAMES[c(1:4, 7)], "generate_de_rank_file",
+                        names(match.call())), environment())
+
   # Rank the genes based on differential expression results
-  ranked_results <- rank_de_genes(de_results, de_method, pvalue_col, log2fc_col)
+  ranked_results <- rank_de_genes(data, method = method, padj.col = padj.col,
+                                  logfc.col = logfc.col)
 
   # Select relevant columns for GSEA
   gsea_rank_file <- ranked_results %>%
@@ -125,78 +183,65 @@ generate_de_rank_file <- function(
     mutate(rank = piValue) %>%
     select(GeneName, rank)
 
-  # Save the rank file to disk if save_file is provided
-  if (!is.null(save_file)) {
-    write.table(gsea_rank_file, file = save_file, sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+  # Save the rank file to disk if a file is given
+  if (!is.null(file)) {
+    write.table(gsea_rank_file, file = file, sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
   }
   return(gsea_rank_file)
 }
 
 
-#' @title Filter genes based on differential expression analysis results
+#' @title Split DE results into up- and down-regulated genes
 #'
-#' @description This function filters genes based on the results of differential
-#'              expression analysis for RNA-seq data. The user can specify the
-#'              minimum log2 fold change and maximum adjusted p-value to filter
-#'              the genes.
+#' @description Keeps the genes of a DE table with an adjusted p-value below
+#'              `padj.cutoff` and an absolute log2 fold change above
+#'              `logfc.cutoff`, split by direction.
 #'
-#' @param de_results A data frame containing the results of differential
-#'                   expression analysis. The data frame should have at least
-#'                   a column for log2 fold change and a column for (adjusted)
-#'                   p-value.
+#' @param logfc.cutoff Minimum absolute log2 fold change (strictly greater).
+#'                     Default is 0 (any change)
 #'
-#' @param log2fc_min The minimum log2 fold change to filter genes. Default is
-#'                   0, which means no filtering based on log2 fold change.
+#' @param padj.cutoff Maximum adjusted p-value (strictly smaller). Default is
+#'                    0.05
 #'
-#' @param pvalue_max The maximum adjusted p-value to filter genes. Default is
-#'                   0.05.
+#' @param ... Deprecated names of the arguments (`de_results`, `log2fc_min`,
+#'            `pvalue_max`, `de_method`, `pvalue_col`, `log2fc_col`), accepted
+#'            with a warning; renamed in 0.10.0
 #'
-#' @param de_method The method used for differential expression analysis.
-#'                  Must be one of "edgeR" or "DESeq2". Default is "edgeR".
-#'                  Use this argument to automatically set the column names
-#'                  for log2 fold change and adjusted P-value. If provided value
-#'                  is not "edgeR" or "DESeq2", the user must provide both the
-#'                  column names for log2 fold change and P-value using the
-#'                  \code{log2fc_col} and \code{pvalue_col} arguments,
-#'                  respectively.
-#'
-#' @param pvalue_col The name of the column in \code{de_results} that contains
-#'                   the p-values. If not NULL, overrides the default column
-#'                   name based on \code{de_method}.
-#'
-#' @param log2fc_col The name of the column in \code{de_results} that contains
-#'                   the log2 fold changes.
+#' @inheritParams rank_de_genes
 #'
 #' @export
 #'
-#' @return A list of two data frames:
-#'          \item{up_reg}{Data frame containing up-regulated genes}
-#'          \item{down_reg}{Data frame containing down-regulated genes}
+#' @return A list of two data frames, the rows of `data` that pass:
+#'          \item{up_reg}{up-regulated genes}
+#'          \item{down_reg}{down-regulated genes}
+#'
+#' @examples
+#' de <- data.frame(
+#'     logFC = c(2.1, -1.4, 0.2), PValue = c(1e-8, 1e-4, 0.6),
+#'     FDR = c(3e-8, 2e-4, 0.6), row.names = c("ISG15", "CD3E", "ACTB")
+#' )
+#' filter_de_genes(de, logfc.cutoff = 1)
 #'
 filter_de_genes <- function(
-    de_results,
-    log2fc_min = 0,
-    pvalue_max = 0.05,
-    de_method = "edgeR",
-    pvalue_col = NULL,
-    log2fc_col = NULL) {
-  # Set column names based on the method used, case-insensitive
-  de_method <- tolower(de_method)
-  if (de_method == "edger" && is.null(pvalue_col) && is.null(log2fc_col)) {
-    pvalue_col <- PVAL_COL_EDGER
-    log2fc_col <- FC_COL_EDGER
-  } else if (de_method == "deseq2" && is.null(pvalue_col) && is.null(log2fc_col)) {
-    pvalue_col <- PVAL_COL_DESEQ2
-    log2fc_col <- FC_COL_DESEQ2
-  } else if (is.null(pvalue_col) || is.null(log2fc_col)) {
-    stop("Please provide both the column names for log2 fold change and p-value.")
-  }
+    data,
+    logfc.cutoff = 0,
+    padj.cutoff = 0.05,
+    method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+    padj.col = NULL,
+    logfc.col = NULL,
+    ...) {
+  # Old argument names (before 0.10.0) are mapped to the new ones
+  list2env(renamed_args(list(...), DE_HELPER_ARG_RENAMES[1:6], "filter_de_genes",
+                        names(match.call())), environment())
+  cols <- de_helper_columns(data, method, logfc.col, padj.col)
+  logfc <- data[[cols[["logfc"]]]]
+  padj <- data[[cols[["padj"]]]]
 
-  # Filter genes based on log2 fold change and p-value
-  up_reg <- de_results[de_results[[log2fc_col]] > log2fc_min &
-                          de_results[[pvalue_col]] < pvalue_max, ]
-  down_reg <- de_results[de_results[[log2fc_col]] < -log2fc_min &
-                            de_results[[pvalue_col]] < pvalue_max, ]
+  # Filter genes based on log2 fold change and adjusted p-value; NA p-values
+  # (e.g. DESeq2's independent filtering) never pass
+  sig <- !is.na(padj) & padj < padj.cutoff
+  up_reg <- data[sig & logfc > logfc.cutoff, ]
+  down_reg <- data[sig & logfc < -logfc.cutoff, ]
 
   return(list(up_reg = up_reg, down_reg = down_reg))
 }

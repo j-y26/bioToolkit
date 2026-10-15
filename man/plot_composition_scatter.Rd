@@ -12,6 +12,7 @@ plot_composition_scatter(
   y = NULL,
   facet.by = NULL,
   sample.by = NULL,
+  error = c("sem", "sd", "ci95"),
   cells = NULL,
   groups = NULL,
   value = c("percent", "count"),
@@ -44,9 +45,17 @@ proportions computed within each. Default is NULL}
 
 \item{sample.by}{Column of the samples. If given, proportions are computed
 per sample and each point is the mean of the samples of a
-condition, with +-SEM bars on both axes, so that every
-sample counts the same. If NULL (default), cells of all
-samples are pooled into one proportion per condition}
+condition, with error bars on both axes (see `error`), so
+that every sample counts the same. If NULL (default),
+cells of all samples are pooled into one proportion per
+condition}
+
+\item{error}{Error bars with `sample.by`: "sem" (default; standard error
+of the mean), "sd" (standard deviation of the samples) or
+"ci95" (95\% confidence interval of the mean, mean +-
+t(0.975, n - 1) x SEM). The horizontal bar is computed from
+the samples of the x condition, the vertical one from those
+of the y condition. A condition with one sample has no bar}
 
 \item{cells}{Cells (rows) to use, as names or indices, e.g. one lineage:
 proportions are then of that subset. If NULL (default), all}
@@ -104,8 +113,12 @@ Plots, for each group of cells (e.g. cell type or state), its
 \details{
 The source data (\code{\link{export_source_data}}) hold one row per group
 (and panel): the values on x and y, the cell counts and totals of both
-conditions and, with `sample.by`, the SEM and number of samples.
+conditions and, with `sample.by`, the SEM, SD, number of samples and the
+half-width of the error bars drawn (`x_error`, `y_error`).
 Per-sample proportions are returned by \code{\link{summarize_group_meta}}.
+
+Groups with no cells in either condition (of a panel, or among `cells`)
+are not drawn.
 
 The plot shows where proportions differ, not whether the difference is
 significant: that needs a test on samples, not cells (e.g. propeller,

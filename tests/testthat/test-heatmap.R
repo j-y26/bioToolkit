@@ -57,7 +57,8 @@ test_that("heatmap layout: column widths, gaps, row heights and the label rule",
 
 test_that("heatmap colours: teal-yellow for z-scores, magma for positive values", {
     expect_equal(heatmap_fill_limits(c(-4, 3), TRUE, TRUE, NA, NA), c(-2.5, 2.5))
-    expect_equal(heatmap_fill_limits(c(-0.4, 0.2), FALSE, TRUE, NA, NA), c(-0.4, 0.4))
+    # Signed values: centred on 0, each end at its own extreme
+    expect_equal(heatmap_fill_limits(c(-0.4, 0.2), FALSE, TRUE, NA, NA), c(-0.4, 0.2))
     expect_equal(heatmap_fill_limits(c(0.5, 3), FALSE, FALSE, NA, NA), c(0, 3))
     pal <- bt_palette("teal-yellow")
     expect_equal(pal[c(1, 6, 11)], c("#00CED1", "#000000", "#FFE800"))
@@ -80,4 +81,30 @@ test_that("heatmap palette: dark centre for cells, light centre for group means"
     pg <- suppressMessages(DoHeatmap_bioToolkit(so, c("Cd3e", "Ms4a1"), group.by = "ct", columns = "groups"))
     expect_equal(mid(pc), "#000000")
     expect_equal(mid(pg), toupper(bt_palette("blue-magenta")[6]))
+})
+
+
+test_that("DoHeatmap_bioToolkit marks blocks of features and of columns with bars", {
+    so <- sim_seurat()
+    p <- suppressMessages(DoHeatmap_bioToolkit(so, list(T = "Cd3e", B = c("Ms4a1", "Cd68")), group.by = "ct",
+                                               feature.group.cols = c(T = "red", B = "blue")))
+    rows <- patchwork_parts(p)$plots
+    body <- rows[[length(rows)]]
+    fb <- Filter(function(l) inherits(l$geom, "GeomGroupBar"), body$layers)
+    expect_equal(fb[[1]]$geom_params$side, "left")
+    expect_equal(fb[[1]]$data$fill, c("red", "blue"))
+    top <- Filter(function(l) inherits(l$geom, "GeomGroupBar"), rows[[1]]$layers)
+    expect_equal(top[[1]]$geom_params$side, "top")
+    expect_true(all(top[[1]]$data$fill == "black"))
+    expect_no_error(patchwork::patchworkGrob(p))
+})
+
+test_that("without header rows, the column bars are drawn on the first block of rows only", {
+    so <- sim_seurat()
+    p <- suppressMessages(DoHeatmap_bioToolkit(so, list(T = "Cd3e", B = c("Ms4a1", "Cd68")), group.by = "ct",
+                                               group.marker = "none"))
+    body <- patchwork_parts(p)$plots[[1]]
+    top <- Filter(function(l) inherits(l$geom, "GeomGroupBar") && l$geom_params$side == "top", body$layers)
+    expect_equal(as.character(unique(top[[1]]$data$row_block)), "T")
+    expect_no_error(patchwork::patchworkGrob(p))
 })

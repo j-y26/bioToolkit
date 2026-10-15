@@ -26,8 +26,15 @@
 #   fixed (colour bar 1, size 2): without `order`, ggplot2 orders legends by
 #   an internal hash of each guide, which changes with the data, so two
 #   figures could list their legends in different orders.
+#   Revision of 2026-10-14 (user): the strips of all panels have the same
+#   thickness, their names centred (a name wrapped onto two lines no longer
+#   makes its strip wider than the others); and, with several panels, the
+#   legends are in two columns by default (`legend.layout = "columns"`):
+#   colour bars in the first, size legends in the second, each in panel
+#   order (a legend block, R/legends.R). A single panel has its colour bar
+#   and size legend side by side.
 # * `plot_enrichment_grid()` draws terms x comparisons on the dot-grid engine
-#   (G0): colour = NES (GSEA; diverging, symmetric) or -log10 padj (ORA),
+#   (G0): colour = NES (GSEA; diverging, centred on 0) or -log10 padj (ORA),
 #   size = -log10 padj or gene count, non-significant results faded (as G2).
 #   For one term across many comparisons (e.g. Hallmark sets across cell
 #   types).
@@ -513,8 +520,8 @@ plot_enrichment_grid <- function(
     }
     fv <- fill_v[drawn & !is.na(fill_v)]
     limits <- if (fill == "nes") {
-        m <- max(abs(c(fv, 0)))
-        c(-1, 1) * (if (m == 0) 1 else m)
+        # Centred on 0, each side to its own extreme (diverging_limits())
+        diverging_limits(fv, center = 0)
     } else {
         c(0, max(c(fv, -log10(padj.cutoff))))
     }
@@ -666,6 +673,13 @@ replace_terms <- function(x,
 #' @param legend.position Position of the legends of each panel: "right"
 #'                        (default), "bottom" or "none"
 #'
+#' @param legend.layout Arrangement of the legends on the right:
+#'                      "columns" (default; colour bars in one column and
+#'                      size legends in the next, each in panel order; a
+#'                      single panel's two legends side by side) or "stacked"
+#'                      (one column, each panel's colour bar and size legend
+#'                      in turn)
+#'
 #' @param bg Background colour, default is "transparent"
 #'
 #' @param ... Arguments to \code{\link{standardize_enrichment}} when
@@ -673,8 +687,15 @@ replace_terms <- function(x,
 #'
 #' @details Legends: each panel has its own colour bar (in its palette) when
 #'          panels are drawn in different palettes; the size legend is drawn
-#'          once when the limits are shared. In every panel the colour bar
-#'          comes first and the size legend second, whatever the data.
+#'          once when the limits are shared. With legends on the right
+#'          (default), the legends of all panels are gathered to the right of
+#'          the panels: colour bars in one column and size legends in the
+#'          next (`legend.layout = "columns"`), or all in one column. Panels
+#'          side by side (or in a grid) have the same height, so that their
+#'          rows line up: shorter panels get empty rows at the bottom. Long
+#'          names of stacked panels are wrapped to fit the height of their
+#'          strip; all strips have the same thickness, with their names
+#'          centred.
 #'
 #'          Gene ratio is a descriptive measure: a set of 10 genes with 5 in
 #'          the list has a higher ratio than a set of 500 with 50, but is
@@ -726,12 +747,14 @@ plot_enrichment_dots <- function(
     cell.height = 0.2,
     panel.width = 2,
     legend.position = c("right", "bottom", "none"),
+    legend.layout = c("columns", "stacked"),
     bg = "transparent",
     ...
 ) {
     x <- match.arg(x)
     order.by <- match.arg(order.by)
     legend.position <- match.arg(legend.position)
+    legend.layout <- match.arg(legend.layout)
     check_de_cutoffs(padj.cutoff, 0)
     res <- as_enrichment(enrichment, ...)
     res$term <- replace_terms(res$term, term.replace)
@@ -800,22 +823,56 @@ plot_enrichment_dots <- function(
     x_title <- switch(x, gene_ratio = "Gene ratio", nes = "Normalized enrichment score", count = "Genes",
                       padj = quote(-log[10] ~ "padj"))
 
+    # Panels stacked in one column (default) get vertical strips on the right
+    vertical <- is.null(ncol) && is.null(nrow) || identical(ncol, 1) || identical(ncol, 1L)
+    # Panels side by side (or in a grid) get the same height, so that their
+    # rows and names line up: as many rows as the longest panel (empty rows
+    # at the bottom of shorter ones), each as tall as the tallest
+    row_hs <- vapply(picked, function(d) label_row_height(wrap_labels(d$term, wrap.width), cell.height, sz$small),
+                     numeric(1))
+    n_rows_max <- max(vapply(picked, nrow, integer(1)))
+
+    # Strip names: those of stacked panels are wrapped to the height of their
+    # panel, so that a long name on a short panel stays within its strip. All
+    # strips get the thickness of the one with the most lines, the names
+    # centred in it
+    strip_names <- vapply(seq_along(picked), function(i) {
+        pn <- names(picked)[i]
+        if (!vertical) return(pn)
+        n_rows <- nrow(picked[[i]])
+        fit <- floor(grid_panel_size(n_rows, row_hs[[i]]) / (0.6 * sz$small / 72))
+        paste(strwrap(pn, width = max(fit, 6)), collapse = "\n")
+    }, character(1))
+    # Thickness of each name as drawn (bold, 0.9 line height), measured on a
+    # PDF device; each strip is padded by half its difference to the thickest
+    grDevices::pdf(NULL)
+    name_h <- tryCatch(vapply(strip_names, function(nm) {
+        g <- grid::textGrob(nm, gp = grid::gpar(fontsize = sz$small, fontface = "bold", lineheight = 0.9))
+        grid::convertHeight(grid::grobHeight(g), "pt", valueOnly = TRUE)
+    }, numeric(1)), finally = grDevices::dev.off())
+    strip_pad <- unname(max(name_h) - name_h) / 2
+    # Legends shown by each panel: colour bars first, size second. With
+    # shared limits, a colour bar is repeated only when the palettes differ
+    # and the size legend is drawn once (first panel)
+    show_fill <- !shared.scale | !same_palette | seq_along(picked) == 1
+    show_size <- has_count & (!shared.scale | seq_along(picked) == 1)
+
     plots <- lapply(seq_along(picked), function(i) {
         d <- picked[[i]]
         pn <- names(picked)[i]
         lim_d <- if (shared.scale) all_d else d
-        d$id <- factor(d$term_id, levels = rev(unique(d$term_id)))
         d$label <- wrap_labels(d$term, wrap.width)
-        d$panel <- factor(pn, levels = pn)
         labels <- stats::setNames(d$label, d$term_id)
-        row_h <- label_row_height(d$label, cell.height, sz$small)
+        row_h <- if (vertical) row_hs[[i]] else max(row_hs)
+        n_rows <- if (vertical) nrow(d) else n_rows_max
+        # Discrete y levels from the bottom: padding rows, then the gene sets
+        # (the first at the top)
+        pad <- if (n_rows > nrow(d)) paste0(".pad", seq_len(n_rows - nrow(d))) else character(0)
+        y_levels <- c(pad, rev(unique(d$term_id)))
+        d$id <- factor(d$term_id, levels = y_levels)
+        d$panel <- factor(strip_names[i], levels = strip_names[i])
         pal <- pals[[pn]]
-        # Legends: colour bar first, size second, in every panel. With shared
-        # limits, a colour bar is repeated only when the palettes differ and
-        # the size legend is drawn once (first panel)
-        show_fill <- !shared.scale || !same_palette || i == 1
-        show_size <- has_count && (!shared.scale || i == 1)
-        fill_guide <- if (show_fill) {
+        fill_guide <- if (show_fill[i]) {
             guide_colourbar(order = 1, theme = theme(
                 legend.key.height = unit(min(0.9, max(0.5, nrow(d) * row_h * 0.8)), "in"),
                 legend.key.width = unit(0.12, "in"),
@@ -836,13 +893,15 @@ plot_enrichment_dots <- function(
         p <- ggplot(d, aes(x = .data$x, y = .data$id)) +
             dots +
             scale_colour_gradientn(colours = pal, limits = range_of(lim_d$neg_log10_padj),
-                                   oob = scales::oob_squish, name = fill.title, guide = fill_guide) +
-            scale_y_discrete(labels = labels, expand = grid_expansion()) +
+                                   oob = scales::oob_squish, name = bold_title(fill.title), guide = fill_guide) +
+            # Padding rows have no tick, grid line or name
+            scale_y_discrete(limits = y_levels, breaks = setdiff(y_levels, pad), labels = labels,
+                             expand = grid_expansion()) +
             scale_x_continuous(limits = if (shared.scale) range(all_d$x) else NULL,
                                expand = expansion(mult = 0.12)) +
             labs(x = x_title, y = NULL) +
             theme_bioToolkit("axis", bg = bg) +
-            panel_size_theme(panel.width, grid_panel_size(nrow(d), row_h)) +
+            panel_size_theme(panel.width, grid_panel_size(n_rows, row_h)) +
             theme(
                 axis.line = element_blank(),
                 panel.border = element_rect(colour = "black", fill = NA, linewidth = pt_to_linewidth(sz$line)),
@@ -857,8 +916,8 @@ plot_enrichment_dots <- function(
             )
         if (has_count) {
             p <- p + scale_size(range = c(max_size * 0.3, max_size), limits = range_of(lim_d$count),
-                                name = size.title,
-                                guide = if (show_size) {
+                                name = bold_title(size.title),
+                                guide = if (show_size[i]) {
                                     guide_legend(order = 2, override.aes = list(colour = "grey45"))
                                 } else {
                                     "none"
@@ -868,9 +927,15 @@ plot_enrichment_dots <- function(
             # The strip is tinted with (half of) the light end of the panel's
             # palette and named in its dark end, tying the panel to its colour
             # bar
-            vertical <- is.null(ncol) && is.null(nrow) || identical(ncol, 1) || identical(ncol, 1L)
-            strip_theme <- element_text(size = sz$small, face = "bold", colour = pal[length(pal)],
-                                        margin = margin(3, 3, 3, 3))
+            # Padded across the strip to the thickness of the thickest one
+            pad <- 3 + strip_pad[i]
+            strip_theme <- element_text(
+                size = sz$small,
+                face = "bold",
+                colour = pal[length(pal)],
+                lineheight = 0.9,
+                margin = if (vertical) margin(3, pad, 3, pad) else margin(pad, 3, pad, 3)
+            )
             p <- p +
                 (if (vertical) facet_grid(rows = vars(.data$panel)) else facet_grid(cols = vars(.data$panel))) +
                 theme(
@@ -894,6 +959,8 @@ plot_enrichment_dots <- function(
     names(src)[names(src) == "x"] <- paste0("x_", x)
     if (length(plots) == 1) {
         p <- plots[[1]]
+        # Colour bar and size legend side by side
+        if (legend.layout == "columns") p <- p + theme(legend.box = "horizontal", legend.box.just = "top")
         if (!is.null(title)) p <- p + labs(title = title) + theme(plot.title.position = "plot")
         attr(p, "source_data") <- src
         return(p)
@@ -903,14 +970,61 @@ plot_enrichment_dots <- function(
     # its own when cut out of the figure
     if (is.null(ncol) && is.null(nrow)) ncol <- 1
     transparent_bg <- is.na(bg) || identical(bg, "transparent")
+    # Legends are collected into one column on the right (each panel's colour
+    # bar in its palette, the size legend once): kept per panel, the legends
+    # of a panel shorter than them would spill over the next panel or out of
+    # the figure
+    guides <- if (legend.position == "right") "collect" else "keep"
     # Stacked panels with a shared x range keep only the bottom x-axis, as
     # facets would (patchwork drops axes identical to their neighbour's)
-    combined <- patchwork::wrap_plots(plots, ncol = ncol, nrow = nrow, guides = "keep",
-                                      axes = if (shared.scale && identical(as.numeric(ncol), 1)) "collect_x" else "keep") +
-        patchwork::plot_annotation(title = title, theme = theme(
-            plot.title = element_text(size = sz$large, face = "bold", hjust = 0),
-            plot.background = element_rect(fill = if (transparent_bg) "transparent" else bg, colour = NA)
-        ))
+    axes <- if (shared.scale && identical(as.numeric(ncol), 1)) "collect_x" else "keep"
+    annotation <- patchwork::plot_annotation(title = title, theme = theme(
+        plot.title = element_text(size = sz$large, face = "bold", hjust = 0),
+        plot.background = element_rect(fill = if (transparent_bg) "transparent" else bg, colour = NA)
+    ))
+    if (legend.position == "right" && legend.layout == "columns") {
+        # Legends in two columns to the right of the panels: the colour bars,
+        # then the size legends, each in panel order. Each legend is taken
+        # from its panel (the other legend hidden) when the figure is drawn
+        fill_col <- lapply(which(show_fill), function(i) plots[[i]] + guides(size = "none"))
+        size_col <- lapply(which(show_size), function(i) plots[[i]] + guides(colour = "none"))
+        block <- legend_block_grob(list(fill_col, size_col))
+        legend_fig <- legend_block_figure(block)
+        panels <- lapply(plots, function(p) p + theme(legend.position = "none"))
+        # One flat layout (a nested patchwork of fixed-size panels cannot be
+        # printed, a patchwork limitation): the panels in their grid, the
+        # legends in a column to the right spanning all rows, top aligned
+        grid_ncol <- if (!is.null(ncol)) ncol else ceiling(length(panels) / nrow)
+        grid_nrow <- ceiling(length(panels) / grid_ncol)
+        k <- seq_along(panels) - 1
+        design <- do.call(c, lapply(seq_along(panels), function(i) {
+            patchwork::area(t = k[i] %/% grid_ncol + 1, l = k[i] %% grid_ncol + 1)
+        }))
+        # Legends taller than the rows of panels get a blank row below them
+        grDevices::pdf(NULL)
+        span <- tryCatch({
+            gt <- patchwork::patchworkGrob(patchwork::wrap_plots(panels, ncol = grid_ncol, axes = axes))
+            pos <- gt$layout[grepl("^panel", gt$layout$name), , drop = FALSE]
+            sum(grid::convertHeight(gt$heights, "in", valueOnly = TRUE)[min(pos$t):max(pos$b)])
+        }, finally = grDevices::dev.off())
+        deficit <- attr(legend_fig, "block_height") - span
+        bottom <- grid_nrow
+        if (deficit > 0) {
+            bottom <- grid_nrow + 1
+            spacer <- ggplot() +
+                theme_void() +
+                panel_size_theme(0.01, deficit) +
+                theme(plot.margin = margin(0, 0, 0, 0))
+            panels <- c(panels, list(spacer))
+            design <- c(design, patchwork::area(t = bottom, l = 1))
+        }
+        design <- c(design, patchwork::area(t = 1, l = grid_ncol + 1, b = bottom))
+        combined <- patchwork::wrap_plots(c(panels, list(legend_fig)), design = design, axes = axes) +
+            annotation
+    } else {
+        combined <- patchwork::wrap_plots(plots, ncol = ncol, nrow = nrow, guides = guides, axes = axes) +
+            annotation
+    }
     attr(combined, "source_data") <- src
     combined
 }
@@ -1091,7 +1205,7 @@ plot_enrichment_bars <- function(
         bar_aes <- aes(fill = .data$direction, alpha = .data$significant)
     } else {
         bar_fill <- scale_fill_gradientn(colours = resolve_continuous_palette(cols, FALSE, default = "seq-purple"),
-                                         limits = c(0, NA), name = quote(-log[10] ~ "padj"),
+                                         limits = c(0, NA), name = bold_title(quote(-log[10] ~ "padj")),
                                          guide = guide_colourbar(order = 1))
         bar_aes <- aes(fill = .data$neg_log10_padj, alpha = .data$significant)
     }

@@ -68,6 +68,30 @@ standardize_de <- function(data,
 This applies to all package-level functions, exported or internal. Short
 anonymous functions inside code (`function(x) ...`) are exempt.
 
+Code should be easy to read line by line (user decision, 2026-10-14):
+
+- **ggplot / patchwork:** one layer per line; never several `+` (or `|`,
+  `/`) on one line.
+
+  ```r
+  ggplot(df, aes(value, feature)) +
+      geom_col(width = 0.6) +
+      theme_bioToolkit()
+  ```
+
+- **Calls with several arguments** that do not fit comfortably on one line
+  (about 80 characters): one argument per line, the closing parenthesis on
+  its own line. The same for long vectors (e.g. named colours), one element
+  per line.
+- **No deep nesting on one line:** at most one level of `{}` or of a call
+  inside a call's arguments per line; give an inner value a name first
+  (`test <- glmQLFTest(...)`, then `topTags(test)`).
+- Comments go on their own line above the code, not after it.
+
+This applies to the website guides (`vignettes/articles/`) and to all new or
+changed package code. The package code written before 2026-10-14 has not
+yet been reformatted to it; that is a separate, planned pass.
+
 ## Every plot
 
 Before a plotting item is marked done in `dev/visualization_roadmap.md`:
@@ -101,6 +125,11 @@ Before a plotting item is marked done in `dev/visualization_roadmap.md`:
 - Unit tests for the data logic in `tests/testthat/`.
 - Checked by eye on real data.
 - `NEWS.md` entry, including anything removed or renamed.
+- On the website: listed in a `reference` section of `_pkgdown.yml` (the
+  pkgdown build fails otherwise) and shown, with each mode of its arguments,
+  in the matching guide in `vignettes/articles/` (see
+  `dev/documentation_site.md`). The site is published when the version in
+  DESCRIPTION changes.
 
 ## Adding a colour palette
 

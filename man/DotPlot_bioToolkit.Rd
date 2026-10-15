@@ -24,6 +24,11 @@ DotPlot_bioToolkit(
   cols = NULL,
   group.marker = c("dot", "strip", "none"),
   group.cols = NULL,
+  feature.group.cols = NULL,
+  feature.group.side = c("opposite", "labels"),
+  split.by.cols = NULL,
+  split.by.side = c("opposite", "labels"),
+  group.bar.width = 3.5,
   flip = FALSE,
   italic.genes = TRUE,
   fill.title = NULL,
@@ -101,11 +106,13 @@ and the legend says so}
 
 \item{min.cutoff, max.cutoff}{Ends of the colour scale: a number, a quantile
 of the plotted values such as "q5" / "q95",
-or NA (default). With `scale = TRUE`, NA gives
-a scale symmetric around 0 reaching
-+-min(largest |z-score|, 2.5); otherwise 0
-and the largest mean. Values beyond the ends
-get the colour of the end}
+or NA (default). With `scale = TRUE` the
+scale is centred on 0 and each end is the
+cutoff (NA: +-2.5) or, when closer to 0, the
+most extreme z-score on that side, so that it
+gets the full colour; otherwise 0 and the
+largest mean. Values beyond the ends get the
+colour of the end}
 
 \item{cluster.features}{Whether to order genes by hierarchical clustering
 of their colour values (within each group of
@@ -131,6 +138,27 @@ colour strip) or "none"}
 the colours \code{\link{DimPlot_bioToolkit}} gives them
 ("scanpy-20" up to 20 groups), a qualitative palette name,
 or colours named by group (or in level order)}
+
+\item{feature.group.cols}{Colours of the bars marking the groups of genes
+(a named list of `features`): NULL (default)
+for black bars, a qualitative palette name, or
+colours named by gene group}
+
+\item{feature.group.side}{Side of the gene groups: "opposite" (default;
+opposite the gene names: on top, or on the right
+with `flip = TRUE`) or "labels" (beyond the gene
+names)}
+
+\item{split.by.cols}{Colours of the bars marking the `split.by` blocks: NULL
+(default) for black bars, a qualitative palette name,
+or colours named by level of `split.by`}
+
+\item{split.by.side}{Side of the `split.by` blocks: "opposite" (default;
+opposite the group names: on the right, or on top with
+`flip = TRUE`) or "labels" (beyond the group names)}
+
+\item{group.bar.width}{Thickness of the bars marking gene groups and
+`split.by` blocks, in points, default is 3.5}
 
 \item{flip}{Whether to draw genes as rows and groups as columns, default is
 FALSE (genes as columns, as Seurat)}

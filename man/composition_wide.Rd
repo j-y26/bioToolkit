@@ -15,8 +15,9 @@ composition_wide(tab, x, y, value)
 }
 \value{
 A data frame: `facet` (if any), `group`, `x_value`, `y_value`, and
-        `x_count`, `x_total`, `y_count`, `y_total` (pooled), or `x_sem`,
-        `y_sem`, `x_n_samples`, `y_n_samples` (per sample)
+        `x_count`, `x_total`, `y_count`, `y_total` (pooled), or `x_sd`,
+        `x_sem`, `y_sd`, `y_sem`, `x_n_samples`, `y_n_samples` (per
+        sample)
 }
 \description{
 One row per group with its values in the two conditions

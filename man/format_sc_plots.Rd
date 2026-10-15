@@ -2,115 +2,120 @@
 % Please edit documentation in R/single_cell_visualize.R
 \name{format_sc_plots}
 \alias{format_sc_plots}
-\title{Format Dimension Plots (from Seurat, scCustomize, SCpubr etc.)}
+\title{Format a set of embedding plots (from Seurat, scCustomize, SCpubr
+       etc.)}
 \usage{
 format_sc_plots(
   plots,
   ncol = NULL,
   nrow = NULL,
-  byrow = TRUE,
-  add_arrow = TRUE,
-  bottom_left_only = FALSE,
-  remove_axes = TRUE,
-  remove_legend = FALSE,
-  remove_grid = FALSE,
-  restore_legend = FALSE,
-  legend_position = NULL,
-  legend_title = NULL,
-  legend_title_size = 12,
-  legend_title_bold = FALSE,
+  by.row = TRUE,
+  arrow.panels = c("bottom.left", "all", "left", "right", "top", "bottom", "none"),
+  remove.axes = TRUE,
+  remove.legend = FALSE,
+  remove.grid = FALSE,
+  restore.legend = FALSE,
+  legend.position = NULL,
+  legend.title = NULL,
+  legend.title.size = 12,
+  legend.title.bold = TRUE,
   reduction = "umap",
   dims = NULL,
-  arrow_length = 2,
-  x_coord_adjust = 0.25,
-  y_coord_adjust = x_coord_adjust,
-  arrow_size = 0.25,
-  arrow_width = 0.2,
-  arrow_line_width = 3,
-  arrow_color = "black",
-  text_font_size = 12,
-  text_dst = 0.3
+  arrow.length = 2,
+  x.coord.adjust = 0.25,
+  y.coord.adjust = x.coord.adjust,
+  arrow.size = 0.25,
+  arrow.width = 0.2,
+  arrow.line.width = 3,
+  arrow.color = "black",
+  text.font.size = 12,
+  text.dst = 0.3,
+  ...
 )
 }
 \arguments{
 \item{plots}{A list of ggplot objects or a patchwork object}
 
-\item{ncol}{Number of columns in the plot grid, default is NULL. Prioritized if
-nrow is also set.}
+\item{ncol}{Number of columns in the plot grid, default is NULL. Prioritized
+if nrow is also set.}
 
 \item{nrow}{Number of rows in the plot grid, default is NULL}
 
-\item{byrow}{Whether to fill the plot grid by row, default is TRUE, consistent
-with patchwork's default behavior. If FALSE, the plots will be
-filled by column.}
+\item{by.row}{Whether to fill the plot grid by row, default is TRUE,
+consistent with patchwork's default behavior. If FALSE, the
+plots will be filled by column.}
 
-\item{add_arrow}{Whether to add an arrow to replace the axes, default is TRUE.
-This will override the remove_axes argument and remove the axes
-from all plots}
+\item{arrow.panels}{Plots that get the dimension arrows: "bottom.left"
+(default; the first plot of the bottom row), "all",
+"left" / "right" (the first / last plot of each row),
+"top" / "bottom" (the top / lowest plot of each column)
+or "none". Edges are those of the plots drawn: in a grid
+whose last row is incomplete, a plot with nothing below
+it is on the bottom edge. The grid is given by `ncol` /
+`nrow`, the patchwork's layout, or patchwork's default.
+Unless "none", the axes of all plots are removed.
+(Replaces `add.arrow` and `bottom.left.only`, accepted
+with a deprecation warning)}
 
-\item{bottom_left_only}{Whether to add the arrow only to the plot at the bottom
-left of the entire grid, default is FALSE. Only valid
-if the arrangement of the plots are defined, either by
-setting ncol or nrow, or that patchwork already defines
-the layout. Only used when add_arrow is TRUE}
+\item{remove.axes}{Whether to remove the axes, default is TRUE}
 
-\item{remove_axes}{Whether to remove the axes, default is TRUE}
+\item{remove.legend}{Whether to remove the legend, default is FALSE}
 
-\item{remove_legend}{Whether to remove the legend, default is FALSE}
+\item{remove.grid}{Whether to remove the grid, default is FALSE}
 
-\item{remove_grid}{Whether to remove the grid, default is FALSE}
+\item{restore.legend}{Whether to restore the legend, default is FALSE}
 
-\item{restore_legend}{Whether to restore the legend, default is FALSE}
+\item{legend.position}{The position of the legend, default is NULL (meaning
+no change)}
 
-\item{legend_position}{The position of the legend, default is NULL (meaning no change)}
+\item{legend.title}{The title of the legend, default is NULL}
 
-\item{legend_title}{The title of the legend, default is NULL}
+\item{legend.title.size}{The size of the legend title, default is 12}
 
-\item{legend_title_size}{The size of the legend title, default is 12}
+\item{legend.title.bold}{Whether to bold the legend title, default is TRUE}
 
-\item{legend_title_bold}{Whether to bold the legend title, default is FALSE}
+\item{reduction}{The reduction method used to generate the plots, default
+is "umap", allowed values are "umap", "tsne", "pca",
+"spatial". Used only when arrows are drawn}
 
-\item{reduction}{The reduction method used to generate the plots, default is
-"umap", allowed values are "umap", "tsne", "pca", "spatial".
-Used only if add_arrow is TRUE}
+\item{dims}{A vector of dimension names, overwrites the default dimension
+names. Used only when arrows are drawn}
 
-\item{dims}{A vector of dimension names, overwrites the default dimension.
-Used only if add_arrow is TRUE}
+\item{arrow.length}{The size of the arrow, default is 2 (cm)}
 
-\item{arrow_length}{The size of the arrow, default is 2 (cm)
-Used only if add_arrow is TRUE}
+\item{x.coord.adjust}{Horizontal adjustment of the arrow origin, default is
+0.25 (cm)}
 
-\item{x_coord_adjust}{Horizontal adjustment of the arrow origin, default is 0.25 (cm)
-Used only if add_arrow is TRUE}
+\item{y.coord.adjust}{Vertical adjustment of the arrow origin, default is
+the same as `x.coord.adjust`}
 
-\item{y_coord_adjust}{Vertical adjustment of the arrow origin, default is the same as x_coord_adjust
-Used only if add_arrow is TRUE}
+\item{arrow.size}{The size of the arrow head, default is 0.25 cm}
 
-\item{arrow_size}{The size of the arrow head, default is 0.25 cm
-Used only if add_arrow is TRUE}
+\item{arrow.width}{The width of the arrow, default is 0.2 cm}
 
-\item{arrow_width}{The width of the arrow, default is 0.2 cm
-Used only if add_arrow is TRUE}
+\item{arrow.line.width}{The width of the arrow line, default is 3}
 
-\item{arrow_line_width}{The width of the arrow line, default is 3
-Used only if add_arrow is TRUE}
+\item{arrow.color}{The color of the arrow and label, default is "black"}
 
-\item{arrow_color}{The color of the arrow and label, default is "black"
-Used only if add_arrow is TRUE}
+\item{text.font.size}{The font size of the text, default is 12}
 
-\item{text_font_size}{The font size of the text, default is 12
-Used only if add_arrow is TRUE}
+\item{text.dst}{The distance of the text from the arrow in cm, default is
+0.3}
 
-\item{text_dst}{The distance of the text from the arrow in cm, default is 0.3
-Used only if add_arrow is TRUE}
+\item{...}{Deprecated arguments, accepted with a warning: `add.arrow` and
+`bottom.left.only` (replaced by `arrow.panels`), and the
+snake_case names renamed to dot.case in 0.10.0 (e.g. `byrow`,
+`legend_position`, `arrow_length`)}
 }
 \value{
 a patchwork object with the formatted plots
 }
 \description{
-This function operates on a list of
-             ggplot objects or a patchwork object and formats them to have a
-             consistent theme. The function performs group operations to
-             format the plots. The default behavior is to remove the axes and
-             add an arrow to the bottom left corner of each individual plot.
+Formats a list of ggplot objects or a patchwork object
+             consistently and arranges them in a grid. By default the axes
+             are removed and replaced by dimension arrows in the bottom left
+             corner of the bottom left plot; `arrow.panels` puts them on
+             every plot or on one edge of the grid instead. Arrows a plot
+             already has (e.g. from \code{\link{DimPlot_bioToolkit}}) are
+             replaced, so that each plot has at most one set.
 }

@@ -48,6 +48,7 @@ FeaturePlot_bioToolkit(
   legend.text.size = NULL,
   ncol = NULL,
   by.row = TRUE,
+  arrow.panels = c("bottom.left", "all", "left", "right", "top", "bottom", "none"),
   combine = TRUE,
   panel.width = 4,
   panel.height = panel.width,
@@ -214,7 +215,7 @@ string, or one string per feature (optionally named by
 feature)}
 
 \item{legend.title.face}{Font face of the legend title. "auto" (default)
-sets gene names in italics}
+sets it in bold, gene names in bold italics}
 
 \item{legend.length}{Length of the colour bar in inches, default is 1.5}
 
@@ -229,6 +230,13 @@ columns as in \code{Seurat::FeaturePlot()}}
 
 \item{by.row}{Whether panels fill the grid row by row (default, TRUE) or
 column by column (FALSE)}
+
+\item{arrow.panels}{Panels that get the dimension arrows: "bottom.left"
+(default; the first panel of the bottom row), "all",
+"left" / "right" (the first / last panel of each row),
+"top" / "bottom" (the top / lowest panel of each
+column) or "none". With `combine = FALSE`, every plot
+gets its own arrows unless "none"}
 
 \item{combine}{Whether to return a single plot (default, TRUE) or a list of
 one plot per panel, each with its own arrows, to be arranged
@@ -265,7 +273,9 @@ halos are then white). Use e.g. "white" for an opaque background}
 \item{seed}{Random seed used for drawing order and label placement, default
 is 42. The global random number generator state is not changed}
 
-\item{...}{Additional arguments passed to \code{\link{add_dimension_arrows}}}
+\item{...}{Arguments of the dimension arrows, as in
+\code{\link{add_dimension_arrows}} (e.g. `arrow.length = 1.5`;
+the snake_case names used before 0.10.0 are deprecated)}
 }
 \value{
 A ggplot object when there is a single colour scale over one

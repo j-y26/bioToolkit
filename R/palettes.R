@@ -622,3 +622,74 @@ resolve_continuous_palette <- function(cols,
     if (!all(ok)) stop("Invalid colour(s) in `cols`: ", paste(cols[!ok], collapse = ", "), call. = FALSE)
     unname(cols)
 }
+
+
+# Diverging colour scales (revision of 2026-10-14)
+# ------------------------------------------------
+# A diverging scale (z-scores, fold changes, NES, signed -log10 p-values) has
+# its centre colour at a meaningful value (0). Its ends used to be symmetric
+# (+-m), so that when the data reach -3 on one side and a cutoff of 5 on the
+# other, the negative values only reached the middle of the blue half and
+# looked faded. User decision (2026-10-14): each end is the cutoff, or the
+# data's own extreme on that side when it is closer to the centre, and each
+# side of the centre is stretched to its own end (`rescale_diverging()`), so
+# that the most extreme value on either side gets the full colour. Colour
+# depth is then comparable within a side, not across sides; the colour bar
+# shows it (its centre is no longer in the middle). Fixed limits given by the
+# user (e.g. `logfc.limits`) are kept as given, for figures that must share
+# one scale.
+
+
+#' Limits of a diverging colour scale, each end trimmed to the data
+#'
+#' @param v Values coloured
+#'
+#' @param low,high Cutoffs of the two ends (NA for none): the end is the
+#'                 cutoff, or the data's extreme on that side when it is
+#'                 closer to the centre
+#'
+#' @param center Centre of the scale
+#'
+#' @return Two numbers, the low end at most `center` and the high end at least
+#'         `center`
+#'
+#' @keywords internal
+diverging_limits <- function(v,
+                             low = NA,
+                             high = NA,
+                             center = 0) {
+    v <- v[is.finite(v)]
+    if (length(v) == 0) return(center + c(-1, 1))
+    lo <- if (is.na(low)) min(v) else max(low, min(v))
+    hi <- if (is.na(high)) max(v) else min(high, max(v))
+    # The centre is always inside the scale
+    lo <- min(lo, center)
+    hi <- max(hi, center)
+    if (lo == hi) return(center + c(-1, 1))
+    c(lo, hi)
+}
+
+
+#' Rescaler of a diverging colour scale
+#'
+#' Maps `center` to the middle of the palette and stretches each side of it
+#' to its own end of the limits, for the `rescaler` of a ggplot2 continuous
+#' scale.
+#'
+#' @param center Centre of the scale
+#'
+#' @return A function `(x, to, from)`
+#'
+#' @keywords internal
+rescale_diverging <- function(center = 0) {
+    function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
+        mid <- mean(to)
+        out <- ifelse(is.na(x), NA_real_, mid)
+        lo <- !is.na(x) & x < center
+        hi <- !is.na(x) & x > center
+        # A side with no room (its end at the centre) maps to its end colour
+        out[lo] <- if (from[1] < center) mid - (center - x[lo]) / (center - from[1]) * (mid - to[1]) else to[1]
+        out[hi] <- if (from[2] > center) mid + (x[hi] - center) / (from[2] - center) * (to[2] - mid) else to[2]
+        out
+    }
+}

@@ -5,48 +5,46 @@
 \title{Generate rank file for GSEA}
 \usage{
 generate_de_rank_file(
-  de_results,
-  save_file = NULL,
-  de_method = "edgeR",
-  pvalue_col = NULL,
-  log2fc_col = NULL
+  data,
+  file = NULL,
+  method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+  padj.col = NULL,
+  logfc.col = NULL,
+  ...
 )
 }
 \arguments{
-\item{de_results}{A data frame containing the results of differential
-expression analysis. The data frame should have at least
-a column for log2 fold change and a column for (adjusted)
-p-value.}
+\item{data}{A data frame of DE results with a log2 fold change and an
+adjusted p-value column (edgeR, DESeq2, limma or Seurat
+results, or any table with the columns given)}
 
-\item{save_file}{The name of the file to save the rank file. Default is NULL.
-If NULL, the rank file will not be saved to disk.}
+\item{file}{Path of the tab-separated rank file to write. Default is NULL
+(nothing written)}
 
-\item{de_method}{The method used for differential expression analysis.
-Must be one of "edgeR" or "DESeq2". Default is "edgeR".
-Use this argument to automatically set the column names
-for log2 fold change and adjusted P-value. If provided value
-is not "edgeR" or "DESeq2", the user must provide both the
-column names for log2 fold change and P-value using the
-\code{log2fc_col} and \code{pvalue_col} arguments,
-respectively.}
+\item{method}{The tool that produced the results: "auto" (default) detects
+it from the column names, as \code{\link{standardize_de}}
+does; or one of "edgeR", "DESeq2", "limma" and "seurat"}
 
-\item{pvalue_col}{The name of the column in \code{de_results} that contains
-the p-values. If not NULL, overrides the default column
-name based on \code{de_method}.}
+\item{padj.col}{Column of the (adjusted) p-values used for the ranking. If
+NULL (default), taken from `method` (e.g. "FDR" for edgeR,
+"padj" for DESeq2)}
 
-\item{log2fc_col}{The name of the column in \code{de_results} that contains
-the log2 fold changes.}
+\item{logfc.col}{Column of the log2 fold changes. If NULL (default), taken
+from `method`}
+
+\item{...}{Deprecated names of the arguments (`de_results`, `save_file`,
+`de_method`, `pvalue_col`, `log2fc_col`), accepted with a
+warning; renamed in 0.10.0}
 }
 \value{
-A data frame with the addition of the following columns:
-         \item{piValue}{The pi-value of the gene}
-         \item{rank}{The rank of the gene based on the pi-value}
-        And if \code{save_file} is not NULL, a rank file will be saved to disk.
+A data frame with columns `GeneName` (the row names of `data`) and
+        `rank` (the pi-value), from highest to lowest; written to `file`
+        when given
 }
 \description{
-This function generates a rank file for Gene Set Enrichment
-             Analysis (GSEA) based on the differential expression analysis
-             results. The rank file contains the gene names and their ranks,
-             which is the pi-value. Higher pi-values indicate higher
-             rank.
+Ranks the genes of a DE table by their pi-value (see
+             \code{\link{rank_de_genes}}) and returns, and optionally
+             writes, the two-column table read by the GSEA desktop
+             application (`.rnk`). For fgsea, use
+             `setNames(rnk$rank, rnk$GeneName)`.
 }

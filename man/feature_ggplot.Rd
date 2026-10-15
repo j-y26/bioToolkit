@@ -103,7 +103,7 @@ and bottom legends and vertical otherwise}
 If NULL (default), the theme's base size (11)}
 
 \item{legend.title.face}{Font face of the legend title. "auto" (default)
-sets gene names in italics}
+sets it in bold, gene names in bold italics}
 
 \item{panel.width}{Width of a single panel in inches, default is 4}
 

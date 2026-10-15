@@ -4,6 +4,24 @@
 # has from 4.4) available package-wide; it was on de_dot_plot(), removed in
 # 0.7.0. The package's own check_installed() takes precedence over rlang's.
 
+#' Base R functions used without a namespace prefix
+#'
+#' @importFrom grDevices hcl
+#' @importFrom methods is
+#' @importFrom stats coef cor.test lm median p.adjust
+#' @importFrom utils write.csv
+#' @keywords internal
+#' @name bioToolkit-imports
+NULL
+
+# Column names used in dplyr / ggplot2 code (non-standard evaluation), declared
+# so that R CMD check does not report them as undefined globals
+utils::globalVariables(c(
+    "Freq", "GeneName", "coef", "colour", "corr_FDR", "corr_p_value", "group",
+    "p_value", "percent", "piValue", "ring", "tile", "value", "x", "y"
+))
+
+
 #' Check if a package is installed, with informative error message
 #'
 #' @param pkg Character string, the package name.
@@ -22,11 +40,7 @@ check_installed <- function(pkg,
       msg <- paste0(msg, " ", reason)
     }
     # Determine install command
-    bioc_pkgs <- c(
-      "edgeR", "Matrix", "GSEABase", "ChIPseeker", "GenomicRanges",
-      "GSVA", "BiocParallel", "IRanges", "Rsamtools", "rtracklayer",
-      "Biobase"
-    )
+    bioc_pkgs <- c("edgeR", "GSEABase", "DOSE")
     if (pkg %in% bioc_pkgs) {
       msg <- paste0(
         msg,
@@ -38,6 +52,91 @@ check_installed <- function(pkg,
     stop(msg, call. = FALSE)
   }
   invisible(TRUE)
+}
+
+
+#' Accept deprecated argument names
+#'
+#' Older versions of a few functions (\code{format_sc_plots()},
+#' \code{manipulate_sc_plot()}, \code{add_dimension_arrows()} and the DE table
+#' helpers) used snake_case argument names. Since 0.10.0 they use the
+#' package's dot.case names (see CONTRIBUTING.md). The old names are still
+#' accepted: the caller collects them in `...` and passes them here, which
+#' warns once (class "deprecatedWarning") and returns the values under their
+#' new names, ready for \code{list2env(..., environment())} in the caller.
+#'
+#' @param dots `list(...)` of the caller
+#'
+#' @param renames Character vector of new argument names, named by the old
+#'                names
+#'
+#' @param fn Name of the calling function, for messages
+#'
+#' @param given Names of the arguments the caller received (from
+#'              \code{names(match.call())}), to refuse an old and a new name
+#'              given together
+#'
+#' @return A named list of the values of the old arguments, named by the new
+#'         names (empty when no old name was used)
+#'
+#' @keywords internal
+renamed_args <- function(dots,
+                         renames,
+                         fn,
+                         given = character()) {
+    if (length(dots) == 0) return(list())
+    old <- names(dots)
+    # `...` only exists to catch old names, so anything else is a user error,
+    # reported as R reports an unused argument
+    if (is.null(old) || any(!nzchar(old))) {
+        stop("unused unnamed argument in `", fn, "()`", call. = FALSE)
+    }
+    unknown <- setdiff(old, names(renames))
+    if (length(unknown)) {
+        stop("unused argument", if (length(unknown) > 1) "s", " in `", fn, "()`: ",
+             paste0("`", unknown, "`", collapse = ", "), call. = FALSE)
+    }
+    new <- unname(renames[old])
+    clash <- new %in% given
+    if (any(clash)) {
+        stop("In `", fn, "()`, give either `", old[clash][1], "` (deprecated) or `",
+             new[clash][1], "`, not both", call. = FALSE)
+    }
+    msg <- paste0("In `", fn, "()`, ", paste0("`", old, "`", collapse = ", "),
+                  if (length(old) > 1) " are" else " is",
+                  " deprecated; use ", paste0("`", new, "`", collapse = ", "), " instead.")
+    warning(warningCondition(msg, class = "deprecatedWarning"))
+    stats::setNames(dots, new)
+}
+
+
+#' Resolve the arrow arguments passed through `...` of an embedding plot
+#'
+#' \code{DimPlot_bioToolkit()}, \code{FeaturePlot_bioToolkit()} and
+#' \code{DensityDiffPlot_bioToolkit()} pass `...` to the dimension arrows. The
+#' arguments take the dot.case names of \code{\link{add_dimension_arrows}}
+#' (since 0.10.0); the old snake_case names are accepted with a deprecation
+#' warning. They are returned under the snake_case names of the internal
+#' \code{\link{dimension_arrow_grob}}.
+#'
+#' @param dots `list(...)` of the plot, without `rasterize`
+#'
+#' @param fn Name of the plot function, for messages
+#'
+#' @return A named list of arguments for \code{dimension_arrow_grob()}
+#'
+#' @keywords internal
+resolve_arrow_args <- function(dots,
+                               fn) {
+    if (length(dots) == 0) return(list())
+    old <- names(dots) %in% names(ARROW_ARG_RENAMES)
+    new_dots <- c(dots[!old], renamed_args(dots[old], ARROW_ARG_RENAMES, fn, names(dots)[!old]))
+    unknown <- setdiff(names(new_dots), ARROW_ARG_RENAMES)
+    if (length(unknown) || is.null(names(new_dots))) {
+        stop("unused argument in `", fn, "()`: ", paste0("`", unknown, "`", collapse = ", "),
+             call. = FALSE)
+    }
+    stats::setNames(new_dots, names(ARROW_ARG_RENAMES)[match(names(new_dots), ARROW_ARG_RENAMES)])
 }
 
 
@@ -307,8 +406,58 @@ panel_layout <- function(n,
     if (!by.row) ncol <- as.integer(ceiling(n / nrow))
     list(
         ncol = ncol, nrow = nrow, dir = if (by.row) "h" else "v",
-        bottom_left = if (by.row) (nrow - 1L) * ncol + 1L else nrow
+        bottom_left = if (by.row) (nrow - 1L) * ncol + 1L else nrow,
+        by.row = by.row
     )
+}
+
+
+# Values of `arrow.panels`: which panels of an embedding grid get the
+# dimension arrows (revision of 2026-10-14)
+ARROW_PANELS <- c("bottom.left", "all", "left", "right", "top", "bottom", "none")
+
+
+#' Panels of a grid that get the dimension arrows
+#'
+#' Panels are numbered in the order they fill the grid (by row or by column).
+#' The edges are those of the panels actually drawn: in a grid whose last row
+#' is incomplete, a panel with no panel below it is on the "bottom" edge, and
+#' the last panel of a row is on the "right" edge.
+#'
+#' @param n Number of panels
+#'
+#' @param ncol,nrow Size of the grid
+#'
+#' @param by.row Whether panels fill the grid row by row
+#'
+#' @param which One of `ARROW_PANELS`: "bottom.left" (the first panel of the
+#'              bottom row), "all", "left" / "right" (first / last panel of
+#'              each row), "top" / "bottom" (top / lowest panel of each
+#'              column) or "none"
+#'
+#' @return Indices of the panels, in 1..n
+#'
+#' @keywords internal
+arrow_panel_index <- function(n,
+                              ncol,
+                              nrow,
+                              by.row,
+                              which) {
+    which <- match.arg(which, ARROW_PANELS)
+    i <- seq_len(n)
+    row <- if (by.row) (i - 1L) %/% ncol + 1L else (i - 1L) %% nrow + 1L
+    col <- if (by.row) (i - 1L) %% ncol + 1L else (i - 1L) %/% nrow + 1L
+    keep <- switch(
+        which,
+        all = rep(TRUE, n),
+        none = rep(FALSE, n),
+        bottom.left = row == max(row) & col == min(col[row == max(row)]),
+        left = col == stats::ave(col, row, FUN = min),
+        right = col == stats::ave(col, row, FUN = max),
+        top = row == stats::ave(row, col, FUN = min),
+        bottom = row == stats::ave(row, col, FUN = max)
+    )
+    i[keep]
 }
 
 
@@ -681,8 +830,8 @@ group_label_layer <- function(df,
 #'
 #' @param arrow_args Further arguments to \code{\link{dimension_arrow_grob}}
 #'
-#' @param panel Level of the facetting variable `panel` to draw the arrows in,
-#'              or NULL to draw them in every panel
+#' @param panel Levels of the facetting variable `panel` to draw the arrows
+#'              in, or NULL to draw them in every panel
 #'
 #' @return a ggplot object
 #'
@@ -699,6 +848,10 @@ add_reduction_arrows <- function(p,
     grob <- do.call(dimension_arrow_grob, c(list(reduction = reduction, dims = labels), arrow_args))
     if (is.null(panel)) {
         apply_arrow_grob(p, grob)
+    } else if (length(panel) == 0) {
+        # No panel gets arrows (`arrow.panels = "none"`); the axes are still
+        # replaced by nothing, as in the panels without arrows
+        apply_arrow_grob(p, grid::nullGrob())
     } else {
         lv <- levels(p$data$panel)
         apply_arrow_grob(p, grob, data = data.frame(panel = factor(panel, levels = lv, exclude = NULL)))

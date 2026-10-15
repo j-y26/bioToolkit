@@ -1,3 +1,160 @@
+# bioToolkit (development version)
+
+Plot revisions after the first round of the documentation website. Argument
+changes refer to the next version, 0.11.0.
+
+## Group annotations: bars
+
+Higher-level groups of rows or columns are drawn the same way in every plot:
+a bar along the group's cells, 3.5 pt thick by default (`group.bar.width`),
+set a little off the grid, with the group's name in bold beyond it. Bars are
+black by default, or coloured by group (`*.cols`, the same values as `cols`).
+By default they sit opposite the axis labels; `*.side = "labels"` moves them
+beyond the labels. New shared code in `R/group_bars.R`.
+
+* `DotPlot_bioToolkit()`: `feature.group.cols`, `feature.group.side`,
+  `split.by.cols`, `split.by.side`, `group.bar.width`. Gene groups are now on
+  top (right with `flip = TRUE`) with a bar instead of a thin bracket line;
+  `split.by` blocks on the right (top when flipped) instead of the left.
+* `VlnPlot_bioToolkit()`: `split.by.cols`, `split.by.side`,
+  `group.bar.width`; flipped `split.by` blocks are now on the right.
+* `DoHeatmap_bioToolkit()`: `feature.group.cols`, `split.by.cols`,
+  `group.bar.width` (blocks of features opposite the feature names, blocks of
+  columns on top).
+* `plot_de_dots()`: comparisons are marked by colour like the groups of the
+  dot plot (`comparison.marker` = "dot" (default), "strip" or "none";
+  `comparison.cols`); `groups` and gene groups get bars (`groups.cols`,
+  `groups.side`, `feature.group.cols`, `feature.group.side`,
+  `group.bar.width`).
+* The dot-grid size legend ("% expressing", "-log10 padj") is black.
+
+## Changes
+
+* `plot_multi_volcano()`: the coloured band at 0 is replaced by a strip of
+  fixed thickness above each comparison's column with its name above it
+  (`comparison.cols`, `comparison.labels`; formerly `band.cols`,
+  `band.labels`, accepted with a deprecation warning), and dashed lines at the
+  cutoffs. Non-significant genes are drawn in grey by default (`show.ns =
+  TRUE`). `groups` get bars like `split.by` (`groups.cols`, `groups.side`).
+  New `flip` lists the comparisons as rows (down left, up right; new
+  `cell.height`, `panel.width`). Grouped comparisons are drawn together.
+* Diverging colour scales (dot plot z-scores, heatmaps, DE dots, enrichment
+  grid NES, multi-volcano, density difference, diverging feature plots) keep
+  their centre colour at 0 but are no longer forced symmetric: each end is
+  the cutoff, or the data's extreme on that side when closer, and each side
+  is stretched to its own end (`diverging_limits()`, `rescale_diverging()`).
+  Fixed `logfc.limits` given by the user are kept.
+* Legend titles are bold in every plot (`theme_bioToolkit()`, also plotmath
+  titles); `manipulate_sc_plot()` / `format_sc_plots()` default to
+  `legend.title.bold = TRUE`.
+* `DimPlot_bioToolkit()`, `FeaturePlot_bioToolkit()`,
+  `DensityDiffPlot_bioToolkit()`, `format_sc_plots()`: new `arrow.panels`
+  ("bottom.left" (default), "all", "left", "right", "top", "bottom", "none")
+  sets which panels get the dimension arrows. In `format_sc_plots()` it
+  replaces `add.arrow` and `bottom.left.only` (accepted with a deprecation
+  warning), defaults to "bottom.left" (was every plot), and arrows a plot
+  already has are replaced rather than added to.
+* `VlnPlot_bioToolkit()`: with a lowered `y.max`, violins and boxes are cut
+  at the top of the axis (they ran past it) and points above it are not
+  drawn.
+* `plot_composition_scatter()`: new `error` ("sem" (default), "sd" or
+  "ci95", t-based) for the per-sample error bars, now drawn with caps, 0.75 pt
+  and black. The source data add `x_sd`, `y_sd`, `x_error`, `y_error`.
+* `plot_fc_quadrant()`: the x = 0 and y = 0 lines are 1 pt black; the
+  correlation is bold, black and larger; new `trend` adds a least-squares line
+  with its 95% confidence band.
+* `plot_enrichment_dots()`: strips of all panels have the same thickness,
+  names centred; with several panels the legends are in two columns (colour
+  bars, then size legends; new `legend.layout`, "stacked" for the previous
+  single column); one panel shows its two legends side by side.
+* `plot_gsea_rank()`: NES and FDR bold and larger; the gene set ID is the
+  second line of the title and the comparison a bold italic subtitle; new
+  `label` / `label.n` / `label.features` name the leading-edge (or chosen)
+  genes with an arrow to their ticks; new `band = "none"`; new
+  `italic.genes`. The source data add `leading_edge` and `labelled`.
+* `ggplotColours()` is renamed `ggplot_colors()` (`showColor` ->
+  `show.colors`); the old name still works, with a deprecation warning.
+
+## Documentation website
+
+* A custom "page not found" page (`.github/404.md`).
+* Home page: a general description of the package; plot conventions moved to
+  the conventions table.
+* Figure essentials: theme tabs fixed and self-contained, panel versus cell
+  sizes explained with examples, more legend extraction examples.
+* Guides show the new arguments; their code follows the new code style (one
+  ggplot layer per line, one argument per line for long calls; see
+  CONTRIBUTING.md).
+
+# bioToolkit 0.10.0
+
+Package clean-up ahead of the documentation website
+(<https://j-y26.github.io/bioToolkit/>).
+
+## Removed
+
+* Legacy functions no longer maintained: `peak_category_qc()`,
+  `peak_category_plot()`, `peak_tss_enrichment()`, `peak_width_distribution()`,
+  `peak_calc_frip()`, `peak_plot_frip()`, `grouped_bar_plot()`,
+  `calc_module_scores()` and `calc_module_scores_ssgsea()`. Their Suggests
+  (ChIPseeker, GenomicRanges, IRanges, Rsamtools, rtracklayer, GSVA,
+  BiocParallel, Biobase) and the unused aplot, data.table and stringr were
+  dropped. `format_gene_sets()` is kept (now in `R/gene_sets.R`).
+
+## Deprecated argument names
+
+The remaining older functions now use the package's dot.case argument names.
+The old names are still accepted, with a deprecation warning (class
+`deprecatedWarning`), and positional calls are unchanged:
+
+* `format_sc_plots()`, `manipulate_sc_plot()`, `add_dimension_arrows()`:
+  snake_case to dot.case (`remove_axes` -> `remove.axes`, `arrow_length` ->
+  `arrow.length`, `legend_position` -> `legend.position`, ...), and `byrow` ->
+  `by.row` as in `DimPlot_bioToolkit()`.
+* `filter_de_genes()`, `rank_de_genes()`, `generate_de_rank_file()`:
+  `de_results` -> `data`, `de_method` -> `method`, `pvalue_col` -> `padj.col`,
+  `log2fc_col` -> `logfc.col`, `log2fc_min` -> `logfc.cutoff`, `pvalue_max` ->
+  `padj.cutoff`, `save_file` -> `file`, as in `standardize_de()` and
+  `plot_volcano()`.
+
+## Changes
+
+* `filter_de_genes()`, `rank_de_genes()`, `generate_de_rank_file()`: `method`
+  now defaults to "auto" and also reads limma and Seurat tables (the columns
+  come from the presets of `standardize_de()`); the method name ignores case
+  as before. `filter_de_genes()` no longer returns all-NA rows for genes with
+  an NA adjusted p-value.
+* `format_sc_plots()` keeps the relative widths and heights of a patchwork
+  (they were passed to `wrap_plots()` under the wrong names and lost).
+* `DimPlot_bioToolkit()`, `FeaturePlot_bioToolkit()` and
+  `DensityDiffPlot_bioToolkit()` take the dot.case arrow arguments of
+  `add_dimension_arrows()` in `...` (e.g. `arrow.length`); the snake_case ones
+  are deprecated.
+* `format_gene_sets(to = "gmt")` returns the GMT lines (it printed them and
+  returned NULL); new `file` argument to write them. A gene listed twice in a
+  set (e.g. from msigdbr) is kept once instead of failing.
+
+## Fixes found while writing the website guides
+
+* `plot_multi_volcano()` with `groups`: the comparison names under the
+  grouped panels were dropped (out of the y range); they are drawn again.
+* `plot_enrichment_dots()`: the legends of stacked panels overlapped the next
+  panel's; legends are now collected into one column on the right. Panels
+  side by side with different numbers of gene sets had names misaligned with
+  their dots; they now have the same height (empty rows at the bottom of
+  shorter panels). Long panel names are wrapped to fit their strip.
+* `plot_composition_scatter()`: groups with no cells in a panel of
+  `facet.by` (or among `cells`) are no longer drawn and labelled at the
+  origin.
+
+## Website
+
+* Documentation website with guides by task, run on public data (Kang et
+  al. 2018 PBMCs; Alasoo et al. 2018 macrophages; MSigDB Hallmark), and the
+  function index in 9 categories. Built by GitHub Actions when the version
+  changes. Website files are excluded from the package build, and the
+  packages needed only by the guides are in `Config/Needs/website`.
+
 # bioToolkit 0.9.0
 
 Phase E of the visualization overhaul: bulk plots (B1, B2, B4, B5). The

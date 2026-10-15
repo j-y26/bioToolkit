@@ -170,7 +170,9 @@ theme_bioToolkit <- function(type = c("axis", "grid", "embedding"),
                 common +
                 theme(
                     legend.text = element_text(size = sz$base),
-                    legend.title = element_text(size = sz$base),
+                    # Legend titles are bold in every plot (user decision
+                    # 2026-10-14)
+                    legend.title = element_text(size = sz$base, face = "bold"),
                     strip.text = element_text(size = sz$large, face = "bold",
                                               margin = margin(b = 0.15, unit = "cm")),
                     # Extra bottom / left margin makes room for the arrow labels;
@@ -192,7 +194,9 @@ theme_bioToolkit <- function(type = c("axis", "grid", "embedding"),
             # Ticks scale with the text, so they stay in proportion with a
             # custom base size
             axis.ticks.length = unit(sz$small / 3, "pt"),
-            legend.title = element_text(size = sz$base),
+            # Legend titles are bold in every plot (user decision
+            # 2026-10-14); plotmath titles need bold_title()
+            legend.title = element_text(size = sz$base, face = "bold"),
             legend.text = element_text(size = sz$small),
             strip.text = element_text(size = sz$base, face = "bold",
                                       margin = margin(b = 0.1, t = 0.1, unit = "cm")),
@@ -211,6 +215,27 @@ theme_bioToolkit <- function(type = c("axis", "grid", "embedding"),
         )
     }
     th
+}
+
+
+#' A legend title in bold, also when it is a plotmath expression
+#'
+#' The `face` of a theme element does not apply to plotmath expressions (e.g.
+#' `quote(-log[10] ~ "padj")`), which are drawn plain unless wrapped in
+#' `bold()`. Strings are returned as they are (the theme makes them bold).
+#'
+#' @param x A string, a plotmath expression, or NULL
+#'
+#' @return `x`, with expressions wrapped in `bold()` (italic ones in
+#'         `bolditalic()`)
+#'
+#' @keywords internal
+bold_title <- function(x) {
+    if (is.null(x) || is.character(x)) return(x)
+    if (is.expression(x)) x <- x[[1]]
+    if (is.call(x) && identical(x[[1]], as.name("italic"))) x[[1]] <- as.name("bolditalic")
+    if (is.call(x) && as.character(x[[1]]) %in% c("bold", "bolditalic")) return(x)
+    bquote(bold(.(x)))
 }
 
 
