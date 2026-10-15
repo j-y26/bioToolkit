@@ -1,0 +1,60 @@
+# Summarize group expression values for each gene
+
+This function summarizes the expression values of genes for each group.
+The user can specify the method to summarize the values for each group.
+The default method is to calculate the mean of the expression values.
+
+## Usage
+
+``` r
+summarize_group_expression(
+  counts,
+  group_info,
+  group_by,
+  method = "mean",
+  pre_scale = FALSE,
+  post_scale = FALSE
+)
+```
+
+## Arguments
+
+- counts:
+
+  A data frame containing the expression values of genes. The data frame
+  should have samples as columns and genes as rows. All values should be
+  numeric.
+
+- group_info:
+
+  A data frame containing the group information of samples. The data
+  frame should have samples as rows and groups as columns. One column
+  should contain the information to group the samples.
+
+- group_by:
+
+  The name of the column in `group_info` that contains the information
+  to group the samples. Row names must be the same as the column names
+  in `counts`.
+
+- method:
+
+  The method to summarize the expression values for each group. Must be
+  one of "mean", "median", "min", "max", or "sum". Default is "mean".
+
+- pre_scale:
+
+  A logical value indicating whether to pre-scale the counts before
+  summarizing. Default is FALSE. Scaling will be done using the `scale`
+  function. Scaling is done across samples for each gene.
+
+- post_scale:
+
+  A logical value indicating whether to post-scale the summarized
+  values. Default is FALSE. Scaling will be done using the `scale`
+  function. Scaling is done across groups for each gene.
+
+## Value
+
+A data frame containing the summarized expression values for each gene
+across samples in each group.

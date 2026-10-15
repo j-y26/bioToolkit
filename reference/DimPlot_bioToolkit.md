@@ -1,0 +1,309 @@
+# Publication-quality dimensionality reduction plot
+
+Plots cells on a 2D reduction (UMAP, tSNE, PCA, ...) coloured by a
+grouping variable, optionally split into one panel per level of a second
+variable. Every panel (the scatter itself) has a fixed absolute size set
+by \`panel.width\` and \`panel.height\`, so panels are identical across
+figures regardless of how many there are and of the legend's size or
+position. Split plots share a single legend covering all groups, even
+when a panel contains only some of them. Use
+[`save_plot`](https://j-y26.github.io/bioToolkit/reference/save_plot.md)
+to save it: the output file is sized to fit the panels, strips, legend
+and margins exactly. Text sizes follow
+[`theme_bioToolkit`](https://j-y26.github.io/bioToolkit/reference/theme_bioToolkit.md).
+
+## Usage
+
+``` r
+DimPlot_bioToolkit(
+  object,
+  group.by = NULL,
+  split.by = NULL,
+  reduction = "umap",
+  dims = c(1, 2),
+  cells = NULL,
+  cells.highlight = NULL,
+  full.extent = FALSE,
+  cols = NULL,
+  na.value = "grey88",
+  pt.size = 0.3,
+  alpha = 1,
+  shuffle = TRUE,
+  outline = FALSE,
+  outline.color = "black",
+  outline.size = 0.6,
+  outline.darken = 0.4,
+  label = FALSE,
+  label.size = 3.5,
+  mark = FALSE,
+  mark.by = NULL,
+  mark.cols = NULL,
+  mark.linetype = "dashed",
+  mark.linewidth = 0.5,
+  mark.expand = 0.04,
+  mark.smooth = 0.05,
+  mark.coverage = 0.98,
+  legend.position = c("right", "left", "top", "bottom", "inside", "none"),
+  legend.ncol = NULL,
+  legend.pt.size = 3.5,
+  legend.text.size = NULL,
+  ncol = NULL,
+  by.row = TRUE,
+  arrow.panels = c("bottom.left", "all", "left", "right", "top", "bottom", "none"),
+  panel.width = 4,
+  panel.height = panel.width,
+  panel.spacing = 0.1,
+  strip.text.size = NULL,
+  strip.text.face = "bold",
+  raster = NULL,
+  raster.threshold = 10000,
+  raster.dpi = 1000,
+  bg = "transparent",
+  seed = 42,
+  ...
+)
+```
+
+## Arguments
+
+- object:
+
+  A Seurat object
+
+- group.by:
+
+  Metadata column to colour cells by. If NULL, the active identities are
+  used
+
+- split.by:
+
+  Metadata column to split the plot by, one panel per level. If NULL
+  (default), a single panel is drawn. Levels with no cells are dropped
+
+- reduction:
+
+  Name of the reduction to plot, default is "umap"
+
+- dims:
+
+  The two dimensions of the reduction to plot, default is 1 and 2
+
+- cells:
+
+  Cells to plot, as names or indices (e.g. from
+  [`Seurat::WhichCells()`](https://satijalab.github.io/seurat-object/reference/WhichCells.html)).
+  Other cells are left out of the plot entirely. If NULL (default), all
+  cells are plotted
+
+- cells.highlight:
+
+  Cells to colour, as names or indices. Other plotted cells are drawn in
+  \`na.value\` and left out of the legend. If NULL (default), all
+  plotted cells are coloured
+
+- full.extent:
+
+  Whether the axes span all cells of the object rather than only the
+  plotted ones, so that a plot of a subset of cells lines up with a plot
+  of the whole object. Default is FALSE
+
+- cols:
+
+  Colours for the groups. If NULL (default), "scanpy-20" (or
+  "scanpy-102" above 20 groups). Otherwise a palette name (see
+  [`show_palettes`](https://j-y26.github.io/bioToolkit/reference/show_palettes.md)),
+  colours named by group (e.g. picked with
+  `bt_palette("scanpy-20")[c(1, 3, 2)]` and named by cell type), or
+  colours in the order of the group levels. Every level of \`group.by\`
+  gets a colour, including levels with no plotted cell, so that a plot
+  of a subset of cells uses the same colours as a plot of all
+
+- na.value:
+
+  Colour of cells with no group and of cells not in \`cells.highlight\`,
+  default is "grey88"
+
+- pt.size:
+
+  Point size, default is 0.3
+
+- alpha:
+
+  Point transparency, default is 1
+
+- shuffle:
+
+  Whether to plot cells in random order so that no group is
+  systematically drawn on top, default is TRUE
+
+- outline:
+
+  Whether to draw an outline around the cell clouds, default is FALSE
+
+- outline.color:
+
+  Colour of the outline: "black" (default), "darken" for a darkened
+  version of each group's colour, or any colour
+
+- outline.size:
+
+  Thickness of the outline (in point size units), default is 0.6
+
+- outline.darken:
+
+  Amount to darken group colours by when \`outline.color = "darken"\`,
+  between 0 and 1, default is 0.4
+
+- label:
+
+  Whether to label groups at their median position, default is FALSE.
+  When split, groups are labelled within each panel
+
+- label.size:
+
+  Size of the group labels in mm, default is 3.5
+
+- mark:
+
+  Whether to draw a dashed line around the cell cloud of each group of
+  \`mark.by\`, kept a fixed distance away from the cells, default is
+  FALSE. Typically, cells are coloured by a fine annotation
+  (\`group.by\`) and outlined by a broader one (\`mark.by\`). Stray
+  cells far from the rest of their group are left outside the line, and
+  a group split into separate clouds gets one line around each. Only
+  cells in \`cells.highlight\` are outlined, and when split, groups are
+  outlined within each panel
+
+- mark.by:
+
+  Metadata column whose groups are outlined. If NULL (default), the
+  groups of \`group.by\`
+
+- mark.cols:
+
+  Colours of the outlines, as for \`cols\`. If NULL (default), the
+  colours of \`cols\` when \`mark.by\` is the same as \`group.by\`, and
+  the default colours otherwise
+
+- mark.linetype:
+
+  Line type of the outlines, default is "dashed"
+
+- mark.linewidth:
+
+  Line width of the outlines, default is 0.5
+
+- mark.expand:
+
+  Distance the outlines are pushed out from the edge of the cell clouds,
+  in inches, default is 0.04 (about 1 mm). The smoothed edge itself
+  already lies slightly beyond the outermost cells
+
+- mark.smooth:
+
+  Smoothing of the outlines in inches, default is 0.05. Larger values
+  give rounder outlines that bridge larger gaps between cells
+
+- mark.coverage:
+
+  Fraction of each group's cells, from its densest regions, that the
+  outlines are drawn around, default is 0.98. Lower values leave more of
+  the sparse, stray cells outside the line
+
+- legend.position:
+
+  Position of the legend, one of "right" (default), "left", "top",
+  "bottom", "inside" or "none"
+
+- legend.ncol:
+
+  Number of legend columns. If NULL (default), ggplot2 chooses based on
+  the number of groups and the position
+
+- legend.pt.size:
+
+  Size of the legend keys, default is 3.5
+
+- legend.text.size:
+
+  Font size of the legend text in points. If NULL (default), the theme's
+  base size (11)
+
+- ncol:
+
+  Number of panel columns when \`split.by\` is given. If NULL (default),
+  all panels are laid out in a single row
+
+- by.row:
+
+  Whether panels fill the grid row by row (default, TRUE) or column by
+  column (FALSE)
+
+- arrow.panels:
+
+  Panels that get the dimension arrows: "bottom.left" (default; the
+  first panel of the bottom row), "all", "left" / "right" (the first /
+  last panel of each row), "top" / "bottom" (the top / lowest panel of
+  each column) or "none"
+
+- panel.width:
+
+  Width of a single panel in inches, default is 4
+
+- panel.height:
+
+  Height of a single panel in inches, default is \`panel.width\`
+
+- panel.spacing:
+
+  Gap between panels in inches, default is 0.1
+
+- strip.text.size:
+
+  Font size of the panel (split) labels in points. If NULL (default),
+  the theme's large size (12)
+
+- strip.text.face:
+
+  Font face of the panel labels, default is "bold"
+
+- raster:
+
+  Whether to rasterize the points while keeping text, legend and arrows
+  as vectors: NULL (default) rasterizes when there are more than
+  \`raster.threshold\` cells, or TRUE / FALSE
+
+- raster.threshold:
+
+  Number of cells above which \`raster = NULL\` rasterizes, default is
+  10000
+
+- raster.dpi:
+
+  Resolution of the rasterized points, default is 1000. Match the
+  \`dpi\` used when saving raster (e.g. png) output
+
+- bg:
+
+  Background colour, default is "transparent", so that the figure can be
+  placed on any background (gaps inside outlines and label halos are
+  then white). Use e.g. "white" for an opaque background
+
+- seed:
+
+  Random seed used for shuffling and label placement, default is 42. The
+  global random number generator state is not changed
+
+- ...:
+
+  Arguments of the dimension arrows, as in
+  [`add_dimension_arrows`](https://j-y26.github.io/bioToolkit/reference/add_dimension_arrows.md):
+  the arrows scale with the panel size, and \`arrow.scale\` makes them
+  larger or smaller (e.g. \`arrow.scale = 0.8\`; default 1, 2 cm arrows
+  on a 3.5-inch panel); the snake_case names used before 0.10.0 are
+  deprecated. \`rasterize\` is accepted as a deprecated alias of
+  \`raster\`
+
+## Value
+
+a ggplot object

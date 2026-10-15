@@ -1,0 +1,278 @@
+# Heatmap of genes across cells or groups
+
+Shows the expression of genes (e.g. top markers of each cell type)
+across cells, or across group means, z-scored per gene by default.
+Columns are arranged in blocks (\`split.by\`, e.g. cell type) and,
+within them, groups compared with each other (\`group.by\`, e.g.
+condition) marked by a coloured dot or strip. A drop-in alternative to
+[`Seurat::DoHeatmap()`](https://satijalab.org/seurat/reference/DoHeatmap.html)
+that reads any gene (not only those in "scale.data"), keeps small groups
+visible by downsampling, and has a fixed size. Save it with
+[`save_plot`](https://j-y26.github.io/bioToolkit/reference/save_plot.md);
+the values behind it are returned by
+[`export_source_data`](https://j-y26.github.io/bioToolkit/reference/export_source_data.md).
+
+## Usage
+
+``` r
+DoHeatmap_bioToolkit(
+  object,
+  features,
+  group.by = NULL,
+  split.by = NULL,
+  cells = NULL,
+  assay = NULL,
+  slot = "data",
+  columns = c("cells", "groups"),
+  average = c("linear", "log"),
+  max.cells = 200,
+  scale = TRUE,
+  min.cutoff = NA,
+  max.cutoff = NA,
+  group.marker = c("dot", "strip", "none"),
+  group.cols = NULL,
+  annotations = NULL,
+  annotation.cols = NULL,
+  cols = NULL,
+  label.features = NULL,
+  label.side = c("right", "left"),
+  feature.group.cols = NULL,
+  split.by.cols = NULL,
+  group.bar.width = 3.5,
+  italic.genes = TRUE,
+  panel.width = 6,
+  cell.width = 0.18,
+  cell.height = 0.13,
+  panel.height = NULL,
+  split.gap = 0.04,
+  seed = 42,
+  legend.position = c("right", "bottom", "top", "left", "none"),
+  bg = "transparent"
+)
+```
+
+## Arguments
+
+- object:
+
+  A Seurat object
+
+- features:
+
+  Genes (or other numeric features, e.g. module scores) as rows: a
+  character vector, or a named list of character vectors (e.g. from
+  [`top_markers`](https://j-y26.github.io/bioToolkit/reference/top_markers.md)),
+  drawn as blocks of rows named by the list. Genes not in the assay are
+  left out with a warning
+
+- group.by:
+
+  Metadata column of the groups compared (e.g. condition), marked by a
+  coloured dot or strip above the columns. If NULL (default), the active
+  identities
+
+- split.by:
+
+  Metadata column of a higher-level grouping (e.g. cell type), drawn
+  like facets: one named block of columns per level. If NULL (default),
+  the groups are the blocks
+
+- cells:
+
+  Cells to use, as names or indices. If NULL (default), all
+
+- assay:
+
+  Assay to read genes from. If NULL (default), the default assay. The
+  assay and layer used are reported in a message and written to the
+  source data
+
+- slot:
+
+  Layer to read, default is "data" (log-normalized values, all genes).
+  "scale.data" is drawn as stored (\`scale\` is then not applied); it
+  usually holds only the variable genes
+
+- columns:
+
+  What a column is: "cells" (default; one column per cell, at most
+  \`max.cells\` per group in each block) or "groups" (one column per
+  group in each block: the group's mean)
+
+- average:
+
+  How group means are computed from the log-normalized "data" layer
+  (\`columns = "groups"\`): "linear" (default, `log1p(mean(expm1(x)))`,
+  as Seurat) or "log" (`mean(x)`), as in
+  [`DotPlot_bioToolkit`](https://j-y26.github.io/bioToolkit/reference/DotPlot_bioToolkit.md)
+
+- max.cells:
+
+  Largest number of cells drawn per group in each block, picked at
+  random (\`seed\`), default is 200. NULL draws all cells. Only for
+  \`columns = "cells"\`
+
+- scale:
+
+  Whether to z-score each feature, default is TRUE: across all plotted
+  cells (before downsampling) for \`columns = "cells"\`, across the
+  columns for \`columns = "groups"\`
+
+- min.cutoff, max.cutoff:
+
+  Ends of the colour scale: a number, a quantile of the plotted values
+  such as "q5" / "q95", or NA (default). For z-scores, NA gives
+  +-min(largest \|z\|, 2.5); for values that are all positive, 0 and the
+  largest value; for other values, +-largest \|value\|. Values beyond
+  the ends get the colour of the end
+
+- group.marker:
+
+  How the groups are marked above the columns: "dot" (default), "strip"
+  or "none"
+
+- group.cols:
+
+  Colours of the groups: NULL (default) for the colours
+  [`DimPlot_bioToolkit`](https://j-y26.github.io/bioToolkit/reference/DimPlot_bioToolkit.md)
+  gives them, a qualitative palette name, or colours named by group
+
+- annotations:
+
+  Further discrete metadata columns shown as colour strips above the
+  columns (e.g. "sample"), each with its legend. With \`columns =
+  "groups"\`, each must have one value per column. Cells in a group are
+  ordered by the first one
+
+- annotation.cols:
+
+  Colours of \`annotations\`: a list named by column, each a qualitative
+  palette name or colours named by value. Columns not in the list get
+  "tol-muted", "okabe-ito", "tol-light", ... in turn (or the default
+  group colours when they have too many values)
+
+- cols:
+
+  Colours of the heatmap. If NULL (default), for z-scores or signed
+  values: "teal-yellow" (teal - black - yellow) with \`columns =
+  "cells"\`, "blue-magenta" (light centre) with \`columns = "groups"\`;
+  "magma" for unscaled non-negative values. Otherwise a palette name
+  (see
+  [`show_palettes`](https://j-y26.github.io/bioToolkit/reference/show_palettes.md))
+  or colours from low to high, e.g. \`c(low, mid, high)\`
+
+- label.features:
+
+  Which feature names are drawn: NULL (default) all of them if a row is
+  tall enough for the text (at least 0.125 in), else none; TRUE or FALSE
+  for all or none; or a few features, named with leader lines
+
+- label.side:
+
+  Side of the feature names: "right" (default) or "left". Names of
+  blocks of features are on the other side
+
+- feature.group.cols:
+
+  Colours of the bars marking the blocks of features (a named list of
+  \`features\`): NULL (default) for black bars, a qualitative palette
+  name, or colours named by block
+
+- split.by.cols:
+
+  Colours of the bars marking the blocks of columns (\`split.by\`, or
+  the groups without it): NULL (default) for black bars, a qualitative
+  palette name, or colours named by block
+
+- group.bar.width:
+
+  Thickness of the block bars in points, default is 3.5
+
+- italic.genes:
+
+  Whether gene names are set in italics, default is TRUE (genomic
+  regions such as peaks never are)
+
+- panel.width:
+
+  Width of the heatmap in inches for \`columns = "cells"\` (without the
+  gaps between blocks), default is 6
+
+- cell.width:
+
+  Width of one column in inches for \`columns = "groups"\`, default is
+  0.18
+
+- cell.height:
+
+  Height of one row in inches, default is 0.13, which fits the names.
+  Used while the heatmap is at most 6 in tall; beyond that, see
+  \`panel.height\`
+
+- panel.height:
+
+  Height of the heatmap in inches (without the gaps between blocks of
+  features). If NULL (default), rows of \`cell.height\`, up to 6 in in
+  all
+
+- split.gap:
+
+  Gap between blocks of columns in inches, default is 0.04
+
+- seed:
+
+  Random seed of the downsampling and cell order, default is 42
+
+- legend.position:
+
+  Position of the legends: "right" (default), "bottom", "top", "left" or
+  "none"
+
+- bg:
+
+  Background colour, default is "transparent"
+
+## Value
+
+A patchwork (body, header rows and labels)
+
+## Details
+
+Cells without a value of \`group.by\` or \`split.by\` are left out, with
+a message. A feature with the same value in every cell has no z-score
+and is drawn at 0, with a message.
+
+The source data
+([`export_source_data`](https://j-y26.github.io/bioToolkit/reference/export_source_data.md))
+hold one row per column and feature: the \`column\` (cell, or group
+mean), \`block\`, \`group\`, \`split\`, the \`annotations\`,
+\`feature_group\`, \`feature\`, \`value\` (as read, or the group mean),
+\`value_scaled\` (when scaled), \`n_cells\` (group means) and the
+\`assay\`, \`layer\` and \`average\` used.
+
+## See also
+
+[`top_markers`](https://j-y26.github.io/bioToolkit/reference/top_markers.md),
+[`DotPlot_bioToolkit`](https://j-y26.github.io/bioToolkit/reference/DotPlot_bioToolkit.md),
+[`save_plot`](https://j-y26.github.io/bioToolkit/reference/save_plot.md),
+[`export_source_data`](https://j-y26.github.io/bioToolkit/reference/export_source_data.md)
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+markers <- top_markers(Seurat::FindAllMarkers(obj, only.pos = TRUE), n = 5)
+
+# Cells, z-scored per gene, at most 200 per cell type
+DoHeatmap_bioToolkit(obj, markers, group.by = "cell_type", assay = "SCT")
+
+# Group means: conditions (dots) compared within each cell type (blocks)
+p <- DoHeatmap_bioToolkit(obj, markers, group.by = "condition",
+                          split.by = "cell_type", columns = "groups")
+save_plot(p, "heatmap.pdf")
+
+# Many genes: names hidden, a few named with leader lines
+DoHeatmap_bioToolkit(obj, top_markers(all_markers, n = 30), group.by = "cell_type",
+                     label.features = c("Col1a1", "Cdh5", "Myh6"))
+} # }
+```

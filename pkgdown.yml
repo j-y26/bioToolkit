@@ -1,0 +1,17 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  articles/bulk-samples: bulk-samples.html
+  articles/de-multi: de-multi.html
+  articles/de-single: de-single.html
+  articles/enrichment: enrichment.html
+  articles/figures: figures.html
+  articles/palettes: palettes.html
+  articles/sc-conditions: sc-conditions.html
+  articles/sc-embeddings: sc-embeddings.html
+  articles/sc-expression: sc-expression.html
+last_built: 2026-10-15T06:10Z
+urls:
+  reference: https://j-y26.github.io/bioToolkit/reference
+  article: https://j-y26.github.io/bioToolkit/articles

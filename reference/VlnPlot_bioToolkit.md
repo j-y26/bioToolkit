@@ -1,0 +1,270 @@
+# Violin plot of genes or per-cell values
+
+Draws the distribution of one or more features in each group of cells as
+violins, with a box of the inter-quartile range and median and a sample
+of the cells as points. Features can be genes, metadata columns (QC
+metrics, module scores) or a mix, each in its own panel with its own
+axis. A drop-in alternative to
+[`Seurat::VlnPlot()`](https://satijalab.org/seurat/reference/VlnPlot.html)
+with a fixed size: save it with
+[`save_plot`](https://j-y26.github.io/bioToolkit/reference/save_plot.md);
+the values behind it are returned by
+[`export_source_data`](https://j-y26.github.io/bioToolkit/reference/export_source_data.md).
+
+## Usage
+
+``` r
+VlnPlot_bioToolkit(
+  object,
+  features,
+  group.by = NULL,
+  split.by = NULL,
+  split.by.cols = NULL,
+  split.by.side = c("opposite", "labels"),
+  group.bar.width = 3.5,
+  cells = NULL,
+  assay = NULL,
+  slot = "data",
+  flip = FALSE,
+  stack = FALSE,
+  log = FALSE,
+  percent = FALSE,
+  y.max = NULL,
+  zeros = c("include", "exclude", "annotate"),
+  box = TRUE,
+  box.width = 0.2,
+  pt.n = 1500,
+  pt.size = 0.16,
+  alpha = 0.4,
+  adjust = 1,
+  cols = NULL,
+  italic.genes = TRUE,
+  ncol = NULL,
+  cell.width = 0.35,
+  cell.height = 0.35,
+  panel.width = NULL,
+  panel.height = NULL,
+  raster = NULL,
+  raster.dpi = 1000,
+  seed = 42,
+  legend.position = "none",
+  bg = "transparent"
+)
+```
+
+## Arguments
+
+- object:
+
+  A Seurat object, or a data frame with one row per cell (e.g. a table
+  of QC metrics; row names are the cell names)
+
+- features:
+
+  Features to plot: genes, metadata columns, module scores or embedding
+  dimensions (from a data frame: its numeric columns). Gene symbols are
+  matched exactly (rat and mouse "Cd3e", human "CD3E"); missing ones are
+  left out with a warning
+
+- group.by:
+
+  Column to group cells by: one violin per group, filled with the
+  group's colour. If NULL (default), the active identities of a Seurat
+  object, or one group for a data frame
+
+- split.by:
+
+  Column of a higher-level grouping, drawn like facets: one labelled
+  block of violins per level, e.g. \`group.by = "condition", split.by =
+  "cell_type"\` compares conditions within each cell type. Default is
+  NULL. (Seurat's \`split.by\` dodges violins instead)
+
+- split.by.cols:
+
+  Colours of the bars marking the \`split.by\` blocks: NULL (default)
+  for black bars, a qualitative palette name, or colours named by level
+  of \`split.by\`
+
+- split.by.side:
+
+  Side of the \`split.by\` blocks: "opposite" (default; opposite the
+  group names: on top, or on the right with \`flip = TRUE\`) or "labels"
+  (beyond the group names)
+
+- group.bar.width:
+
+  Thickness of the \`split.by\` bars in points, default is 3.5
+
+- cells:
+
+  Cells to use, as names or indices. If NULL (default), all
+
+- assay:
+
+  Assay to read genes from. If NULL (default), the default assay; the
+  assay and layer used are reported in a message when a feature is a
+  gene, and written to the source data
+
+- slot:
+
+  Layer to read genes from, default is "data"
+
+- flip:
+
+  Whether to draw horizontal violins (groups on the y-axis, the first at
+  the top), default is FALSE (vertical, groups on x)
+
+- stack:
+
+  Whether to stack the features as thin panels sharing the group axis
+  (rows; columns when flipped), default is FALSE (one panel each, in a
+  grid of \`ncol\` columns)
+
+- log:
+
+  Whether to draw values on a log10 axis: TRUE / FALSE for all features,
+  or the names of the features to draw so (e.g. \`c("nCount_RNA",
+  "nFeature_RNA")\`). Values of 0 or below cannot be drawn and are left
+  out, with a message. Default is FALSE
+
+- percent:
+
+  Whether values are fractions (0 to 1) shown as percentages on the
+  axis: TRUE / FALSE, or the names of the features (e.g.
+  "mito_fraction"). Default is FALSE
+
+- y.max:
+
+  Top of the value axis: a number, a quantile of each feature's values
+  such as "q99" (zooms past a few extreme cells), or NULL (default) for
+  the full range. Only the view is cut: violins and boxes are computed
+  from all cells and cut at the top of the axis, and points above it are
+  not drawn. One value for all features, or a vector named by feature
+
+- zeros:
+
+  How cells with a value of 0 are handled for genes: "include" (default,
+  as Seurat), "exclude" (violins of the cells above 0 only) or
+  "annotate" (as "exclude", with the % of cells above 0 printed for each
+  group). Not applied to other features
+
+- box:
+
+  Whether to draw the box (inter-quartile range and median), default is
+  TRUE
+
+- box.width:
+
+  Width of the box, as a fraction of a violin's slot, default is 0.2
+
+- pt.n:
+
+  Largest number of cells drawn as points per violin, picked at random
+  (\`seed\`), default is 1500. 0 draws no points; Inf all
+
+- pt.size:
+
+  Size of the points, default is 0.16
+
+- alpha:
+
+  Opacity of the points, default is 0.4
+
+- adjust:
+
+  Bandwidth multiplier of the densities, default is 1
+
+- cols:
+
+  Colours of the groups: NULL (default) for the colours
+  [`DimPlot_bioToolkit`](https://j-y26.github.io/bioToolkit/reference/DimPlot_bioToolkit.md)
+  gives them ("scanpy-20" up to 20 groups), a qualitative palette name,
+  or colours named by group (or in level order)
+
+- italic.genes:
+
+  Whether gene names are set in italics, default is TRUE
+
+- ncol:
+
+  Number of columns of panels when \`stack = FALSE\`. If NULL (default),
+  as Seurat
+
+- cell.width, cell.height:
+
+  Width (vertical violins) or height (horizontal violins) of one
+  violin's slot in inches, default is 0.35
+
+- panel.width, panel.height:
+
+  Length of the value axis in inches: the panel height for vertical
+  violins and the width for horizontal ones. If NULL (default), 1.6, or
+  0.5 when stacked
+
+- raster:
+
+  Whether to rasterize the points: NULL (default) does so above 2000
+  points; or TRUE / FALSE
+
+- raster.dpi:
+
+  Resolution of rasterized points, default is 1000
+
+- seed:
+
+  Random seed of the sampled and jittered points, default is 42
+
+- legend.position:
+
+  Position of the group legend, default is "none" (the groups are named
+  on the axis)
+
+- bg:
+
+  Background colour, default is "transparent"
+
+## Value
+
+A ggplot object for one feature, otherwise a patchwork
+
+## Details
+
+Cells without a value of \`group.by\` (or \`split.by\`) are left out,
+with a message. Group colours are taken from all levels of \`group.by\`
+in the whole object, so that they match an embedding of all cells.
+
+The source data
+([`export_source_data`](https://j-y26.github.io/bioToolkit/reference/export_source_data.md))
+hold one row per cell and feature: \`cell\`, \`group\`, \`split\`,
+\`feature\`, \`value\`, whether the cell is \`drawn\` (\`zeros\`,
+\`log\`) and, for genes, the \`assay\` and \`layer\`.
+
+## See also
+
+[`RidgePlot_bioToolkit`](https://j-y26.github.io/bioToolkit/reference/RidgePlot_bioToolkit.md),
+[`DotPlot_bioToolkit`](https://j-y26.github.io/bioToolkit/reference/DotPlot_bioToolkit.md),
+[`save_plot`](https://j-y26.github.io/bioToolkit/reference/save_plot.md),
+[`export_source_data`](https://j-y26.github.io/bioToolkit/reference/export_source_data.md)
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# QC metrics per sample, from the metadata alone
+VlnPlot_bioToolkit(obj[[]], c("nCount_RNA", "nFeature_RNA", "percent.mt"),
+                   group.by = "sample", log = c("nCount_RNA", "nFeature_RNA"))
+
+# Genes per cell type, horizontal
+VlnPlot_bioToolkit(obj, c("Cdh5", "Col1a1"), group.by = "cell_type",
+                   assay = "SCT", flip = TRUE)
+
+# Conditions compared within each cell type; % above 0 for sparse genes
+VlnPlot_bioToolkit(obj, "Nppa", group.by = "condition",
+                   split.by = "cell_type", zeros = "annotate")
+
+# Many markers, stacked
+p <- VlnPlot_bioToolkit(obj, c("Cdh5", "Col1a1", "Myh6", "Cd74"),
+                        group.by = "cell_type", stack = TRUE, pt.n = 0)
+save_plot(p, "violins.pdf")
+} # }
+```

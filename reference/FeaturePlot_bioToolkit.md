@@ -1,0 +1,413 @@
+# Publication-quality feature plot
+
+Colours cells on a 2D reduction (UMAP, tSNE, PCA, ...) by the values of
+one or more features (genes, metadata columns, module scores, ...). Like
+[`DimPlot_bioToolkit`](https://j-y26.github.io/bioToolkit/reference/DimPlot_bioToolkit.md),
+every panel has a fixed absolute size set by \`panel.width\` and
+\`panel.height\`, so that panels are identical across figures; use
+[`save_plot`](https://j-y26.github.io/bioToolkit/reference/save_plot.md)
+to save the plot, or a patchwork combination of plots, sized to fit.
+Text sizes follow
+[`theme_bioToolkit`](https://j-y26.github.io/bioToolkit/reference/theme_bioToolkit.md),
+and the values behind each panel can be written out with
+[`export_source_data`](https://j-y26.github.io/bioToolkit/reference/export_source_data.md).
+
+Cells go through three steps:
+
+1.  \`cells\` selects the cells that are plotted at all; the others are
+    left out entirely.
+
+2.  \`split.by\` divides the plotted cells into panels.
+
+3.  Within each panel, cells that are in \`cells.highlight\` and have a
+    value above \`na.cutoff\` are coloured by their value. All other
+    plotted cells are drawn beneath them in \`na.value\` grey, which is
+    never shown in the legend and does not affect the colour scale.
+
+Values can be shown per cell (\`geom = "point"\`), averaged into
+hexagonal tiles (\`geom = "hex"\`), or smoothed over neighbouring cells
+(\`geom = "density"\`), which recovers the signal of sparse genes.
+
+## Usage
+
+``` r
+FeaturePlot_bioToolkit(
+  object,
+  features,
+  cells = NULL,
+  cells.highlight = NULL,
+  full.extent = FALSE,
+  split.by = NULL,
+  keep.scale = "feature",
+  reduction = "umap",
+  dims = c(1, 2),
+  assay = NULL,
+  slot = "data",
+  geom = c("point", "hex", "density"),
+  cols = NULL,
+  na.value = NULL,
+  na.cutoff = "auto",
+  min.cutoff = NA,
+  max.cutoff = NA,
+  diverging = "auto",
+  center = 0,
+  order = TRUE,
+  pt.size = 0.3,
+  alpha = 1,
+  outline = FALSE,
+  outline.color = "black",
+  outline.size = 0.6,
+  label = FALSE,
+  label.by = NULL,
+  label.size = 3.5,
+  label.color = "black",
+  hex.bins = 60,
+  hex.fun = c("mean", "pct"),
+  hex.min.cells = 3,
+  density.method = c("smooth", "wkde"),
+  density.adjust = 1,
+  legend.position = c("right", "left", "top", "bottom", "inside", "none"),
+  legend.direction = NULL,
+  legend.title = "auto",
+  legend.title.face = "auto",
+  legend.length = 1.5,
+  legend.width = 0.15,
+  legend.text.size = NULL,
+  ncol = NULL,
+  by.row = TRUE,
+  arrow.panels = c("bottom.left", "all", "left", "right", "top", "bottom", "none"),
+  combine = TRUE,
+  panel.width = 4,
+  panel.height = panel.width,
+  panel.spacing = 0.1,
+  strip.text.size = NULL,
+  strip.text.face = "bold",
+  raster = NULL,
+  raster.threshold = 10000,
+  raster.dpi = 1000,
+  bg = "transparent",
+  seed = 42,
+  ...
+)
+```
+
+## Arguments
+
+- object:
+
+  A Seurat object
+
+- features:
+
+  Features to plot: genes, metadata columns or anything else
+  [`Seurat::FetchData()`](https://satijalab.github.io/seurat-object/reference/FetchData.html)
+  accepts. Several features are drawn as one panel each, and only one
+  feature can be given with \`split.by\`
+
+- cells:
+
+  Cells to plot, as names or indices (e.g. from
+  [`Seurat::WhichCells()`](https://satijalab.github.io/seurat-object/reference/WhichCells.html)).
+  Other cells are left out of the plot entirely. If NULL (default), all
+  cells are plotted
+
+- cells.highlight:
+
+  Cells to colour, as names or indices. Other plotted cells are drawn in
+  \`na.value\`. If NULL (default), all plotted cells can be coloured
+
+- full.extent:
+
+  Whether the axes span all cells of the object rather than only the
+  plotted ones, so that a plot of a subset of cells lines up with a plot
+  of the whole object. Default is FALSE
+
+- split.by:
+
+  Metadata column to split the plot by, one panel per level. If NULL
+  (default), a single panel per feature is drawn
+
+- keep.scale:
+
+  How colour scales are shared between panels, as in
+  [`Seurat::FeaturePlot()`](https://satijalab.org/seurat/reference/FeaturePlot.html):
+  "feature" (default) gives all panels of a feature one scale and one
+  legend; "all" gives every panel of every feature one scale; NULL gives
+  each panel its own scale and legend
+
+- reduction:
+
+  Name of the reduction to plot, default is "umap"
+
+- dims:
+
+  The two dimensions of the reduction to plot, default is 1 and 2
+
+- assay:
+
+  Assay that genes are read from. If NULL (default), the default assay
+  of the object
+  ([`SeuratObject::DefaultAssay()`](https://satijalab.github.io/seurat-object/reference/DefaultAssay.html)),
+  as in Seurat. The assay and layer used are reported in a message.
+  Genes are fetched from this assay only: a gene that is only in another
+  assay is an error rather than being read from it silently. Objects
+  holding both "RNA" and "SCT" assays give different values for the same
+  gene, so set it explicitly for reproducible figures
+
+- slot:
+
+  Layer to fetch expression from, default is "data"
+
+- geom:
+
+  How values are drawn: "point" (default) colours each cell; "hex"
+  colours hexagonal tiles by a summary of the cells in them (see
+  \`hex.fun\`); "density" colours each cell by values smoothed over
+  neighbouring cells (see \`density.method\`)
+
+- cols:
+
+  The colours of the scale. If NULL (default), "plasma_r" or, for a
+  diverging scale, "blue-magenta". Otherwise two or more colours from
+  low to high values, e.g. \`c("grey90", "darkred")\` (low, high) or,
+  for a diverging scale, \`c("#2166AC", "white", "#B2182B")\` (low,
+  centre, high); or the name of a sequential or diverging palette (see
+  [`show_palettes`](https://j-y26.github.io/bioToolkit/reference/show_palettes.md)),
+  such as "viridis", "magma" or "tol-burd", or of an RColorBrewer
+  palette
+
+- na.value:
+
+  Colour of cells (or tiles) that are not coloured. If NULL (default),
+  "grey88", or "grey70" for a diverging scale so that they stand out
+  from its light centre
+
+- na.cutoff:
+
+  Values at or below this are drawn in \`na.value\` rather than on the
+  colour scale. "auto" (default) uses 0 for features with no negative
+  values, so that cells with no expression are told apart from cells
+  with low expression, and no cutoff otherwise, and for \`geom =
+  "density"\`. NULL plots all values on the colour scale
+
+- min.cutoff, max.cutoff:
+
+  Lower and upper ends of the colour scale, one per feature or a single
+  value for all. Values beyond them get the colour of the end. A number
+  sets the end exactly, so that separate plots share colours; a quantile
+  such as "q1" or "q99" is computed from the coloured values; NA
+  (default) uses the smallest or largest value
+
+- diverging:
+
+  Whether to use a diverging scale centred on \`center\`: "auto"
+  (default) does so when the coloured values span \`center\`, or TRUE /
+  FALSE
+
+- center:
+
+  Centre of a diverging scale, default is 0. The two sides of the scale
+  extend equally far in colour from the centre, so that a side with a
+  smaller range does not reach its darkest colour
+
+- order:
+
+  Whether to draw cells with higher values on top, default is TRUE; on a
+  diverging scale, cells further from the centre are drawn on top. If
+  FALSE, cells are drawn in random order
+
+- pt.size:
+
+  Point size, default is 0.3
+
+- alpha:
+
+  Point (or tile) transparency, default is 1
+
+- outline:
+
+  Whether to draw an outline around the cell clouds, default is FALSE.
+  Not used for \`geom = "hex"\`
+
+- outline.color:
+
+  Colour of the outline, default is "black"
+
+- outline.size:
+
+  Thickness of the outline (in point size units), default is 0.6
+
+- label:
+
+  Whether to label groups at their median position, default is FALSE.
+  Groups are the active identities unless \`label.by\` is given
+
+- label.by:
+
+  Metadata column whose groups are labelled when \`label = TRUE\`. If
+  NULL (default), the active identities
+
+- label.size:
+
+  Size of the group labels in mm, default is 3.5
+
+- label.color:
+
+  Colour of the group labels, default is "black"
+
+- hex.bins:
+
+  Number of hexagons across the width of a panel, default is 60.
+  Hexagons are regular for any panel shape
+
+- hex.fun:
+
+  Summary of a tile: "mean" (default) is the mean value of its
+  coloured-eligible cells, counting those at or below \`na.cutoff\`;
+  "pct" is the percentage of them above \`na.cutoff\` (or 0 when there
+  is none). Tiles with no such cell, or a summary at or below the
+  cutoff, are drawn in \`na.value\`
+
+- hex.min.cells:
+
+  Tiles with fewer plotted cells are not drawn, default is 3
+
+- density.method:
+
+  For \`geom = "density"\`: "smooth" (default) is a kernel-weighted mean
+  of the values of neighbouring cells, which keeps the units of the
+  feature and is comparable between panels; "wkde" is a kernel density
+  of cells weighted by their values, as in the Nebulosa package, scaled
+  to a maximum of 1 per feature. It is highest where many cells have
+  high values, and needs non-negative values
+
+- density.adjust:
+
+  Multiplier of the smoothing bandwidth, default is 1. Smaller values
+  smooth less
+
+- legend.position:
+
+  Position of the legend, one of "right" (default), "left", "top",
+  "bottom", "inside" or "none"
+
+- legend.direction:
+
+  Direction of the colour bar, "vertical" or "horizontal". If NULL
+  (default), horizontal for top and bottom legends and vertical
+  otherwise
+
+- legend.title:
+
+  Title of the colour bar: "auto" (default) for the feature name (or
+  "Expression" / "Value" for a scale shared by several features); NULL
+  for no title; or a string, or one string per feature (optionally named
+  by feature)
+
+- legend.title.face:
+
+  Font face of the legend title. "auto" (default) sets it in bold, gene
+  names in bold italics
+
+- legend.length:
+
+  Length of the colour bar in inches, default is 1.5
+
+- legend.width:
+
+  Thickness of the colour bar in inches, default is 0.15
+
+- legend.text.size:
+
+  Font size of the legend text and title in points. If NULL (default),
+  the theme's base size (11)
+
+- ncol:
+
+  Number of panel columns. If NULL (default), split panels are laid out
+  in a single row, and several features in up to four columns as in
+  [`Seurat::FeaturePlot()`](https://satijalab.org/seurat/reference/FeaturePlot.html)
+
+- by.row:
+
+  Whether panels fill the grid row by row (default, TRUE) or column by
+  column (FALSE)
+
+- arrow.panels:
+
+  Panels that get the dimension arrows: "bottom.left" (default; the
+  first panel of the bottom row), "all", "left" / "right" (the first /
+  last panel of each row), "top" / "bottom" (the top / lowest panel of
+  each column) or "none". With \`combine = FALSE\`, every plot gets its
+  own arrows unless "none"
+
+- combine:
+
+  Whether to return a single plot (default, TRUE) or a list of one plot
+  per panel, each with its own arrows, to be arranged by the caller
+
+- panel.width:
+
+  Width of a single panel in inches, default is 4
+
+- panel.height:
+
+  Height of a single panel in inches, default is \`panel.width\`
+
+- panel.spacing:
+
+  Gap between panels in inches, default is 0.1
+
+- strip.text.size:
+
+  Font size of the panel labels in points. If NULL (default), the
+  theme's large size (12)
+
+- strip.text.face:
+
+  Font face of the panel labels, default is "bold". Gene names are
+  additionally set in italics
+
+- raster:
+
+  Whether to rasterize the points while keeping text, legend and arrows
+  as vectors: NULL (default) rasterizes when there are more than
+  \`raster.threshold\` cells, or TRUE / FALSE. Hex tiles are always
+  drawn as vectors
+
+- raster.threshold:
+
+  Number of cells above which \`raster = NULL\` rasterizes, default is
+  10000
+
+- raster.dpi:
+
+  Resolution of the rasterized points, default is 1000. Match the
+  \`dpi\` used when saving raster (e.g. png) output
+
+- bg:
+
+  Background colour, default is "transparent", so that the figure can be
+  placed on any background (gaps inside outlines and label halos are
+  then white). Use e.g. "white" for an opaque background
+
+- seed:
+
+  Random seed used for drawing order and label placement, default is 42.
+  The global random number generator state is not changed
+
+- ...:
+
+  Arguments of the dimension arrows, as in
+  [`add_dimension_arrows`](https://j-y26.github.io/bioToolkit/reference/add_dimension_arrows.md):
+  the arrows scale with the panel size, and \`arrow.scale\` makes them
+  larger or smaller (e.g. \`arrow.scale = 0.8\`; default 1, 2 cm arrows
+  on a 3.5-inch panel); the snake_case names used before 0.10.0 are
+  deprecated
+
+## Value
+
+A ggplot object when there is a single colour scale over one feature;
+otherwise a patchwork object, whose panels keep their fixed size when
+combined further with patchwork. With \`combine = FALSE\`, a named list
+of ggplot objects

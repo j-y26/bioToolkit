@@ -1,0 +1,168 @@
+# Contributing to bioToolkit
+
+## Naming conventions
+
+One naming scheme across the package. Every new function follows it;
+existing functions are renamed when their roadmap item is worked on.
+
+### Function names
+
+| Kind | Scheme | Examples |
+|----|----|----|
+| Plots of a Seurat object, per cell | `<SeuratName>_bioToolkit` (drop-in replacements users recognise) | `DimPlot_bioToolkit`, `FeaturePlot_bioToolkit`, `DotPlot_bioToolkit`, `VlnPlot_bioToolkit`, `DoHeatmap_bioToolkit`, `DensityDiffPlot_bioToolkit` |
+| Plots of tables / matrices (DE, enrichment, bulk) | `plot_<thing>()` | `plot_volcano`, `plot_ma`, `plot_pca`, `plot_variance_explained`, `plot_fc_quadrant`, `plot_de_dots`, `plot_enrichment_dots`, `plot_enrichment_bars`, `plot_composition_scatter` |
+| Data helpers | verb first | [`standardize_de()`](https://j-y26.github.io/bioToolkit/reference/standardize_de.md), [`standardize_enrichment()`](https://j-y26.github.io/bioToolkit/reference/standardize_enrichment.md), [`top_markers()`](https://j-y26.github.io/bioToolkit/reference/top_markers.md), [`export_source_data()`](https://j-y26.github.io/bioToolkit/reference/export_source_data.md) |
+| Palettes | [`bt_palette()`](https://j-y26.github.io/bioToolkit/reference/bt_palette.md); verb first for the rest | [`bt_palette()`](https://j-y26.github.io/bioToolkit/reference/bt_palette.md), [`list_palettes()`](https://j-y26.github.io/bioToolkit/reference/list_palettes.md), [`show_palettes()`](https://j-y26.github.io/bioToolkit/reference/show_palettes.md), [`check_palette()`](https://j-y26.github.io/bioToolkit/reference/check_palette.md) |
+| ggplot2 extensions | ggplot2’s own scheme, with `bioToolkit` | [`theme_bioToolkit()`](https://j-y26.github.io/bioToolkit/reference/theme_bioToolkit.md) |
+| Saving | [`save_plot()`](https://j-y26.github.io/bioToolkit/reference/save_plot.md) | replaces `save_dimplot()`; `save_umap()` removed |
+
+### Argument names
+
+Seurat-style `dot.case` everywhere, with one shared vocabulary: the same
+meaning has the same name and the same default in every function.
+
+| Argument | Meaning |
+|----|----|
+| `group.by`, `split.by` | `group.by`: the lower-level grouping whose levels are compared, marked by their colours (violins, dot-plot rows, heatmap columns); `split.by`: the higher-level grouping, drawn like facets (labelled blocks or panels). E.g. `group.by = "condition", split.by = "cell_type"` compares conditions within each cell type. (Seurat’s VlnPlot / DotPlot use `split.by` the other way round.) |
+| `cols` | discrete colours (named or ordered) or a palette name — never `colors` / `palette` |
+| `na.value` | colour of missing / non-coloured marks |
+| `pt.size`, `alpha` | point size and opacity |
+| `label`, `label.size`, `label.n` | text labels and how many to draw |
+| `legend.position`, `legend.text.size`, `legend.title` | legend |
+| `panel.width`, `panel.height` (inches) | fixed panel size |
+| `cell.width`, `cell.height` (inches) | fixed size of one row / column of a grid plot |
+| `raster`, `raster.dpi` | rasterize the marks only; `raster.dpi` defaults to 1000 everywhere |
+| `bg` | background |
+| `seed` | randomness, without touching the global RNG ([`with_seed()`](https://j-y26.github.io/bioToolkit/reference/with_seed.md)) |
+| `logfc.col`, `p.col`, `padj.col`, `mean.col`, `feature.col` | columns of a DE table |
+
+Default resolution: every rasterized output (`raster.dpi`, the `dpi` of
+[`save_plot()`](https://j-y26.github.io/bioToolkit/reference/save_plot.md)
+and of functions that save figures) defaults to 1000 dpi.
+
+There are no size presets: one set of sizes
+([`theme_sizes()`](https://j-y26.github.io/bioToolkit/reference/theme_sizes.md):
+11 / 9 / 12 pt text, 1 pt axes, 0.5 pt other lines) applies everywhere.
+Text-size arguments (`legend.text.size`, `strip.text.size`, …) default
+to `NULL`, meaning “from
+[`theme_sizes()`](https://j-y26.github.io/bioToolkit/reference/theme_sizes.md)”,
+so that the text sizes are set in one place; other sizes have plain
+numeric defaults.
+
+## Code style
+
+Function definitions list one parameter per line, never several on a
+line:
+
+``` r
+plot_volcano <- function(
+    data,
+    method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+    feature.col = NULL
+) {
+```
+
+or, aligned with the parenthesis:
+
+``` r
+standardize_de <- function(data,
+                           method = c("auto", "edgeR", "DESeq2", "limma", "seurat"),
+                           feature.col = NULL) {
+```
+
+This applies to all package-level functions, exported or internal. Short
+anonymous functions inside code (`function(x) ...`) are exempt.
+
+Code should be easy to read line by line (user decision, 2026-10-14):
+
+- **ggplot / patchwork:** one layer per line; never several `+` (or `|`,
+  `/`) on one line.
+
+  ``` r
+
+  ggplot(df, aes(value, feature)) +
+      geom_col(width = 0.6) +
+      theme_bioToolkit()
+  ```
+
+- **Calls with several arguments** that do not fit comfortably on one
+  line (about 80 characters): one argument per line, the closing
+  parenthesis on its own line. The same for long vectors (e.g. named
+  colours), one element per line.
+
+- **No deep nesting on one line:** at most one level of
+  [`{}`](https://rdrr.io/r/base/Paren.html) or of a call inside a call’s
+  arguments per line; give an inner value a name first
+  (`test <- glmQLFTest(...)`, then `topTags(test)`).
+
+- Comments go on their own line above the code, not after it.
+
+This applies to the website guides (`vignettes/articles/`) and to all
+new or changed package code. The package code written before 2026-10-14
+has not yet been reformatted to it; that is a separate, planned pass.
+
+## Every plot
+
+Before a plotting item is marked done in `dev/visualization_roadmap.md`:
+
+- Follows the names above.
+- Fixed geometry:
+  [`panel_size_theme()`](https://j-y26.github.io/bioToolkit/reference/panel_size_theme.md)
+  (continuous axes: `panel.width`, `panel.height`, with
+  `panel.height = panel.width` as the default for scatter-type plots
+  usually drawn square (volcano, PCA, embeddings, quadrant and
+  composition scatter), so that `panel.width` alone resizes them;
+  discrete axes: `cell.width`, `cell.height` with
+  [`grid_panel_size()`](https://j-y26.github.io/bioToolkit/reference/grid_panel_size.md)
+  and
+  [`grid_expansion()`](https://j-y26.github.io/bioToolkit/reference/grid_expansion.md)),
+  and saves correctly with
+  [`save_plot()`](https://j-y26.github.io/bioToolkit/reference/save_plot.md).
+- Uses
+  [`theme_bioToolkit()`](https://j-y26.github.io/bioToolkit/reference/theme_bioToolkit.md).
+  Colours: one `cols` argument with a good default, resolved by
+  [`group_colours()`](https://j-y26.github.io/bioToolkit/reference/group_colours.md)
+  for groups (palette name, or colours named by group or in level order)
+  and
+  [`resolve_continuous_palette()`](https://j-y26.github.io/bioToolkit/reference/resolve_continuous_palette.md)
+  for continuous scales (palette name, or colours from low to high, e.g.
+  `c(low, mid, high)`).
+- Gene names in italics
+  ([`italic_labels()`](https://j-y26.github.io/bioToolkit/reference/italic_labels.md),
+  [`feature_is_gene()`](https://j-y26.github.io/bioToolkit/reference/feature_is_gene.md)).
+- Expression from Seurat objects: an `assay` argument (NULL = the
+  default assay, as in Seurat) and `slot`; resolve them with
+  [`resolve_assay()`](https://j-y26.github.io/bioToolkit/reference/resolve_assay.md),
+  which reports the assay and layer used, and fetch genes with
+  [`fetch_features()`](https://j-y26.github.io/bioToolkit/reference/fetch_features.md)
+  (assay-keyed, so values never come from another assay). Write the
+  assay and layer into the source data (`R/seurat_data.R`).
+- Grids of dots (genes x groups, terms x comparisons) use the dot-grid
+  engine
+  [`dot_grid_plot()`](https://j-y26.github.io/bioToolkit/reference/dot_grid_plot.md)
+  (`R/dot_grid.R`) rather than drawing their own.
+- Legend extractable with
+  [`extract_legend()`](https://j-y26.github.io/bioToolkit/reference/extract_legend.md)
+  (works for any ggplot; nothing to do unless the plot hides its legend
+  in an unusual way).
+- Source data recoverable with
+  [`export_source_data()`](https://j-y26.github.io/bioToolkit/reference/export_source_data.md):
+  the tidy table in `plot$data`, or in `attr(plot, "source_data")` when
+  layers use different data.
+- roxygen docs with an example; `devtools::document()` re-run.
+- Unit tests for the data logic in `tests/testthat/`.
+- Checked by eye on real data.
+- `NEWS.md` entry, including anything removed or renamed.
+- On the website: listed in a `reference` section of `_pkgdown.yml` (the
+  pkgdown build fails otherwise) and shown, with each mode of its
+  arguments, in the matching guide in `vignettes/articles/` (see
+  `dev/documentation_site.md`). The site is published when the version
+  in DESCRIPTION changes.
+
+## Adding a colour palette
+
+Add an entry to
+[`palette_list()`](https://j-y26.github.io/bioToolkit/reference/palette_list.md)
+in `R/palettes.R` with its source, copying hex values from the primary
+source (or a package reproducing it), never from memory. The tests in
+`tests/testthat/test-palettes.R` check every entry.
