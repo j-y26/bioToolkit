@@ -148,6 +148,33 @@ docs_kang_de <- function() {
     })
 }
 
+#' MSigDB Hallmark gene sets (human symbols)
+#'
+#' msigdbr (>= 10) downloads the whole MSigDB archive from zenodo.org on first
+#' use; on the GitHub runners this connection sometimes times out, so the
+#' download is retried a few times and only the small Hallmark table is cached
+#' (later builds do not contact zenodo at all).
+#'
+#' @return A data frame with `gs_name` and `gene_symbol` (one row per gene and
+#'         set, as msigdbr::msigdbr(species = "Homo sapiens", collection = "H"))
+docs_hallmark <- function() {
+    cached("hallmark", function() {
+        tries <- 3
+        for (i in seq_len(tries)) {
+            h <- tryCatch(
+                msigdbr::msigdbr(species = "Homo sapiens", collection = "H"),
+                error = function(e) e
+            )
+            if (!inherits(h, "error")) break
+            message("msigdbr download failed (try ", i, " of ", tries, "): ", conditionMessage(h))
+            # Give up after the last try; otherwise wait before the next one
+            if (i == tries) stop(h)
+            Sys.sleep(30)
+        }
+        as.data.frame(h[c("gs_name", "gene_symbol")])
+    })
+}
+
 #' Alasoo 2018 macrophages: counts and sample information
 #'
 #' Gene-level counts (tximeta estimates, rounded) with gene symbols as row

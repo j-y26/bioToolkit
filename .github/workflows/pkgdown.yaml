@@ -7,8 +7,9 @@
 # Run workflow). Other commits do not change the published site.
 #
 # The guides download public example data (Bioconductor muscData,
-# macrophage; MSigDB via msigdbr) and cache the processed objects; the cache
-# is kept between runs, keyed on vignettes/articles/_data.R.
+# macrophage; MSigDB via msigdbr from zenodo.org) and cache the processed
+# objects; the cache is kept between runs, keyed on vignettes/articles/_data.R.
+# A failed run saves no cache: if a download timed out, re-run the workflow.
 # Design notes: dev/documentation_site.md (local only).
 
 name: pkgdown
