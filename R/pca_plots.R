@@ -15,6 +15,8 @@
 #   the variance (of the features used). Square panel (F2); the two axes keep
 #   their own scales, as in most PCA plots: the % in the titles say how much
 #   each axis counts.
+# * The panel is boxed on all four sides (no grid lines): PC scores have no
+#   meaningful zero or units, so only the relative positions of samples count.
 # * Ellipses (`ellipse = TRUE`) are drawn only for groups of >= 4 samples: an
 #   ellipse fitted to 2-3 points is mostly noise. Others are named in a
 #   message.
@@ -311,7 +313,16 @@ plot_pca <- function(
         labs(x = axis_title(dims[1]), y = axis_title(dims[2])) +
         theme_bioToolkit("axis", bg = bg) +
         panel_size_theme(panel.width, panel.height) +
-        theme(legend.position = legend.position)
+        theme(
+            # Full box instead of the two axis lines: neither PC axis has a
+            # natural origin, so the panel is framed on all four sides. Same
+            # width as the axis lines of the other plots
+            axis.line = element_blank(),
+            panel.border = element_rect(colour = "black",
+                                        fill = NA,
+                                        linewidth = pt_to_linewidth(sz$axis)),
+            legend.position = legend.position
+        )
     src <- df[setdiff(names(df), c(".x", ".y", ".fill", ".shape", ".label"))]
     attr(p, "source_data") <- src
     if (!scree) return(p)
