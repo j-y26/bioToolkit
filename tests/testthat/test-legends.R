@@ -57,7 +57,9 @@ test_that("save_plot saves a legend sized to fit, with a margin", {
     leg <- extract_legend(p, direction = "horizontal")
     pad <- 2 * theme_sizes()$small / 72
     f <- tempfile(fileext = ".pdf")
-    dims <- save_plot(leg, f)
+    # Base pdf(), as grob_inches() measures on it (the default PDF device,
+    # cairo, measures with the system font)
+    dims <- save_plot(leg, f, device = grDevices::pdf)
     expect_true(file.exists(f))
     expect_equal(unname(dims), grob_inches(leg) + pad, tolerance = 1e-6)
     # PNG: re-built with the PNG device's fonts, so its size may differ from

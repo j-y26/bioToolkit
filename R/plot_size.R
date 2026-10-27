@@ -159,6 +159,16 @@ has_fixed_size <- function(gt) {
 #'              A legend from \code{\link{extract_legend}} is saved on its own,
 #'              sized to fit, with a small margin.
 #'
+#'              PDFs are written with \code{\link[grDevices]{cairo_pdf}} when R
+#'              has cairo support (\code{capabilities("cairo")}): fonts are
+#'              embedded, Unicode text is drawn, and a hyphen stays a hyphen
+#'              (base \code{pdf()} draws "-" with the wider minus glyph). The
+#'              default font family is set to the one the PNG device (ragg)
+#'              uses, so PDF and PNG files of a plot match; a family named
+#'              explicitly ("sans", "Arial", ...) is passed on as it is.
+#'              Without cairo, or when `device` is given, \code{ggsave()}'s
+#'              device is used.
+#'
 #' @param plot A ggplot or patchwork object, or a legend from
 #'             \code{\link{extract_legend}}
 #'
@@ -174,6 +184,13 @@ has_fixed_size <- function(gt) {
 #' @param bg Background colour. If NULL (default), taken from the plot. A
 #'           transparent background is kept in PDF, PNG, TIFF and SVG; formats
 #'           without transparency (JPEG, BMP) get a white one instead
+#'
+#' @param minus If TRUE (default), negative numbers in the labels of
+#'              continuous scales (axes, colour bars) are written with a true
+#'              minus sign (U+2212) rather than a hyphen. Text typed in titles
+#'              or labels is not changed. Applies to PDFs written with cairo
+#'              and to raster files written with ragg, the devices that can
+#'              draw the minus sign
 #'
 #' @param ... Additional arguments passed to \code{\link[ggplot2]{ggsave}}
 #'
@@ -197,18 +214,49 @@ save_plot <- function(plot,
                       height = NULL,
                       dpi = 1000,
                       bg = NULL,
+                      minus = TRUE,
                       ...) {
     is_legend <- inherits(plot, "bt_legend")
     if (!(is_ggplot(plot) || inherits(plot, "patchwork") || is_legend)) {
         stop("`plot` must be a ggplot, a patchwork or a legend from extract_legend()", call. = FALSE)
     }
+    dots <- list(...)
+    # PDFs are written with cairo_pdf() when R has cairo: base pdf() draws the
+    # hyphen "-" with the minus glyph (ISOLatin1 encoding), cannot draw Unicode
+    # (U+2212, Greek letters) and does not embed its fonts
+    pdf_ext <- grepl("\\.pdf$", filename, ignore.case = TRUE)
+    raster_ext <- grepl("\\.(png|jpe?g|tiff?|bmp)$", filename, ignore.case = TRUE)
+    use_cairo <- pdf_ext && capabilities("cairo") && is.null(dots$device)
+    use_ragg <- raster_ext && requireNamespace("ragg", quietly = TRUE)
+    # cairo maps the default font to Helvetica (Nimbus Sans on Linux), ragg to
+    # the system's sans-serif font (e.g. Arial). The PDF is given ragg's font,
+    # so that PDF and PNG files of a plot look the same and have the same size
+    pdf_family <- if (requireNamespace("systemfonts", quietly = TRUE)) {
+        systemfonts::font_info("sans")$family
+    } else {
+        "sans"
+    }
+    cairo_device <- function(filename, ...) {
+        grDevices::cairo_pdf(filename, family = pdf_family, ...)
+    }
+    # Negative numbers get a true minus on the two devices that can draw it
+    if (minus && (use_cairo || use_ragg)) {
+        plot <- if (is_legend) {
+            structure(plot, legend_plot = minus_signs(attr(plot, "legend_plot")))
+        } else {
+            minus_signs(plot)
+        }
+    }
     # Build the gtable once, on the same kind of device it will be saved to, and
     # draw that exact gtable so measured and saved layouts cannot differ
-    raster_ext <- grepl("\\.(png|jpe?g|tiff?|bmp)$", filename, ignore.case = TRUE)
     old_dev <- grDevices::dev.cur()
-    if (raster_ext && requireNamespace("ragg", quietly = TRUE)) {
+    if (use_ragg) {
         tmp <- tempfile(fileext = ".png")
         ragg::agg_png(tmp, res = dpi)
+        on.exit(unlink(tmp), add = TRUE)
+    } else if (use_cairo) {
+        tmp <- tempfile(fileext = ".pdf")
+        cairo_device(tmp)
         on.exit(unlink(tmp), add = TRUE)
     } else {
         grDevices::pdf(NULL)
@@ -261,9 +309,97 @@ save_plot <- function(plot,
         bg <- "white"
     }
 
-    ggsave(filename, gt, width = dims[["width"]], height = dims[["height"]], units = "in",
-           dpi = dpi, bg = bg, limitsize = FALSE, ...)
+    if (use_cairo) dots$device <- cairo_device
+    do.call(
+        ggsave,
+        c(
+            list(
+                filename,
+                gt,
+                width = dims[["width"]],
+                height = dims[["height"]],
+                units = "in",
+                dpi = dpi,
+                bg = bg,
+                limitsize = FALSE
+            ),
+            dots
+        )
+    )
     invisible(dims)
+}
+
+
+#' Write the negative numbers of a plot's scales with a true minus sign
+#'
+#' ggplot2 labels negative breaks with the ASCII hyphen-minus ("-2"), which is
+#' shorter than a minus and sits lower. The labels of every continuous and
+#' binned scale (axes, colour bars, size legends, ...) are wrapped so that a
+#' leading "-" before a number becomes U+2212. Scales added by ggplot2 by
+#' default are found by building the plot once; the plot is then rebuilt with
+#' them, so its layout is measured with the minus. Labels that are not plain
+#' text (plotmath expressions) and discrete scales are left as they are.
+#'
+#' @param plot A ggplot or patchwork object; anything else (spacers, grobs) is
+#'             returned unchanged
+#'
+#' @return The plot, with the labels of its continuous scales wrapped
+#'
+#' @keywords internal
+minus_signs <- function(plot) {
+    if (inherits(plot, "patchwork")) {
+        # The plots of a patchwork are in `patches`; the patchwork itself is
+        # its last plot
+        plot$patches$plots <- lapply(plot$patches$plots, minus_signs)
+        last <- plot
+        last$patches <- NULL
+        class(last) <- setdiff(class(last), "patchwork")
+        if (!inherits(last, "plot_filler")) plot$scales <- minus_signs(last)$scales
+        return(plot)
+    }
+    if (!is_ggplot(plot) || inherits(plot, "plot_filler")) return(plot)
+    # The build is only used to list the scales; its warnings (removed rows,
+    # ...) are given again by the real build
+    built <- suppressMessages(suppressWarnings(ggplot_build(plot)))
+    # clone() gives untrained copies, so the real build trains them afresh
+    scales <- built$plot$scales$clone()
+    for (s in scales$scales) {
+        if (!inherits(s, c("ScaleContinuous", "ScaleBinned")) || is.null(s$labels)) next
+        s$labels <- minus_labels(s$labels, s$get_transformation())
+    }
+    plot$scales <- scales
+    plot
+}
+
+
+#' Labels of a scale with a true minus sign
+#'
+#' @param labels The `labels` of a continuous scale: a waiver, a function or a
+#'               character vector
+#' @param transformation The scale's transformation, which formats the breaks
+#'                       when `labels` is a waiver (as ggplot2 does)
+#'
+#' @return A function of the breaks giving their labels
+#'
+#' @keywords internal
+minus_labels <- function(labels, transformation) {
+    # Both are forced: minus_signs() calls this in a loop, and an unforced
+    # promise would take the transformation of the last scale of the loop
+    force(labels)
+    force(transformation)
+    function(breaks) {
+        out <- if (inherits(labels, "waiver")) {
+            transformation$format(breaks)
+        } else if (is.function(labels)) {
+            labels(breaks)
+        } else {
+            labels
+        }
+        # Only a hyphen opening a number ("-2", "-0.5", "-1e+03"); "1e-05",
+        # "PAB-1wk" or "-log10" are not numbers starting with a minus
+        if (is.character(out)) out <- sub("^-(?=[0-9.])", "\u2212", out, perl = TRUE)
+        out
+    }
 }
 
 

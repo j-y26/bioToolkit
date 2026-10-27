@@ -11,6 +11,7 @@ save_plot(
   height = NULL,
   dpi = 1000,
   bg = NULL,
+  minus = TRUE,
   ...
 )
 }
@@ -30,6 +31,13 @@ is NULL}
 \item{bg}{Background colour. If NULL (default), taken from the plot. A
 transparent background is kept in PDF, PNG, TIFF and SVG; formats
 without transparency (JPEG, BMP) get a white one instead}
+
+\item{minus}{If TRUE (default), negative numbers in the labels of
+continuous scales (axes, colour bars) are written with a true
+minus sign (U+2212) rather than a hyphen. Text typed in titles
+or labels is not changed. Applies to PDFs written with cairo
+and to raster files written with ragg, the devices that can
+draw the minus sign}
 
 \item{...}{Additional arguments passed to \code{\link[ggplot2]{ggsave}}}
 }
@@ -54,6 +62,16 @@ Saves a ggplot or patchwork to PDF (vector), PNG or any format
 
              A legend from \code{\link{extract_legend}} is saved on its own,
              sized to fit, with a small margin.
+
+             PDFs are written with \code{\link[grDevices]{cairo_pdf}} when R
+             has cairo support (\code{capabilities("cairo")}): fonts are
+             embedded, Unicode text is drawn, and a hyphen stays a hyphen
+             (base \code{pdf()} draws "-" with the wider minus glyph). The
+             default font family is set to the one the PNG device (ragg)
+             uses, so PDF and PNG files of a plot match; a family named
+             explicitly ("sans", "Arial", ...) is passed on as it is.
+             Without cairo, or when `device` is given, \code{ggsave()}'s
+             device is used.
 }
 \examples{
 library(ggplot2)
