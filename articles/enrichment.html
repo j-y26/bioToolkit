@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -155,7 +155,8 @@ al. 2018</a>.</p>
 <h2 id="gene-sets">Gene sets<a class="anchor" aria-label="anchor" href="#gene-sets"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hallmark</span> <span class="op">&lt;-</span> <span class="fu">msigdbr</span><span class="fu">::</span><span class="fu"><a href="https://igordot.github.io/msigdbr/reference/msigdbr.html" class="external-link">msigdbr</a></span><span class="op">(</span>species <span class="op">=</span> <span class="st">"Homo sapiens"</span>, collection <span class="op">=</span> <span class="st">"H"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># msigdbr::msigdbr(species = "Homo sapiens", collection = "H"), cached</span></span>
+<span><span class="va">hallmark</span> <span class="op">&lt;-</span> <span class="fu">docs_hallmark</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">hallmark_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">hallmark</span><span class="op">$</span><span class="va">gene_symbol</span>, <span class="va">hallmark</span><span class="op">$</span><span class="va">gs_name</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">hallmark_list</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 50</span></span></code></pre></div>
@@ -470,7 +471,7 @@ most down-ranked gene:</p>
 <span>    gene.sets <span class="op">=</span> <span class="va">hallmark_list</span>,</span>
 <span>    metric.title <span class="op">=</span> <span class="st">"Signed\n-log10 p"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/rank-negative-16.png" class="r-plt" alt="" width="358" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/rank-negative-16.png" class="r-plt" alt="" width="364" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="chosen-genes" role="tabpanel" aria-labelledby="chosen-genes-tab">
 

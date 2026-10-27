@@ -323,7 +323,8 @@ through the same receptor and induce the same genes):
 
 ``` r
 
-hallmark <- msigdbr::msigdbr(species = "Homo sapiens", collection = "H")
+# msigdbr::msigdbr(species = "Homo sapiens", collection = "H"), cached
+hallmark <- docs_hallmark()
 is_ifn <- hallmark$gs_name == "HALLMARK_INTERFERON_ALPHA_RESPONSE"
 ifn_genes <- intersect(hallmark$gene_symbol[is_ifn], rownames(pbmc))
 pbmc <- Seurat::AddModuleScore(

@@ -32,7 +32,8 @@ et al. 2018](https://doi.org/10.1038/s41588-018-0046-7).
 
 ``` r
 
-hallmark <- msigdbr::msigdbr(species = "Homo sapiens", collection = "H")
+# msigdbr::msigdbr(species = "Homo sapiens", collection = "H"), cached
+hallmark <- docs_hallmark()
 hallmark_list <- split(hallmark$gene_symbol, hallmark$gs_name)
 length(hallmark_list)
 #> [1] 50

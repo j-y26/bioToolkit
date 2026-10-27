@@ -181,6 +181,12 @@ save_plot(p, "cell_types.png")   # 1000 dpi raster
 save_plot(p, "cell_types.jpg")   # no transparency: saved on white
 ```
 
+PDFs are written with cairo
+([`cairo_pdf()`](https://rdrr.io/r/grDevices/cairo.html)), which embeds
+the fonts and uses the same font as the PNG, so both files of a figure
+look the same. Negative numbers on axes and colour bars get a true minus
+sign (−2, not -2); `minus = FALSE` keeps the hyphen.
+
 Backgrounds are transparent by default (`bg = "transparent"` in every
 plot), so figures can be placed on any slide or panel; `bg = "white"`
 gives an opaque one. Patchworks keep the size of every panel:
@@ -295,10 +301,10 @@ a patchwork to XLSX) and returns it:
 
 src <- export_source_data(p_cond)
 head(src[[1]], 3)
-#>                row         x           y    group highlight
-#> 1 GCGGAGCTCTTACT-1 -14.04730  0.07375865  Control      TRUE
-#> 2 AACTACCTAAGCCT-1 -11.83630  1.36838348 IFN-beta      TRUE
-#> 3 GAGGTTACACCTGA-1 -11.83237 -0.29598908  Control      TRUE
+#>                row        x          y    group highlight
+#> 1 GCGGAGCTCTTACT-1 11.98873  0.4388136  Control      TRUE
+#> 2 AACTACCTAAGCCT-1 12.34284 -2.1304214 IFN-beta      TRUE
+#> 3 GAGGTTACACCTGA-1 10.95205 -1.5232978  Control      TRUE
 ```
 
 ``` r

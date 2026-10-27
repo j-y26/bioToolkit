@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -433,7 +433,8 @@ side reaches its full colour at its own extreme, so a score from -0.2 to
 response genes (IFN-α and IFN-β signal through the same receptor and
 induce the same genes):</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hallmark</span> <span class="op">&lt;-</span> <span class="fu">msigdbr</span><span class="fu">::</span><span class="fu"><a href="https://igordot.github.io/msigdbr/reference/msigdbr.html" class="external-link">msigdbr</a></span><span class="op">(</span>species <span class="op">=</span> <span class="st">"Homo sapiens"</span>, collection <span class="op">=</span> <span class="st">"H"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># msigdbr::msigdbr(species = "Homo sapiens", collection = "H"), cached</span></span>
+<span><span class="va">hallmark</span> <span class="op">&lt;-</span> <span class="fu">docs_hallmark</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">is_ifn</span> <span class="op">&lt;-</span> <span class="va">hallmark</span><span class="op">$</span><span class="va">gs_name</span> <span class="op">==</span> <span class="st">"HALLMARK_INTERFERON_ALPHA_RESPONSE"</span></span>
 <span><span class="va">ifn_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">hallmark</span><span class="op">$</span><span class="va">gene_symbol</span><span class="op">[</span><span class="va">is_ifn</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">pbmc</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">pbmc</span> <span class="op">&lt;-</span> <span class="fu">Seurat</span><span class="fu">::</span><span class="fu"><a href="https://satijalab.org/seurat/reference/AddModuleScore.html" class="external-link">AddModuleScore</a></span><span class="op">(</span></span>

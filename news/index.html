@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,6 +57,15 @@
       <small>Source: <a href="https://github.com/j-y26/bioToolkit/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.0" id="biotoolkit-110">bioToolkit 1.1.0<a class="anchor" aria-label="anchor" href="#biotoolkit-110"></a></h2>
+<div class="section level3">
+<h3 id="saving-1-1-0">Saving<a class="anchor" aria-label="anchor" href="#saving-1-1-0"></a></h3>
+<ul><li>
+<code><a href="../reference/save_plot.html">save_plot()</a></code> writes PDFs with <code><a href="https://rdrr.io/r/grDevices/cairo.html" class="external-link">cairo_pdf()</a></code> when R has cairo support. Base <code><a href="https://rdrr.io/r/grDevices/pdf.html" class="external-link">pdf()</a></code> drew every hyphen with the wider minus glyph (its ISOLatin1 encoding on Linux / macOS), could not draw Unicode text and did not embed its fonts. The PDF’s default font is the one ragg uses for PNGs (found with systemfonts, new in Suggests), so PDF and PNG files of a plot use the same font and have nearly the same size. Without cairo, or with <code>device</code> given, <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave()</a></code>’s device is used as before.</li>
+<li>New <code>minus</code> argument (default TRUE): negative numbers in the labels of continuous and binned scales (axes, colour bars) are written with a true minus sign (U+2212). Text typed in titles, labels or gene names is not changed.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="biotoolkit-100">bioToolkit 1.0.0<a class="anchor" aria-label="anchor" href="#biotoolkit-100"></a></h2>
 <p>First stable release: plot revisions after the first round of the documentation website, scaled dimension arrows, a palette page.</p>

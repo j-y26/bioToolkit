@@ -1,5 +1,26 @@
 # Changelog
 
+## bioToolkit 1.1.0
+
+### Saving
+
+- [`save_plot()`](https://j-y26.github.io/bioToolkit/reference/save_plot.md)
+  writes PDFs with
+  [`cairo_pdf()`](https://rdrr.io/r/grDevices/cairo.html) when R has
+  cairo support. Base [`pdf()`](https://rdrr.io/r/grDevices/pdf.html)
+  drew every hyphen with the wider minus glyph (its ISOLatin1 encoding
+  on Linux / macOS), could not draw Unicode text and did not embed its
+  fonts. The PDF’s default font is the one ragg uses for PNGs (found
+  with systemfonts, new in Suggests), so PDF and PNG files of a plot use
+  the same font and have nearly the same size. Without cairo, or with
+  `device` given,
+  [`ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html)’s
+  device is used as before.
+- New `minus` argument (default TRUE): negative numbers in the labels of
+  continuous and binned scales (axes, colour bars) are written with a
+  true minus sign (U+2212). Text typed in titles, labels or gene names
+  is not changed.
+
 ## bioToolkit 1.0.0
 
 First stable release: plot revisions after the first round of the

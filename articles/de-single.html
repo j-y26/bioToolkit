@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -187,11 +187,11 @@ columns):</p>
 <span><span class="co">#&gt; 4 p-values of 0 replaced by 2.55999999769412e-315 (a tenth of the smallest non-zero value)</span></span>
 <span><span class="co">#&gt; 4 adjusted p-values of 0 replaced by 6.41000000000069e-312 (a tenth of the smallest non-zero value)</span></span>
 <span><span class="co">#&gt;   feature      logfc       pvalue         padj mean_expr log2FoldChange</span></span>
-<span><span class="co">#&gt; 1    SPP1 -0.6664638 1.908492e-03 4.255992e-03  556815.1     -0.6902862</span></span>
+<span><span class="co">#&gt; 1    SPP1 -0.6664640 1.908393e-03 4.255770e-03  556815.1     -0.6902862</span></span>
 <span><span class="co">#&gt; 2    ACTB  0.6581395 1.336112e-12 1.175064e-11  574651.6      0.6628589</span></span>
 <span><span class="co">#&gt; 3     FTL  0.1154071 3.866035e-01 4.721085e-01  404628.0      0.1122727</span></span>
 <span><span class="co">#&gt;        lfcSE       stat</span></span>
-<span><span class="co">#&gt; 1 0.22237777 -3.1041149</span></span>
+<span><span class="co">#&gt; 1 0.22237667 -3.1041303</span></span>
 <span><span class="co">#&gt; 2 0.09348526  7.0905178</span></span>
 <span><span class="co">#&gt; 3 0.12967607  0.8657933</span></span></code></pre></div>
 <table class="table">
@@ -339,7 +339,7 @@ expression level. edgeR’s <code>logCPM</code> is already log2 and drawn
 as it is:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_ma.html">plot_ma</a></span><span class="op">(</span><span class="va">de_edger</span>, label.n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-single_files/figure-html/ma-7.png" class="r-plt" alt="" width="536" style="display: block; margin: auto;"></p>
+<p><img src="de-single_files/figure-html/ma-7.png" class="r-plt" alt="" width="542" style="display: block; margin: auto;"></p>
 <div class="section level3 tabset tabset-pills">
 <h3 class="tabset tabset-pills" id="variants-1">Variants<a class="anchor" aria-label="anchor" href="#variants-1"></a>
 </h3>
@@ -363,14 +363,14 @@ changes, the lowly expressed genes on the left no longer fan out:</p>
 <span>    logfc.col <span class="op">=</span> <span class="st">"log2FoldChange_shrunk"</span>,</span>
 <span>    label.n <span class="op">=</span> <span class="fl">5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-single_files/figure-html/ma-shrunk-8.png" class="r-plt" alt="" width="528" style="display: block; margin: auto;"></p>
+<p><img src="de-single_files/figure-html/ma-shrunk-8.png" class="r-plt" alt="" width="534" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="deseq2-unshrunken" role="tabpanel" aria-labelledby="deseq2-unshrunken-tab">
 
 <p>The same genes without shrinkage, for comparison:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_ma.html">plot_ma</a></span><span class="op">(</span><span class="va">de_deseq</span>, label <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-single_files/figure-html/ma-raw-9.png" class="r-plt" alt="" width="536" style="display: block; margin: auto;"></p>
+<p><img src="de-single_files/figure-html/ma-raw-9.png" class="r-plt" alt="" width="542" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="trend" role="tabpanel" aria-labelledby="trend-tab">
 
@@ -379,7 +379,7 @@ would point to an expression-dependent bias, such as a normalization
 problem.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_ma.html">plot_ma</a></span><span class="op">(</span><span class="va">de_edger</span>, trend <span class="op">=</span> <span class="cn">TRUE</span>, label <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-single_files/figure-html/ma-trend-10.png" class="r-plt" alt="" width="536" style="display: block; margin: auto;"></p>
+<p><img src="de-single_files/figure-html/ma-trend-10.png" class="r-plt" alt="" width="542" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
