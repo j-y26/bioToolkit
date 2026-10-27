@@ -1,3 +1,14 @@
+# bioToolkit 1.1.2
+
+## Saving
+
+* `save_plot()`: the `minus` argument (new in 1.1.0) is removed. Negative
+  numbers on axes and colour bars keep ggplot2's hyphen ("-2"), as in PNGs,
+  instead of the wider minus sign (U+2212).
+* PDFs are still written with `cairo_pdf()`, so a hyphen stays a hyphen, but
+  with cairo's default "sans" font, resolved by the system, rather than the
+  font looked up with systemfonts (removed from Suggests).
+
 # bioToolkit 1.1.1
 
 Change default volcano up and down colors to brighter ones.

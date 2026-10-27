@@ -1,7 +1,7 @@
 Package: bioToolkit
 Type: Package
 Title: An R package hosting useful functions for data analysis
-Version: 1.1.1
+Version: 1.1.2
 Author: person("Jielin", "Yang",
                 email = "jielin.yang@sickkids.ca",
                 role = c("aut", "cre"),
@@ -45,7 +45,6 @@ Suggests:
     ggrastr,
     ggridges,
     ragg,
-    systemfonts,
     hexbin,
     SeuratObject,
     writexl,

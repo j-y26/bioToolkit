@@ -80,7 +80,7 @@ test_that("plot_multi_volcano counts, strips, cutoff lines and offsets", {
     expected_up <- tapply(std$padj < 0.05 & std$logfc > 1, std$comparison, sum)
     b <- ggplot2::ggplot_build(p)
     counts <- b$data[[which(vapply(p$layers, function(l) {
-        inherits(l$geom, "GeomText") && identical(l$aes_params$colour, "firebrick4")
+        inherits(l$geom, "GeomText") && identical(l$aes_params$colour, volcano_colours(NULL)[["up"]])
     }, logical(1)))[1]]]
     expect_equal(as.numeric(counts$label), as.vector(expected_up))
     # No band: dashed lines at +-logfc.cutoff, and a strip per comparison

@@ -73,7 +73,7 @@ test_that("missing label features warn, pointing to case mismatches", {
 })
 
 test_that("colours accept partial names, three unnamed colours, and reject bad input", {
-    expect_equal(volcano_colours(NULL), c(up = "firebrick4", down = "midnightblue", ns = "grey75"))
+    expect_equal(volcano_colours(NULL), c(up = "#C91F28", down = "#174EA6", ns = "grey75"))
     expect_equal(volcano_colours(c(ns = "grey90"))[["ns"]], "grey90")
     expect_equal(unname(volcano_colours(c("red", "blue", "grey"))), c("red", "blue", "grey"))
     expect_error(volcano_colours(c(sig = "red")), "named 'up'")

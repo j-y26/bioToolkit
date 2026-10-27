@@ -108,32 +108,17 @@ test_that("save_plot sizes fixed plots and needs a size for others", {
     expect_gt(min(jpeg::readJPEG(jpg)[1, 1, ]), 0.95)
 })
 
-test_that("save_plot writes negative numbers with a minus sign", {
+test_that("save_plot writes PDFs with cairo", {
     library(ggplot2)
-    p <- ggplot(data.frame(x = c(-2, 2), y = c(-0.5, 1)), aes(x, y, colour = x)) +
-        geom_point() +
-        scale_y_continuous(labels = scales::label_number(accuracy = 0.1))
-    built <- ggplot_build(minus_signs(p))
-    pp <- built$layout$panel_params[[1]]
-    # Default labels, labels from a function, and a colour bar
-    expect_true(all(startsWith(na.omit(pp$x$get_labels())[1:2], "\u2212")))
-    expect_true(any(startsWith(na.omit(pp$y$get_labels()), "\u2212")))
-    colour <- built$plot$scales$get_scales("colour")
-    expect_true(any(startsWith(colour$get_labels(), "\u2212")))
-    # A discrete scale built after the continuous ones (each wrapper keeps
-    # its own scale's transformation)
-    q <- ggplot(data.frame(x = c(-2, 2), y = 1, g = c("a", "b")), aes(x, y, colour = g)) +
-        geom_point()
-    qp <- ggplot_build(minus_signs(q))$layout$panel_params[[1]]
-    expect_true(any(startsWith(na.omit(qp$x$get_labels()), "\u2212")))
-    # Text that is not a negative number is left as it is
-    f <- minus_labels(c("-log10", "PAB-1wk", "1e-05", "-3"), NULL)
-    expect_equal(f(1:4), c("-log10", "PAB-1wk", "1e-05", "\u22123"))
-    # A patchwork, and the file is written
     skip_if_not(capabilities("cairo"))
+    p <- ggplot(data.frame(x = c(-2, 2), y = c(-0.5, 1)), aes(x, y)) +
+        geom_point()
     f <- tempfile(fileext = ".pdf")
-    save_plot((p | p) + plot_layout(guides = "collect") & panel_size_theme(1, 1), f)
+    save_plot((p | p) & panel_size_theme(1, 1), f)
     expect_true(file.exists(f))
+    # cairo embeds its fonts (a /FontFile stream); base pdf() does not
+    pdf_bytes <- readBin(f, "raw", file.size(f))
+    expect_gt(length(grepRaw("/FontFile", pdf_bytes, fixed = TRUE)), 0)
 })
 
 test_that("export_source_data writes one table per plot", {

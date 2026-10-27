@@ -115,7 +115,7 @@ the panel, with the counts below them) or "none"}
 features: a vector named `up`, `down` and `ns` (any of them;
 the others keep their default), or three colours in that
 order. NULL (default) is
-`c(up = "firebrick4", down = "midnightblue", ns = "grey75")`}
+`c(up = "#C91F28", down = "#174EA6", ns = "grey75")`}
 
 \item{up.label, down.label, ns.label}{Names of the three classes in the
 legend (and next to the arrows with `annotate.counts = "arrow"`).

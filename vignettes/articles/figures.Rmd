@@ -160,10 +160,9 @@ save_plot(p, "cell_types.png")   # 1000 dpi raster
 save_plot(p, "cell_types.jpg")   # no transparency: saved on white
 ```
 
-PDFs are written with cairo (`cairo_pdf()`), which embeds the fonts and uses
-the same font as the PNG, so both files of a figure look the same. Negative
-numbers on axes and colour bars get a true minus sign (−2, not -2);
-`minus = FALSE` keeps the hyphen.
+PDFs are written with cairo (`cairo_pdf()`), which embeds the fonts and keeps
+a hyphen as a hyphen (base `pdf()` draws it as a wider minus sign). Both PDF
+and PNG use the system's default sans-serif font.
 
 Backgrounds are transparent by default (`bg = "transparent"` in every plot),
 so figures can be placed on any slide or panel; `bg = "white"` gives an
