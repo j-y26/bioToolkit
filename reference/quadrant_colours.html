@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">quadrant_colours</span><span class="op">(</span><span class="va">cols</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">quadrant_colours</span><span class="op">(</span><span class="va">cols</span>, scheme <span class="op">=</span> <span class="st">"consistency"</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -73,13 +73,18 @@
 
 <dl><dt id="arg-cols">cols<a class="anchor" aria-label="anchor" href="#arg-cols"></a></dt>
 <dd><p>NULL, colours named by class (the others keep their default),
-or five unnamed colours in the order concordant, discordant,
-x_only, y_only, ns</p></dd>
+or one unnamed colour per class of the scheme, in its order</p></dd>
+
+
+<dt id="arg-scheme">scheme<a class="anchor" aria-label="anchor" href="#arg-scheme"></a></dt>
+<dd><p>The `color.by` of the plot: "consistency" (up, down,
+inconsistent, other), "direction" (up, down, other) or
+"significance" (concordant, discordant, x_only, y_only, ns)</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Five colours named by class</p>
+    <p>The colours of the classes of the scheme, named by class</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -5,7 +5,7 @@ Check the significance cutoffs of DE plots
 ## Usage
 
 ``` r
-check_de_cutoffs(padj.cutoff, logfc.cutoff)
+check_de_cutoffs(padj.cutoff, logfc.cutoff, suffix = "")
 ```
 
 ## Arguments
@@ -17,3 +17,8 @@ check_de_cutoffs(padj.cutoff, logfc.cutoff)
 - logfc.cutoff:
 
   Absolute log2 fold change cutoff
+
+- suffix:
+
+  Appended to the argument names in the errors, e.g. ".x" for
+  \`padj.cutoff.x\`. Default "" (none)

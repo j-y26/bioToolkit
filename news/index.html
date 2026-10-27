@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,6 +57,32 @@
       <small>Source: <a href="https://github.com/j-y26/bioToolkit/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.0" id="biotoolkit-120">bioToolkit 1.2.0<a class="anchor" aria-label="anchor" href="#biotoolkit-120"></a></h2>
+<div class="section level3">
+<h3 id="de-plots-1-2-0">DE plots<a class="anchor" aria-label="anchor" href="#de-plots-1-2-0"></a></h3>
+<ul><li>
+<code><a href="../reference/plot_fc_quadrant.html">plot_fc_quadrant()</a></code> (breaking changes):
+<ul><li>New <code>color.by</code>. The default, <code>"consistency"</code>, colours the features significant in both comparisons by direction: “Consistently up” (red), “Consistently down” (blue) and “Inconsistent” (opposite directions, yellow #DDAA33); all others are grey (“Others”). <code>"direction"</code> keeps only the consistent classes in colour, with counts in the top-right and bottom-left corners only. <code>"significance"</code> is the former five-class scheme (both same / both opposite / x only / y only / neither); <code>categories</code> now applies to it only. Coloured classes are drawn 1.4 times larger, and <code>cols</code> takes the class names of the chosen scheme (<code>up</code>, <code>down</code>, <code>inconsistent</code>, <code>other</code> for the first two).</li>
+<li>
+<code>padj.cutoff</code> and <code>logfc.cutoff</code> are replaced with <code>padj.cutoff.x</code>, <code>padj.cutoff.y</code>, <code>logfc.cutoff.x</code> and <code>logfc.cutoff.y</code>. Fold change cutoffs above 0 are drawn as thin dashed grey lines at +-cutoff.</li>
+<li>New <code>trend.interval</code> (<code>"confidence"</code>, default; <code>"prediction"</code>; <code>"none"</code>): the 95% band around the trend line. The band is now drawn under the points, the line above them.</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.2" id="biotoolkit-112">bioToolkit 1.1.2<a class="anchor" aria-label="anchor" href="#biotoolkit-112"></a></h2>
+<div class="section level3">
+<h3 id="saving-1-1-2">Saving<a class="anchor" aria-label="anchor" href="#saving-1-1-2"></a></h3>
+<ul><li>
+<code><a href="../reference/save_plot.html">save_plot()</a></code>: the <code>minus</code> argument (new in 1.1.0) is removed. Negative numbers on axes and colour bars keep ggplot2’s hyphen (“-2”), as in PNGs, instead of the wider minus sign (U+2212).</li>
+<li>PDFs are still written with <code><a href="https://rdrr.io/r/grDevices/cairo.html" class="external-link">cairo_pdf()</a></code>, so a hyphen stays a hyphen, but with cairo’s default “sans” font, resolved by the system, rather than the font looked up with systemfonts (removed from Suggests).</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.1" id="biotoolkit-111">bioToolkit 1.1.1<a class="anchor" aria-label="anchor" href="#biotoolkit-111"></a></h2>
+<p>Change default volcano up and down colors to brighter ones.</p>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.0" id="biotoolkit-110">bioToolkit 1.1.0<a class="anchor" aria-label="anchor" href="#biotoolkit-110"></a></h2>
 <div class="section level3">

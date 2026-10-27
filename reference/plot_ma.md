@@ -183,8 +183,7 @@ plot_ma(
   Colours of the up-regulated, down-regulated and not significant
   features: a vector named \`up\`, \`down\` and \`ns\` (any of them; the
   others keep their default), or three colours in that order. NULL
-  (default) is \`c(up = "firebrick4", down = "midnightblue", ns =
-  "grey75")\`
+  (default) is \`c(up = "#C91F28", down = "#174EA6", ns = "grey75")\`
 
 - up.label, down.label, ns.label:
 

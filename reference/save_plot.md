@@ -26,10 +26,9 @@ PDFs are written with
 support (`capabilities("cairo")`): fonts are embedded, Unicode text is
 drawn, and a hyphen stays a hyphen (base
 [`pdf()`](https://rdrr.io/r/grDevices/pdf.html) draws "-" with the wider
-minus glyph). The default font family is set to the one the PNG device
-(ragg) uses, so PDF and PNG files of a plot match; a family named
-explicitly ("sans", "Arial", ...) is passed on as it is. Without cairo,
-or when \`device\` is given,
+minus glyph). Fonts are the system's: the default "sans" family is
+resolved by cairo (Helvetica or its metric-compatible stand-in) and by
+ragg for PNGs (e.g. Arial). Without cairo, or when \`device\` is given,
 [`ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html)'s
 device is used.
 
@@ -43,7 +42,6 @@ save_plot(
   height = NULL,
   dpi = 1000,
   bg = NULL,
-  minus = TRUE,
   ...
 )
 ```
@@ -74,14 +72,6 @@ save_plot(
   Background colour. If NULL (default), taken from the plot. A
   transparent background is kept in PDF, PNG, TIFF and SVG; formats
   without transparency (JPEG, BMP) get a white one instead
-
-- minus:
-
-  If TRUE (default), negative numbers in the labels of continuous scales
-  (axes, colour bars) are written with a true minus sign (U+2212) rather
-  than a hyphen. Text typed in titles or labels is not changed. Applies
-  to PDFs written with cairo and to raster files written with ragg, the
-  devices that can draw the minus sign
 
 - ...:
 

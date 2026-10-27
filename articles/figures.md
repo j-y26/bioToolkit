@@ -20,8 +20,6 @@ object works the same way.
 ``` r
 
 pbmc <- docs_kang()
-#> Warning: Feature names cannot have underscores ('_'), replacing with dashes
-#> ('-')
 p <- DimPlot_bioToolkit(pbmc, group.by = "cell_type", label = TRUE)
 p
 ```
@@ -183,9 +181,9 @@ save_plot(p, "cell_types.jpg")   # no transparency: saved on white
 
 PDFs are written with cairo
 ([`cairo_pdf()`](https://rdrr.io/r/grDevices/cairo.html)), which embeds
-the fonts and uses the same font as the PNG, so both files of a figure
-look the same. Negative numbers on axes and colour bars get a true minus
-sign (−2, not -2); `minus = FALSE` keeps the hyphen.
+the fonts and keeps a hyphen as a hyphen (base
+[`pdf()`](https://rdrr.io/r/grDevices/pdf.html) draws it as a wider
+minus sign). Both PDF and PNG use the system’s default sans-serif font.
 
 Backgrounds are transparent by default (`bg = "transparent"` in every
 plot), so figures can be placed on any slide or panel; `bg = "white"`

@@ -242,10 +242,12 @@ plot_de_dots(
 
 ## Quadrant plot
 
-The fold changes of two comparisons against each other, coloured by
-where each gene is significant; counts of genes significant in both in
-each quadrant, and the correlation of the fold changes above the panel.
-Do monocytes and B cells respond to IFN-β with the same genes?
+The fold changes of two comparisons against each other. Genes
+significant in both are coloured by whether they change the same way:
+consistently up, consistently down, or in opposite directions
+(inconsistent); all others are grey. Counts of these genes in each
+quadrant, and the correlation of the fold changes above the panel. Do
+monocytes and B cells respond to IFN-β with the same genes?
 
 ``` r
 
@@ -260,23 +262,63 @@ plot_fc_quadrant(
 
 ![](de-multi_files/figure-html/quadrant-13.png)
 
-Most genes changed in both change in the same direction (concordant,
-top-right and bottom-left), and B cells respond to fewer genes, more
-weakly (the cloud lies below the diagonal on the right).
+Most genes changed in both change in the same direction (top-right and
+bottom-left), and B cells respond to fewer genes, more weakly (the cloud
+lies below the diagonal on the right). “Consistent” needs significance
+in both comparisons: a gene significant in one only is among the others,
+whatever its sign in the other.
 
 ### Variants
 
+- `color.by`
 - `trend`
 - Two treatments
 - `categories` and `cor.on`
 - `label = "selected"`
 - Peaks to genes: `map.y`
 
-A least-squares line with its 95% confidence band, fitted on the genes
-of the correlation (`cor.on`). Both fold changes are noisy estimates,
-which biases a least-squares slope toward 0 (regression dilution): the
-line shows the trend, but its slope is not the ratio of the two
-responses.
+`color.by = "direction"` keeps only the consistent genes in colour
+(genes changed in opposite directions join the others, and only the
+top-right and bottom-left are counted). `color.by = "significance"`
+colours where each gene is significant: in both (same or opposite
+direction), in one only, or in neither.
+
+``` r
+
+plot_fc_quadrant(
+    de[["CD14 Mono"]],
+    de[["B"]],
+    name.x = "CD14 Mono",
+    name.y = "B",
+    color.by = "direction",
+    label = "none"
+)
+```
+
+![](de-multi_files/figure-html/quadrant-color-by-14.png)
+
+``` r
+
+plot_fc_quadrant(
+    de[["CD14 Mono"]],
+    de[["B"]],
+    name.x = "CD14 Mono",
+    name.y = "B",
+    color.by = "significance",
+    label = "none"
+)
+```
+
+![](de-multi_files/figure-html/quadrant-color-by-15.png)
+
+A least-squares line of y on x, fitted on the genes of the correlation
+(`cor.on`), with a 95% band (`trend.interval`): “confidence” (default)
+shows where the fitted line lies, as `geom_smooth(method = "lm")` draws
+it, and is very narrow with many genes; “prediction” shows where 95% of
+the genes are expected to fall around the line. Both fold changes are
+noisy estimates, which biases a least-squares slope toward 0 (regression
+dilution): the line shows the trend, but its slope is not the ratio of
+the two responses.
 
 ``` r
 
@@ -287,17 +329,20 @@ plot_fc_quadrant(
     name.y = "B",
     cor.on = "significant",
     trend = TRUE,
+    trend.interval = "prediction",
     label = "none"
 )
 ```
 
-![](de-multi_files/figure-html/quadrant-trend-14.png)
+![](de-multi_files/figure-html/quadrant-trend-16.png)
 
 The comparisons can come from different experiments, tools or designs.
 Here, macrophages ([Alasoo et
 al. 2018](https://doi.org/10.1038/s41588-018-0046-7)) stimulated with
 IFN-γ or infected with *Salmonella*, each against naive, paired by
-donor:
+donor. Fold change cutoffs are set per comparison (`logfc.cutoff.x`,
+`logfc.cutoff.y`; likewise `padj.cutoff.x`, `padj.cutoff.y`) and drawn
+as thin dashed lines:
 
 ``` r
 
@@ -315,14 +360,15 @@ plot_fc_quadrant(
     de_sl1344,
     name.x = "IFN-γ",
     name.y = "Salmonella",
-    logfc.cutoff = 1
+    logfc.cutoff.x = 1,
+    logfc.cutoff.y = 1
 )
 ```
 
-![](de-multi_files/figure-html/quadrant-mac-15.png)
+![](de-multi_files/figure-html/quadrant-mac-17.png)
 
-Colour only genes significant in both; correlation of the genes
-significant in either comparison:
+With `color.by = "significance"`, colour only genes significant in both;
+correlation of the genes significant in either comparison:
 
 ``` r
 
@@ -331,13 +377,14 @@ plot_fc_quadrant(
     de[["CD4 T"]],
     name.x = "CD14 Mono",
     name.y = "CD4 T",
+    color.by = "significance",
     categories = "both",
     cor.on = "significant",
     correlation = "pearson"
 )
 ```
 
-![](de-multi_files/figure-html/quadrant-both-16.png)
+![](de-multi_files/figure-html/quadrant-both-18.png)
 
 ``` r
 
@@ -351,7 +398,7 @@ plot_fc_quadrant(
 )
 ```
 
-![](de-multi_files/figure-html/quadrant-selected-17.png)
+![](de-multi_files/figure-html/quadrant-selected-19.png)
 
 To compare RNA with chromatin (ATAC, ChIP, CUT&RUN), map the peaks of
 `de.y` to genes with `map.y` (e.g. from a ChIPseeker annotation); with
@@ -389,4 +436,4 @@ plot_fc_quadrant(
 )
 ```
 
-![](de-multi_files/figure-html/quadrant-peaks-18.png)
+![](de-multi_files/figure-html/quadrant-peaks-20.png)

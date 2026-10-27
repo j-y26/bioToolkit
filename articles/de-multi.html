@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -161,7 +161,7 @@ cutoffs (±<code>logfc.cutoff</code>, default 1) as dashed lines; counts
 of up- and down-regulated genes above and below.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_multi_volcano.html">plot_multi_volcano</a></span><span class="op">(</span><span class="va">de</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-1.png" class="r-plt" alt="" width="516" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-1.png" class="r-plt" alt="" width="514" style="display: block; margin: auto;"></p>
 <p>CD14 monocytes respond with the most genes; the top genes of every
 cell type include interferon-stimulated genes. Colour is the −log10
 adjusted p-value (warm for up, cool for down), saturating at the 95th
@@ -202,7 +202,7 @@ comparison names).</p>
 <span>    <span class="st">"FCGR3A Mono"</span> <span class="op">=</span> <span class="st">"Myeloid"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_multi_volcano.html">plot_multi_volcano</a></span><span class="op">(</span><span class="va">de</span>, groups <span class="op">=</span> <span class="va">lineage</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-groups-2.png" class="r-plt" alt="" width="526" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-groups-2.png" class="r-plt" alt="" width="524" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="flip" role="tabpanel" aria-labelledby="flip-tab">
 
@@ -230,7 +230,7 @@ the default layout; <code>"jitter"</code> spreads all genes
 uniformly.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_multi_volcano.html">plot_multi_volcano</a></span><span class="op">(</span><span class="va">de</span>, layout <span class="op">=</span> <span class="st">"pvalue"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-layout-4.png" class="r-plt" alt="" width="516" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-layout-4.png" class="r-plt" alt="" width="514" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="color-by" role="tabpanel" aria-labelledby="color-by-tab">
 
@@ -239,7 +239,7 @@ they are DE in: responses shared by all cell types versus specific to
 one. <code>"direction"</code> uses one colour per direction.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_multi_volcano.html">plot_multi_volcano</a></span><span class="op">(</span><span class="va">de</span>, color.by <span class="op">=</span> <span class="st">"sharing"</span>, label <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-sharing-5.png" class="r-plt" alt="" width="530" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-sharing-5.png" class="r-plt" alt="" width="527" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="order" role="tabpanel" aria-labelledby="order-tab">
 
@@ -248,7 +248,7 @@ first; <code>"cluster"</code> groups comparisons with similar
 fold-change profiles.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_multi_volcano.html">plot_multi_volcano</a></span><span class="op">(</span><span class="va">de</span>, order <span class="op">=</span> <span class="st">"cluster"</span>, label.n <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-order-6.png" class="r-plt" alt="" width="512" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-order-6.png" class="r-plt" alt="" width="510" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="cutoffs-and-show-ns" role="tabpanel" aria-labelledby="cutoffs-and-show-ns-tab">
 
@@ -261,7 +261,7 @@ fold-change profiles.</p>
 <span>    logfc.cutoff <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>    label <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-ns-7.png" class="r-plt" alt="" width="516" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-ns-7.png" class="r-plt" alt="" width="514" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -351,10 +351,12 @@ genes as rows, comparisons as columns marked by colour strips:</p>
 <div class="section level2">
 <h2 id="quadrant-plot">Quadrant plot<a class="anchor" aria-label="anchor" href="#quadrant-plot"></a>
 </h2>
-<p>The fold changes of two comparisons against each other, coloured by
-where each gene is significant; counts of genes significant in both in
-each quadrant, and the correlation of the fold changes above the panel.
-Do monocytes and B cells respond to IFN-β with the same genes?</p>
+<p>The fold changes of two comparisons against each other. Genes
+significant in both are coloured by whether they change the same way:
+consistently up, consistently down, or in opposite directions
+(inconsistent); all others are grey. Counts of these genes in each
+quadrant, and the correlation of the fold changes above the panel. Do
+monocytes and B cells respond to IFN-β with the same genes?</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_fc_quadrant.html">plot_fc_quadrant</a></span><span class="op">(</span></span>
 <span>    <span class="va">de</span><span class="op">[[</span><span class="st">"CD14 Mono"</span><span class="op">]</span><span class="op">]</span>,</span>
@@ -363,10 +365,12 @@ Do monocytes and B cells respond to IFN-β with the same genes?</p>
 <span>    name.y <span class="op">=</span> <span class="st">"B"</span>,</span>
 <span>    label.n <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-13.png" class="r-plt" alt="" width="522" style="display: block; margin: auto;"></p>
-<p>Most genes changed in both change in the same direction (concordant,
-top-right and bottom-left), and B cells respond to fewer genes, more
-weakly (the cloud lies below the diagonal on the right).</p>
+<p><img src="de-multi_files/figure-html/quadrant-13.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
+<p>Most genes changed in both change in the same direction (top-right
+and bottom-left), and B cells respond to fewer genes, more weakly (the
+cloud lies below the diagonal on the right). “Consistent” needs
+significance in both comparisons: a gene significant in one only is
+among the others, whatever its sign in the other.</p>
 <div class="section level3 tabset tabset-pills">
 <h3 class="tabset tabset-pills" id="variants-2">Variants<a class="anchor" aria-label="anchor" href="#variants-2"></a>
 </h3>
@@ -375,22 +379,57 @@ weakly (the cloud lies below the diagonal on the right).</p>
 
 
 
+
 <ul class="nav nav-pills" id="variants-2" role="tablist">
-<li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#trend" id="trend-tab" type="button" role="tab" aria-controls="trend" aria-selected="true" class="active nav-link"><code>trend</code></button></li>
+<li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#color-by-1" id="color-by-1-tab" type="button" role="tab" aria-controls="color-by-1" aria-selected="true" class="active nav-link"><code>color.by</code></button></li>
+<li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#trend" id="trend-tab" type="button" role="tab" aria-controls="trend" aria-selected="false" class="nav-link"><code>trend</code></button></li>
 <li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#two-treatments" id="two-treatments-tab" type="button" role="tab" aria-controls="two-treatments" aria-selected="false" class="nav-link">Two treatments</button></li>
 <li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#categories-and-cor-on" id="categories-and-cor-on-tab" type="button" role="tab" aria-controls="categories-and-cor-on" aria-selected="false" class="nav-link"><code>categories</code> and <code>cor.on</code></button></li>
 <li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#label-selected" id="label-selected-tab" type="button" role="tab" aria-controls="label-selected" aria-selected="false" class="nav-link"><code>label = "selected"</code></button></li>
 <li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#peaks-to-genes-map-y" id="peaks-to-genes-map-y-tab" type="button" role="tab" aria-controls="peaks-to-genes-map-y" aria-selected="false" class="nav-link">Peaks to genes: <code>map.y</code></button></li>
 </ul>
 <div class="tab-content">
-<div class="active  tab-pane" id="trend" role="tabpanel" aria-labelledby="trend-tab">
+<div class="active  tab-pane" id="color-by-1" role="tabpanel" aria-labelledby="color-by-1-tab">
 
-<p>A least-squares line with its 95% confidence band, fitted on the
-genes of the correlation (<code>cor.on</code>). Both fold changes are
-noisy estimates, which biases a least-squares slope toward 0 (regression
+<p><code>color.by = "direction"</code> keeps only the consistent genes
+in colour (genes changed in opposite directions join the others, and
+only the top-right and bottom-left are counted).
+<code>color.by = "significance"</code> colours where each gene is
+significant: in both (same or opposite direction), in one only, or in
+neither.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_fc_quadrant.html">plot_fc_quadrant</a></span><span class="op">(</span></span>
+<span>    <span class="va">de</span><span class="op">[[</span><span class="st">"CD14 Mono"</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>    <span class="va">de</span><span class="op">[[</span><span class="st">"B"</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>    name.x <span class="op">=</span> <span class="st">"CD14 Mono"</span>,</span>
+<span>    name.y <span class="op">=</span> <span class="st">"B"</span>,</span>
+<span>    color.by <span class="op">=</span> <span class="st">"direction"</span>,</span>
+<span>    label <span class="op">=</span> <span class="st">"none"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="de-multi_files/figure-html/quadrant-color-by-14.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_fc_quadrant.html">plot_fc_quadrant</a></span><span class="op">(</span></span>
+<span>    <span class="va">de</span><span class="op">[[</span><span class="st">"CD14 Mono"</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>    <span class="va">de</span><span class="op">[[</span><span class="st">"B"</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>    name.x <span class="op">=</span> <span class="st">"CD14 Mono"</span>,</span>
+<span>    name.y <span class="op">=</span> <span class="st">"B"</span>,</span>
+<span>    color.by <span class="op">=</span> <span class="st">"significance"</span>,</span>
+<span>    label <span class="op">=</span> <span class="st">"none"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="de-multi_files/figure-html/quadrant-color-by-15.png" class="r-plt" alt="" width="516" style="display: block; margin: auto;"></p>
+</div>
+<div class="tab-pane" id="trend" role="tabpanel" aria-labelledby="trend-tab">
+
+<p>A least-squares line of y on x, fitted on the genes of the
+correlation (<code>cor.on</code>), with a 95% band
+(<code>trend.interval</code>): “confidence” (default) shows where the
+fitted line lies, as <code>geom_smooth(method = "lm")</code> draws it,
+and is very narrow with many genes; “prediction” shows where 95% of the
+genes are expected to fall around the line. Both fold changes are noisy
+estimates, which biases a least-squares slope toward 0 (regression
 dilution): the line shows the trend, but its slope is not the ratio of
 the two responses.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_fc_quadrant.html">plot_fc_quadrant</a></span><span class="op">(</span></span>
 <span>    <span class="va">de</span><span class="op">[[</span><span class="st">"CD14 Mono"</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>    <span class="va">de</span><span class="op">[[</span><span class="st">"B"</span><span class="op">]</span><span class="op">]</span>,</span>
@@ -398,17 +437,21 @@ the two responses.</p>
 <span>    name.y <span class="op">=</span> <span class="st">"B"</span>,</span>
 <span>    cor.on <span class="op">=</span> <span class="st">"significant"</span>,</span>
 <span>    trend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    trend.interval <span class="op">=</span> <span class="st">"prediction"</span>,</span>
 <span>    label <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-trend-14.png" class="r-plt" alt="" width="522" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-trend-16.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="two-treatments" role="tabpanel" aria-labelledby="two-treatments-tab">
 
 <p>The comparisons can come from different experiments, tools or
 designs. Here, macrophages (<a href="https://doi.org/10.1038/s41588-018-0046-7" class="external-link">Alasoo et al. 2018</a>)
 stimulated with IFN-γ or infected with <em>Salmonella</em>, each against
-naive, paired by donor:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+naive, paired by donor. Fold change cutoffs are set per comparison
+(<code>logfc.cutoff.x</code>, <code>logfc.cutoff.y</code>; likewise
+<code>padj.cutoff.x</code>, <code>padj.cutoff.y</code>) and drawn as
+thin dashed lines:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mac</span> <span class="op">&lt;-</span> <span class="fu">docs_macrophage</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_low_expression_genes.html">filter_low_expression_genes</a></span><span class="op">(</span><span class="va">mac</span><span class="op">$</span><span class="va">counts</span>, min_group_size <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
 <span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">edgeR</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/edgeR/man/calcNormFactors.html" class="external-link">normLibSizes</a></span><span class="op">(</span><span class="fu">edgeR</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/edgeR/man/DGEList.html" class="external-link">DGEList</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span><span class="op">)</span></span>
@@ -423,29 +466,32 @@ naive, paired by donor:</p>
 <span>    <span class="va">de_sl1344</span>,</span>
 <span>    name.x <span class="op">=</span> <span class="st">"IFN-γ"</span>,</span>
 <span>    name.y <span class="op">=</span> <span class="st">"Salmonella"</span>,</span>
-<span>    logfc.cutoff <span class="op">=</span> <span class="fl">1</span></span>
+<span>    logfc.cutoff.x <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    logfc.cutoff.y <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-mac-15.png" class="r-plt" alt="" width="522" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-mac-17.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="categories-and-cor-on" role="tabpanel" aria-labelledby="categories-and-cor-on-tab">
 
-<p>Colour only genes significant in both; correlation of the genes
-significant in either comparison:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<p>With <code>color.by = "significance"</code>, colour only genes
+significant in both; correlation of the genes significant in either
+comparison:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_fc_quadrant.html">plot_fc_quadrant</a></span><span class="op">(</span></span>
 <span>    <span class="va">de</span><span class="op">[[</span><span class="st">"CD14 Mono"</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>    <span class="va">de</span><span class="op">[[</span><span class="st">"CD4 T"</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>    name.x <span class="op">=</span> <span class="st">"CD14 Mono"</span>,</span>
 <span>    name.y <span class="op">=</span> <span class="st">"CD4 T"</span>,</span>
+<span>    color.by <span class="op">=</span> <span class="st">"significance"</span>,</span>
 <span>    categories <span class="op">=</span> <span class="st">"both"</span>,</span>
 <span>    cor.on <span class="op">=</span> <span class="st">"significant"</span>,</span>
 <span>    correlation <span class="op">=</span> <span class="st">"pearson"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-both-16.png" class="r-plt" alt="" width="522" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-both-18.png" class="r-plt" alt="" width="516" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="label-selected" role="tabpanel" aria-labelledby="label-selected-tab">
 
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_fc_quadrant.html">plot_fc_quadrant</a></span><span class="op">(</span></span>
 <span>    <span class="va">de</span><span class="op">[[</span><span class="st">"CD14 Mono"</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>    <span class="va">de</span><span class="op">[[</span><span class="st">"B"</span><span class="op">]</span><span class="op">]</span>,</span>
@@ -454,7 +500,7 @@ significant in either comparison:</p>
 <span>    label <span class="op">=</span> <span class="st">"selected"</span>,</span>
 <span>    label.features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ISG15"</span>, <span class="st">"CXCL10"</span>, <span class="st">"IFIT1"</span>, <span class="st">"MX1"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-selected-17.png" class="r-plt" alt="" width="522" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-selected-19.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="peaks-to-genes-map-y" role="tabpanel" aria-labelledby="peaks-to-genes-map-y-tab">
 
@@ -464,7 +510,7 @@ ChIPseeker annotation); with several peaks per gene, the most
 significant one is used (<code>map.summary</code>). The peak table below
 is <strong>simulated</strong> from the monocyte RNA fold changes, only
 to show the input format:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rna</span> <span class="op">&lt;-</span> <span class="va">de</span><span class="op">[[</span><span class="st">"CD14 Mono"</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">genes_with_peaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">rna</span><span class="op">)</span>, <span class="fl">3000</span><span class="op">)</span></span>
@@ -491,7 +537,7 @@ to show the input format:</p>
 <span>    name.y <span class="op">=</span> <span class="st">"ATAC (simulated)"</span>,</span>
 <span>    map.y <span class="op">=</span> <span class="va">peak_to_gene</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-peaks-18.png" class="r-plt" alt="" width="529" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-peaks-20.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>

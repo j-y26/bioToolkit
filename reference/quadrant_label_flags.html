@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">quadrant_label_flags</span><span class="op">(</span><span class="va">df</span>, <span class="va">cls</span>, <span class="va">label</span>, <span class="va">label.n</span>, <span class="va">label.features</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">quadrant_label_flags</span><span class="op">(</span><span class="va">df</span>, <span class="va">both</span>, <span class="va">label</span>, <span class="va">label.n</span>, <span class="va">label.features</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -75,8 +75,9 @@
 <dd><p>Joined table with `feature`, `logfc_x`, `logfc_y`</p></dd>
 
 
-<dt id="arg-cls">cls<a class="anchor" aria-label="anchor" href="#arg-cls"></a></dt>
-<dd><p>Class of each row</p></dd>
+<dt id="arg-both">both<a class="anchor" aria-label="anchor" href="#arg-both"></a></dt>
+<dd><p>Whether each row is in a coloured class significant in both
+comparisons (the candidates of `label = "top"`)</p></dd>
 
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>

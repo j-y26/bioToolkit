@@ -164,8 +164,6 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/map_features.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/mark_layer.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/mark_paths.html</loc></url>
-<url><loc>https://j-y26.github.io/bioToolkit/reference/minus_labels.html</loc></url>
-<url><loc>https://j-y26.github.io/bioToolkit/reference/minus_signs.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/mix_colors.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/multi_volcano_offsets.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/outline_layers.html</loc></url>
@@ -201,6 +199,7 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/quadrant_colours.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/quadrant_counts.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/quadrant_label_flags.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/quadrant_trend.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/rank_de_genes.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/ratio_part.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/read_de_table.html</loc></url>

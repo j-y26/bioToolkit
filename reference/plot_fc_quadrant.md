@@ -1,13 +1,13 @@
 # Quadrant plot of the log fold changes of two DE comparisons
 
 Plots, for every feature measured in both comparisons, its log2 fold
-change in one (x) against the other (y), coloured by where it is
-significant: in both, with the same or opposite signs, in one only, or
-in neither. Shows how far two comparisons agree (e.g. two time points,
-two tissues, or RNA and chromatin), with counts of features significant
-in both per quadrant, the correlation of the fold changes, the y = x
-diagonal and labels of the top features. Square panel of a fixed size;
-save it with
+change in one (x) against the other (y), coloured by whether it changes
+consistently: significant in both and up in both, down in both, or in
+opposite directions (see \`color.by\` for other schemes). Shows how far
+two comparisons agree (e.g. two time points, two tissues, or RNA and
+chromatin), with counts of features significant in both per quadrant,
+the correlation of the fold changes, the y = x diagonal and labels of
+the top features. Square panel of a fixed size; save it with
 [`save_plot`](https://j-y26.github.io/bioToolkit/reference/save_plot.md);
 the joined table behind it is returned by
 [`export_source_data`](https://j-y26.github.io/bioToolkit/reference/export_source_data.md).
@@ -27,14 +27,18 @@ plot_fc_quadrant(
   padj.col = NULL,
   map.y = NULL,
   map.summary = c("min_padj", "max_abs"),
-  padj.cutoff = 0.05,
-  logfc.cutoff = 0,
+  padj.cutoff.x = 0.05,
+  padj.cutoff.y = 0.05,
+  logfc.cutoff.x = 0,
+  logfc.cutoff.y = 0,
+  color.by = c("consistency", "direction", "significance"),
   categories = c("both", "x_only", "y_only"),
   show.counts = TRUE,
   correlation = c("spearman", "pearson", "none"),
   cor.on = c("all", "significant"),
   diagonal = TRUE,
   trend = FALSE,
+  trend.interval = c("confidence", "prediction", "none"),
   equal.axes = TRUE,
   label = c("top", "selected", "none"),
   label.n = 5,
@@ -92,27 +96,46 @@ plot_fc_quadrant(
   broken by the largest absolute fold change) or "max_abs" (the largest
   absolute fold change)
 
-- padj.cutoff:
+- padj.cutoff.x, padj.cutoff.y:
 
-  Adjusted p-value below which a feature is significant, default 0.05.
-  One value for both comparisons, or two (x, y)
+  Adjusted p-value below which a feature is significant in the
+  comparison on x and on y, default 0.05 each
 
-- logfc.cutoff:
+- logfc.cutoff.x, logfc.cutoff.y:
 
-  Absolute log2 fold change a significant feature must exceed,
-  default 0. One value, or two (x, y)
+  Absolute log2 fold change a significant feature must exceed in the
+  comparison on x and on y, default 0 each. A cutoff above 0 is drawn as
+  thin dashed grey lines at +-cutoff
+
+- color.by:
+
+  How the points are coloured:
+
+  - "consistency" (default): significant in both and up in both
+    ("Consistently up"), down in both ("Consistently down") or in
+    opposite directions ("Inconsistent"); "Others" in grey
+
+  - "direction": "Consistently up" and "Consistently down"; all other
+    features, opposite ones included, in grey
+
+  - "significance": significant in both with the same or opposite signs,
+    in x only, in y only, or in neither (grey); see \`categories\`
+
+  Features significant in both are drawn larger
 
 - categories:
 
-  Which classes are coloured: any of "both" (significant in both,
-  concordant and discordant), "x_only" and "y_only". The others are
-  drawn in grey with the features significant in neither. Default all
-  three
+  With \`color.by = "significance"\`, which classes are coloured: any of
+  "both" (significant in both, same and opposite directions), "x_only"
+  and "y_only". The others are drawn in grey with the features
+  significant in neither. Default all three
 
 - show.counts:
 
   Whether to print the number of features significant in both in each
-  quadrant, in its corner. Default TRUE
+  quadrant, in its corner and in the colour of its class. With
+  \`color.by = "direction"\`, only the top-right and bottom-left
+  corners. Default TRUE
 
 - correlation:
 
@@ -130,11 +153,19 @@ plot_fc_quadrant(
 
 - trend:
 
-  Whether to draw a least-squares line of y on x with its 95% confidence
-  band, fitted on the features of the correlation (\`cor.on\`), default
-  FALSE. Both fold changes are noisy estimates, which biases the slope
-  toward 0 (regression dilution): the line shows the trend, but its
-  slope is not the ratio of the effects
+  Whether to draw a least-squares line of y on x, fitted on the features
+  of the correlation (\`cor.on\`), default FALSE. Both fold changes are
+  noisy estimates, which biases the slope toward 0 (regression
+  dilution): the line shows the trend, but its slope is not the ratio of
+  the effects
+
+- trend.interval:
+
+  Band drawn around the trend line, at 95%: "confidence" (default; where
+  the fitted line lies, as drawn by `geom_smooth(method = "lm")`; very
+  narrow with thousands of features), "prediction" (where a new feature
+  is expected to fall; shows the spread of the features around the line)
+  or "none"
 
 - equal.axes:
 
@@ -170,16 +201,23 @@ plot_fc_quadrant(
 
 - cols:
 
-  Colours of the classes: a vector named by any of \`concordant\`,
-  \`discordant\`, \`x_only\`, \`y_only\` and \`ns\` (the others keep
-  their default), or five colours in that order. NULL (default) is
-  \`c(concordant = "#762A83", discordant = "#1B7837", x_only =
-  "#4393C3", y_only = "#D6604D", ns = "grey80")\`
+  Colours of the classes of \`color.by\`: a vector named by any of its
+  classes (the others keep their default), or one colour per class in
+  this order. NULL (default) is
+
+  - "consistency": \`c(up = "#C91F28", down = "#174EA6", inconsistent =
+    "#DDAA33", other = "grey80")\`
+
+  - "direction": \`c(up = "#C91F28", down = "#174EA6", other =
+    "grey80")\`
+
+  - "significance": \`c(concordant = "#762A83", discordant = "#1B7837",
+    x_only = "#4393C3", y_only = "#D6604D", ns = "grey80")\`
 
 - pt.size:
 
-  Size of the points, default 1; features significant in both are drawn
-  1.4 times as large
+  Size of the points, default 1; features significant in both (coloured)
+  are drawn 1.4 times as large
 
 - alpha:
 
@@ -223,10 +261,13 @@ A ggplot object
 ## Details
 
 A feature is significant in a comparison when its adjusted p-value is
-below \`padj.cutoff\` and its absolute log2 fold change above
-\`logfc.cutoff\`; features with an NA adjusted p-value (e.g. DESeq2
-independent filtering) are not significant. Features without a fold
-change in either table are not drawn.
+below \`padj.cutoff.x\` (or \`.y\`) and its absolute log2 fold change
+above \`logfc.cutoff.x\` (or \`.y\`); features with an NA adjusted
+p-value (e.g. DESeq2 independent filtering) are not significant.
+Features without a fold change in either table are not drawn.
+"Consistently up / down" and "Inconsistent" need significance in both
+comparisons: a feature significant in one only is among "Others",
+whatever its sign in the other.
 
 The correlation describes the agreement of all fold changes, most of
 them small and noisy; \`cor.on = "significant"\` restricts it to the
@@ -259,6 +300,19 @@ de2$PValue <- 2 * pnorm(-abs(de2$logFC) / 0.45)
 de1$FDR <- p.adjust(de1$PValue, "BH")
 de2$FDR <- p.adjust(de2$PValue, "BH")
 plot_fc_quadrant(de1, de2, name.x = "1 week", name.y = "6 weeks")
+#> Detected edgeR results (logFC, PValue, FDR)
+#> Detected edgeR results (logFC, PValue, FDR)
+#> 3000 feature(s) in both comparisons (3000 in x, 3000 in y)
+
+# Former five-class scheme, a fold change cutoff on x and a trend line
+plot_fc_quadrant(
+    de1,
+    de2,
+    color.by = "significance",
+    logfc.cutoff.x = 1,
+    trend = TRUE,
+    trend.interval = "prediction"
+)
 #> Detected edgeR results (logFC, PValue, FDR)
 #> Detected edgeR results (logFC, PValue, FDR)
 #> 3000 feature(s) in both comparisons (3000 in x, 3000 in y)

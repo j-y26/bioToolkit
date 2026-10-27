@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -141,8 +141,6 @@ interferon-β, 8 donors; 8,000 cells), loaded by the guides’ data helper;
 any Seurat object works the same way.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pbmc</span> <span class="op">&lt;-</span> <span class="fu">docs_kang</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Feature names cannot have underscores ('_'), replacing with dashes</span></span>
-<span><span class="co">#&gt; ('-')</span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/DimPlot_bioToolkit.html">DimPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, group.by <span class="op">=</span> <span class="st">"cell_type"</span>, label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">p</span></span></code></pre></div>
 <p><img src="figures_files/figure-html/data-1.png" class="r-plt" alt="" width="564" style="display: block; margin: auto;"></p>
@@ -180,7 +178,7 @@ plots.</p>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/theme_bioToolkit.html">theme_bioToolkit</a></span><span class="op">(</span><span class="st">"axis"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/panel_size_theme.html">panel_size_theme</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/theme-axis-2.png" class="r-plt" alt="" width="308" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/theme-axis-2.png" class="r-plt" alt="" width="303" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="grid" role="tabpanel" aria-labelledby="grid-tab">
 
@@ -191,7 +189,7 @@ whose rows and columns are categories.</p>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/theme_bioToolkit.html">theme_bioToolkit</a></span><span class="op">(</span><span class="st">"grid"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/panel_size_theme.html">panel_size_theme</a></span><span class="op">(</span><span class="fl">1.2</span>, <span class="fl">1.6</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/theme-grid-3.png" class="r-plt" alt="" width="282" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/theme-grid-3.png" class="r-plt" alt="" width="277" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="embedding" role="tabpanel" aria-labelledby="embedding-tab">
 
@@ -312,7 +310,7 @@ behaviour:</p>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/theme_bioToolkit.html">theme_bioToolkit</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/panel_size_theme.html">panel_size_theme</a></span><span class="op">(</span>panel.width <span class="op">=</span> <span class="fl">3</span>, panel.height <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/size-own-9.png" class="r-plt" alt="" width="344" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/size-own-9.png" class="r-plt" alt="" width="339" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -328,9 +326,9 @@ the extension.</p>
 <span><span class="fu"><a href="../reference/save_plot.html">save_plot</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"cell_types.png"</span><span class="op">)</span>   <span class="co"># 1000 dpi raster</span></span>
 <span><span class="fu"><a href="../reference/save_plot.html">save_plot</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"cell_types.jpg"</span><span class="op">)</span>   <span class="co"># no transparency: saved on white</span></span></code></pre></div>
 <p>PDFs are written with cairo (<code><a href="https://rdrr.io/r/grDevices/cairo.html" class="external-link">cairo_pdf()</a></code>), which embeds
-the fonts and uses the same font as the PNG, so both files of a figure
-look the same. Negative numbers on axes and colour bars get a true minus
-sign (−2, not -2); <code>minus = FALSE</code> keeps the hyphen.</p>
+the fonts and keeps a hyphen as a hyphen (base <code><a href="https://rdrr.io/r/grDevices/pdf.html" class="external-link">pdf()</a></code> draws
+it as a wider minus sign). Both PDF and PNG use the system’s default
+sans-serif font.</p>
 <p>Backgrounds are transparent by default
 (<code>bg = "transparent"</code> in every plot), so figures can be
 placed on any slide or panel; <code>bg = "white"</code> gives an opaque
