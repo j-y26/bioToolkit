@@ -4,12 +4,13 @@
 \alias{quadrant_label_flags}
 \title{Which features of a quadrant plot are labelled}
 \usage{
-quadrant_label_flags(df, cls, label, label.n, label.features)
+quadrant_label_flags(df, both, label, label.n, label.features)
 }
 \arguments{
 \item{df}{Joined table with `feature`, `logfc_x`, `logfc_y`}
 
-\item{cls}{Class of each row}
+\item{both}{Whether each row is in a coloured class significant in both
+comparisons (the candidates of `label = "top"`)}
 
 \item{label}{"top", "selected" or "none"}
 

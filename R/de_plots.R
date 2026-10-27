@@ -385,14 +385,18 @@ significance_labels <- function(padj.cutoff,
 #'
 #' @param logfc.cutoff Absolute log2 fold change cutoff
 #'
+#' @param suffix Appended to the argument names in the errors, e.g. ".x"
+#'               for `padj.cutoff.x`. Default "" (none)
+#'
 #' @keywords internal
 check_de_cutoffs <- function(padj.cutoff,
-                             logfc.cutoff) {
+                             logfc.cutoff,
+                             suffix = "") {
     if (!(is.numeric(padj.cutoff) && length(padj.cutoff) == 1 && padj.cutoff > 0 && padj.cutoff <= 1)) {
-        stop("`padj.cutoff` must be a single number in (0, 1]", call. = FALSE)
+        stop("`padj.cutoff", suffix, "` must be a single number in (0, 1]", call. = FALSE)
     }
     if (!(is.numeric(logfc.cutoff) && length(logfc.cutoff) == 1 && logfc.cutoff >= 0)) {
-        stop("`logfc.cutoff` must be a single number >= 0", call. = FALSE)
+        stop("`logfc.cutoff", suffix, "` must be a single number >= 0", call. = FALSE)
     }
     invisible(TRUE)
 }

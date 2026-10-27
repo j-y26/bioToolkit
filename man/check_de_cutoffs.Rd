@@ -4,12 +4,15 @@
 \alias{check_de_cutoffs}
 \title{Check the significance cutoffs of DE plots}
 \usage{
-check_de_cutoffs(padj.cutoff, logfc.cutoff)
+check_de_cutoffs(padj.cutoff, logfc.cutoff, suffix = "")
 }
 \arguments{
 \item{padj.cutoff}{Adjusted p-value cutoff}
 
 \item{logfc.cutoff}{Absolute log2 fold change cutoff}
+
+\item{suffix}{Appended to the argument names in the errors, e.g. ".x"
+for `padj.cutoff.x`. Default "" (none)}
 }
 \description{
 Check the significance cutoffs of DE plots

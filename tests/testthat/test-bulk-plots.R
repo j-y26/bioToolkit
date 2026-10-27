@@ -212,21 +212,60 @@ quadrant_fixture <- function() {
     list(x = x, y = y)
 }
 
-test_that("plot_fc_quadrant() classes shared features and counts quadrants", {
+test_that("plot_fc_quadrant() colours consistent features by default", {
     f <- quadrant_fixture()
     p <- quiet(plot_fc_quadrant(f$x, f$y, name.x = "A", name.y = "B", label = "none"))
     d <- attr(p, "source_data")
     expect_false("OnlyX" %in% d$feature)
     cls <- setNames(as.character(d$category), d$feature)
     expect_equal(unname(cls[c("CC1", "CC2", "DC1", "XO", "YO", "NS")]),
-                 c("Both, same direction", "Both, same direction", "Both, opposite", "A only", "B only", "Neither"))
-    # Drawn from neither to concordant
-    expect_equal(as.character(d$category[1]), "Neither")
+                 c("Consistently up", "Consistently down", "Inconsistent", "Others", "Others", "Others"))
+    # Drawn from the others to consistently up
+    expect_equal(as.character(d$category[1]), "Others")
+    expect_equal(as.character(d$category[nrow(d)]), "Consistently up")
     expect_equal(quadrant_counts(c(1, -1, -1, 1, 0), c(1, 1, -1, -1, 1)), c(1, 1, 1, 1))
+    # Counts in all four corners, in the colour of their class
+    txt <- Filter(function(l) inherits(l$geom, "GeomText"), p$layers)[[1]]
+    expect_equal(txt$aes_params$label, c("1", "0", "1", "1"))
+    expect_equal(txt$aes_params$colour, unname(quadrant_colours(NULL)[c("up", "inconsistent", "down", "inconsistent")]))
+})
+
+test_that("plot_fc_quadrant() direction and significance schemes", {
+    f <- quadrant_fixture()
+    p <- quiet(plot_fc_quadrant(f$x, f$y, color.by = "direction", label = "none"))
+    d <- attr(p, "source_data")
+    expect_equal(as.character(d$category[d$feature == "DC1"]), "Others")
+    expect_setequal(levels(droplevels(d$category)), c("Consistently up", "Consistently down", "Others"))
+    # Counts only in the same-sign corners
+    txt <- Filter(function(l) inherits(l$geom, "GeomText"), p$layers)[[1]]
+    expect_equal(txt$aes_params$label, c("1", "1"))
+    # The former five classes
+    p2 <- quiet(plot_fc_quadrant(f$x, f$y, name.x = "A", name.y = "B", color.by = "significance", label = "none"))
+    cls <- setNames(as.character(attr(p2, "source_data")$category), attr(p2, "source_data")$feature)
+    expect_equal(unname(cls[c("CC1", "CC2", "DC1", "XO", "YO", "NS")]),
+                 c("Both, same direction", "Both, same direction", "Both, opposite", "A only", "B only", "Neither"))
     # Classes not asked for are grey
-    p2 <- quiet(plot_fc_quadrant(f$x, f$y, categories = "both", label = "none"))
-    d2 <- attr(p2, "source_data")
-    expect_equal(as.character(d2$category[d2$feature == "XO"]), "Neither")
+    p3 <- quiet(plot_fc_quadrant(f$x, f$y, color.by = "significance", categories = "both", label = "none"))
+    d3 <- attr(p3, "source_data")
+    expect_equal(as.character(d3$category[d3$feature == "XO"]), "Neither")
+    # `categories` is for "significance" only
+    expect_warning(suppressMessages(plot_fc_quadrant(f$x, f$y, categories = "both", label = "none")), "ignored")
+})
+
+test_that("plot_fc_quadrant() takes cutoffs per comparison and draws them", {
+    f <- quadrant_fixture()
+    # CC2 (y = -1.5) is no longer significant in y, DC1 (FDR 1e-5, not < 1e-5) not in x
+    p <- quiet(plot_fc_quadrant(f$x, f$y, logfc.cutoff.y = 1.6, padj.cutoff.x = 1e-5, label = "none"))
+    d <- attr(p, "source_data")
+    expect_equal(as.character(d$category[d$feature %in% c("CC2", "DC1")]), c("Others", "Others"))
+    expect_equal(as.character(d$category[d$feature == "CC1"]), "Consistently up")
+    # Dashed lines at +-1.6 on y only
+    dashed <- Filter(function(l) identical(l$aes_params$linetype, "dashed") && inherits(l$geom, c("GeomHline", "GeomVline")),
+                     p$layers)
+    expect_length(dashed, 1)
+    expect_true(inherits(dashed[[1]]$geom, "GeomHline"))
+    expect_equal(sort(dashed[[1]]$data$yintercept), c(-1.6, 1.6))
+    expect_error(quiet(plot_fc_quadrant(f$x, f$y, padj.cutoff.y = 2)), "padj.cutoff.y")
 })
 
 test_that("plot_fc_quadrant() shows the correlation and labels the top per quadrant", {
@@ -239,21 +278,42 @@ test_that("plot_fc_quadrant() shows the correlation and labels the top per quadr
     p2 <- quiet(plot_fc_quadrant(f$x, f$y, label = "selected", label.features = "NS", correlation = "none"))
     expect_null(p2$labels$subtitle)
     expect_equal(attr(p2, "source_data")$feature[attr(p2, "source_data")$labelled], "NS")
+    # "direction" labels only the coloured, consistent features
+    p3 <- quiet(plot_fc_quadrant(f$x, f$y, color.by = "direction", label.n = 1))
+    d3 <- attr(p3, "source_data")
+    expect_setequal(d3$feature[d3$labelled], c("CC1", "CC2"))
 })
 
-test_that("plot_fc_quadrant() draws 1 pt black zero lines and an optional trend line", {
+test_that("plot_fc_quadrant() draws 1 pt zero lines and an optional trend line", {
     f <- quadrant_fixture()
     p <- quiet(plot_fc_quadrant(f$x, f$y, label = "none"))
     zero <- Filter(function(l) inherits(l$geom, "GeomHline"), p$layers)[[1]]
-    expect_equal(zero$aes_params$colour, "black")
+    expect_equal(zero$aes_params$colour, "grey20")
     expect_equal(zero$aes_params$linewidth, pt_to_linewidth(1))
-    expect_false(any(vapply(p$layers, function(l) inherits(l$geom, "GeomSmooth"), logical(1))))
+    expect_false(any(vapply(p$layers, function(l) inherits(l$geom, "GeomLine"), logical(1))))
     expect_equal(p$theme$plot.subtitle$face, "bold")
-    pt <- quiet(plot_fc_quadrant(f$x, f$y, label = "none", trend = TRUE))
-    smooth <- Filter(function(l) inherits(l$geom, "GeomSmooth"), pt$layers)
-    expect_length(smooth, 1)
-    expect_true(smooth[[1]]$stat_params$se)
-    expect_no_error(ggplot2::ggplotGrob(pt))
+    has <- function(p, geom) any(vapply(p$layers, function(l) inherits(l$geom, geom), logical(1)))
+    pc <- quiet(plot_fc_quadrant(f$x, f$y, label = "none", trend = TRUE))
+    pp <- quiet(plot_fc_quadrant(f$x, f$y, label = "none", trend = TRUE, trend.interval = "prediction"))
+    pn <- quiet(plot_fc_quadrant(f$x, f$y, label = "none", trend = TRUE, trend.interval = "none"))
+    expect_true(has(pc, "GeomLine") && has(pc, "GeomRibbon"))
+    expect_true(has(pn, "GeomLine") && !has(pn, "GeomRibbon"))
+    expect_no_error(ggplot2::ggplotGrob(pc))
+    expect_no_error(ggplot2::ggplotGrob(pp))
+})
+
+test_that("quadrant_trend() gives a wider prediction band than the confidence band", {
+    set.seed(1)
+    x <- rnorm(200)
+    y <- 0.5 * x + rnorm(200)
+    lm_fit <- lm(y ~ x)
+    conf <- quadrant_trend(x, y, "confidence", c(-100, 100))
+    pred <- quadrant_trend(x, y, "prediction", c(-100, 100))
+    expect_equal(conf$fit, unname(predict(lm_fit, data.frame(x = conf$x))))
+    expect_true(all(pred$upr - pred$lwr > conf$upr - conf$lwr))
+    # The band is clamped to the panel
+    clamped <- quadrant_trend(x, y, "prediction", c(-1, 1))
+    expect_true(all(clamped$lwr >= -1 & clamped$upr <= 1))
 })
 
 test_that("map_features() keeps one feature per gene", {
@@ -279,10 +339,11 @@ test_that("plot_fc_quadrant() reads peaks through map.y and rejects duplicates",
     expect_error(quiet(plot_fc_quadrant(f$x, dup)), "more than once")
 })
 
-test_that("quadrant_colours() accepts partial names and five colours", {
-    expect_equal(quadrant_colours(c(ns = "grey90"))[["ns"]], "grey90")
-    expect_equal(unname(quadrant_colours(c("red", "blue", "green", "orange", "grey"))),
+test_that("quadrant_colours() accepts partial names and one colour per class", {
+    expect_equal(quadrant_colours(c(other = "grey90"))[["other"]], "grey90")
+    expect_equal(names(quadrant_colours(NULL, "direction")), c("up", "down", "other"))
+    expect_equal(unname(quadrant_colours(c("red", "blue", "green", "orange", "grey"), "significance")),
                  c("red", "blue", "green", "orange", "grey"))
-    expect_error(quadrant_colours(c("red", "blue")), "five colours")
-    expect_error(quadrant_colours(c(both = "red")), "named by")
+    expect_error(quadrant_colours(c("red", "blue")), "4 colours")
+    expect_error(quadrant_colours(c(ns = "red")), "named by")
 })

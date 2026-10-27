@@ -4,15 +4,18 @@
 \alias{quadrant_colours}
 \title{Colours of the classes of a quadrant plot}
 \usage{
-quadrant_colours(cols)
+quadrant_colours(cols, scheme = "consistency")
 }
 \arguments{
 \item{cols}{NULL, colours named by class (the others keep their default),
-or five unnamed colours in the order concordant, discordant,
-x_only, y_only, ns}
+or one unnamed colour per class of the scheme, in its order}
+
+\item{scheme}{The `color.by` of the plot: "consistency" (up, down,
+inconsistent, other), "direction" (up, down, other) or
+"significance" (concordant, discordant, x_only, y_only, ns)}
 }
 \value{
-Five colours named by class
+The colours of the classes of the scheme, named by class
 }
 \description{
 Colours of the classes of a quadrant plot

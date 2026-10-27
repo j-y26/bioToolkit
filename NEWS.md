@@ -1,3 +1,25 @@
+# bioToolkit 1.2.0
+
+## DE plots
+
+* `plot_fc_quadrant()` (breaking changes):
+  * New `color.by`. The default, `"consistency"`, colours the features
+    significant in both comparisons by direction: "Consistently up" (red),
+    "Consistently down" (blue) and "Inconsistent" (opposite directions,
+    yellow #DDAA33); all others are grey ("Others"). `"direction"` keeps
+    only the consistent classes in colour, with counts in the top-right and
+    bottom-left corners only. `"significance"` is the former five-class
+    scheme (both same / both opposite / x only / y only / neither);
+    `categories` now applies to it only. Coloured classes are drawn 1.4
+    times larger, and `cols` takes the class names of the chosen scheme
+    (`up`, `down`, `inconsistent`, `other` for the first two).
+  * `padj.cutoff` and `logfc.cutoff` are replaced with `padj.cutoff.x`,
+    `padj.cutoff.y`, `logfc.cutoff.x` and `logfc.cutoff.y`. Fold change
+    cutoffs above 0 are drawn as thin dashed grey lines at +-cutoff.
+  * New `trend.interval` (`"confidence"`, default; `"prediction"`;
+    `"none"`): the 95% band around the trend line. The band is now drawn
+    under the points, the line above them.
+
 # bioToolkit 1.1.2
 
 ## Saving

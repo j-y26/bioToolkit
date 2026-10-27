@@ -42,17 +42,37 @@
 #   on the same features as the correlation. Both fold changes are noisy
 #   estimates, so the least-squares slope is biased toward 0 (regression
 #   dilution): the line shows the trend, its slope is not an effect ratio.
+# * Revision of 2026-10-27 (user, 1.2.0): three colour schemes (`color.by`).
+#   The default, "consistency", colours what most readers look for first:
+#   features significant in both comparisons and changed the same way
+#   ("Consistently up" in the volcano red, "Consistently down" in its blue),
+#   or opposite ways ("Inconsistent", Paul Tol's yellow #DDAA33: colour-blind
+#   safe next to red and blue, and lighter than both), all 1.4 times larger;
+#   everything else is grey ("Others"). "direction" drops "Inconsistent"
+#   into "Others" (counts only in the top-right and bottom-left corners);
+#   "significance" is the former five-class scheme. Consistent means
+#   significant in BOTH: with one significant and the same sign in the
+#   other, half of the non-significant fold changes would qualify by chance.
+#   Cutoffs are set per comparison (`padj.cutoff.x / .y`, `logfc.cutoff.x /
+#   .y`; the one-or-two-value `padj.cutoff` / `logfc.cutoff` are removed);
+#   fold change cutoffs above 0 are drawn as thin dashed grey lines.
+#   The trend line is fitted with lm() and its band drawn by hand
+#   (`trend.interval`): "confidence" (default; the band of the fitted mean,
+#   as geom_smooth(method = "lm") draws it, the usual choice in published
+#   logFC-logFC plots; very narrow with thousands of genes), "prediction"
+#   (where 95% of the features are expected; shows their spread) or "none".
 
 
 #' @title Quadrant plot of the log fold changes of two DE comparisons
 #'
 #' @description Plots, for every feature measured in both comparisons, its
 #'              log2 fold change in one (x) against the other (y), coloured by
-#'              where it is significant: in both, with the same or opposite
-#'              signs, in one only, or in neither. Shows how far two
-#'              comparisons agree (e.g. two time points, two tissues, or RNA
-#'              and chromatin), with counts of features significant in both
-#'              per quadrant, the correlation of the fold changes, the y = x
+#'              whether it changes consistently: significant in both and up in
+#'              both, down in both, or in opposite directions (see
+#'              `color.by` for other schemes). Shows how far two comparisons
+#'              agree (e.g. two time points, two tissues, or RNA and
+#'              chromatin), with counts of features significant in both per
+#'              quadrant, the correlation of the fold changes, the y = x
 #'              diagonal and labels of the top features. Square panel of a
 #'              fixed size; save it with \code{\link{save_plot}}; the joined
 #'              table behind it is returned by \code{\link{export_source_data}}.
@@ -84,20 +104,41 @@
 #'                    absolute fold change) or "max_abs" (the largest absolute
 #'                    fold change)
 #'
-#' @param padj.cutoff Adjusted p-value below which a feature is significant,
-#'                    default 0.05. One value for both comparisons, or two
-#'                    (x, y)
+#' @param padj.cutoff.x,padj.cutoff.y Adjusted p-value below which a feature
+#'                                    is significant in the comparison on x
+#'                                    and on y, default 0.05 each
 #'
-#' @param logfc.cutoff Absolute log2 fold change a significant feature must
-#'                     exceed, default 0. One value, or two (x, y)
+#' @param logfc.cutoff.x,logfc.cutoff.y Absolute log2 fold change a
+#'                                      significant feature must exceed in the
+#'                                      comparison on x and on y, default 0
+#'                                      each. A cutoff above 0 is drawn as
+#'                                      thin dashed grey lines at +-cutoff
 #'
-#' @param categories Which classes are coloured: any of "both" (significant
-#'                   in both, concordant and discordant), "x_only" and
-#'                   "y_only". The others are drawn in grey with the features
-#'                   significant in neither. Default all three
+#' @param color.by How the points are coloured:
+#'                 \itemize{
+#'                   \item "consistency" (default): significant in both and
+#'                         up in both ("Consistently up"), down in both
+#'                         ("Consistently down") or in opposite directions
+#'                         ("Inconsistent"); "Others" in grey
+#'                   \item "direction": "Consistently up" and "Consistently
+#'                         down"; all other features, opposite ones included,
+#'                         in grey
+#'                   \item "significance": significant in both with the same
+#'                         or opposite signs, in x only, in y only, or in
+#'                         neither (grey); see `categories`
+#'                 }
+#'                 Features significant in both are drawn larger
+#'
+#' @param categories With `color.by = "significance"`, which classes are
+#'                   coloured: any of "both" (significant in both, same and
+#'                   opposite directions), "x_only" and "y_only". The others
+#'                   are drawn in grey with the features significant in
+#'                   neither. Default all three
 #'
 #' @param show.counts Whether to print the number of features significant in
-#'                    both in each quadrant, in its corner. Default TRUE
+#'                    both in each quadrant, in its corner and in the colour
+#'                    of its class. With `color.by = "direction"`, only the
+#'                    top-right and bottom-left corners. Default TRUE
 #'
 #' @param correlation Correlation of the fold changes shown above the panel:
 #'                    "spearman" (default), "pearson" or "none"
@@ -108,12 +149,18 @@
 #'
 #' @param diagonal Whether to draw the y = x line (dashed), default TRUE
 #'
-#' @param trend Whether to draw a least-squares line of y on x with its 95\%
-#'              confidence band, fitted on the features of the correlation
-#'              (`cor.on`), default FALSE. Both fold changes are noisy
-#'              estimates, which biases the slope toward 0 (regression
-#'              dilution): the line shows the trend, but its slope is not the
-#'              ratio of the effects
+#' @param trend Whether to draw a least-squares line of y on x, fitted on the
+#'              features of the correlation (`cor.on`), default FALSE. Both
+#'              fold changes are noisy estimates, which biases the slope
+#'              toward 0 (regression dilution): the line shows the trend, but
+#'              its slope is not the ratio of the effects
+#'
+#' @param trend.interval Band drawn around the trend line, at 95\%:
+#'                       "confidence" (default; where the fitted line lies,
+#'                       as drawn by \code{geom_smooth(method = "lm")}; very
+#'                       narrow with thousands of features), "prediction"
+#'                       (where a new feature is expected to fall; shows the
+#'                       spread of the features around the line) or "none"
 #'
 #' @param equal.axes Whether x and y have the same range, symmetric around 0
 #'                   (default TRUE), so that the diagonal is the line of equal
@@ -137,15 +184,21 @@
 #' @param italic.genes Whether labels are gene names, set in italics. Default
 #'                     TRUE. Labels are bold either way
 #'
-#' @param cols Colours of the classes: a vector named by any of
-#'             `concordant`, `discordant`, `x_only`, `y_only` and `ns` (the
-#'             others keep their default), or five colours in that order.
-#'             NULL (default) is `c(concordant = "#762A83", discordant =
-#'             "#1B7837", x_only = "#4393C3", y_only = "#D6604D", ns =
-#'             "grey80")`
+#' @param cols Colours of the classes of `color.by`: a vector named by any of
+#'             its classes (the others keep their default), or one colour per
+#'             class in this order. NULL (default) is
+#'             \itemize{
+#'               \item "consistency": `c(up = "#C91F28", down = "#174EA6",
+#'                     inconsistent = "#DDAA33", other = "grey80")`
+#'               \item "direction": `c(up = "#C91F28", down = "#174EA6",
+#'                     other = "grey80")`
+#'               \item "significance": `c(concordant = "#762A83", discordant
+#'                     = "#1B7837", x_only = "#4393C3", y_only = "#D6604D",
+#'                     ns = "grey80")`
+#'             }
 #'
 #' @param pt.size Size of the points, default 1; features significant in both
-#'                are drawn 1.4 times as large
+#'                (coloured) are drawn 1.4 times as large
 #'
 #' @param alpha Opacity of the points, default 0.7
 #'
@@ -168,10 +221,12 @@
 #'
 #' @details
 #' A feature is significant in a comparison when its adjusted p-value is
-#' below `padj.cutoff` and its absolute log2 fold change above
-#' `logfc.cutoff`; features with an NA adjusted p-value (e.g. DESeq2
-#' independent filtering) are not significant. Features without a fold change
-#' in either table are not drawn.
+#' below `padj.cutoff.x` (or `.y`) and its absolute log2 fold change above
+#' `logfc.cutoff.x` (or `.y`); features with an NA adjusted p-value (e.g.
+#' DESeq2 independent filtering) are not significant. Features without a fold
+#' change in either table are not drawn. "Consistently up / down" and
+#' "Inconsistent" need significance in both comparisons: a feature
+#' significant in one only is among "Others", whatever its sign in the other.
 #'
 #' The correlation describes the agreement of all fold changes, most of them
 #' small and noisy; `cor.on = "significant"` restricts it to the features
@@ -196,6 +251,15 @@
 #' de1$FDR <- p.adjust(de1$PValue, "BH")
 #' de2$FDR <- p.adjust(de2$PValue, "BH")
 #' plot_fc_quadrant(de1, de2, name.x = "1 week", name.y = "6 weeks")
+#' # Former five-class scheme, a fold change cutoff on x and a trend line
+#' plot_fc_quadrant(
+#'     de1,
+#'     de2,
+#'     color.by = "significance",
+#'     logfc.cutoff.x = 1,
+#'     trend = TRUE,
+#'     trend.interval = "prediction"
+#' )
 #' \dontrun{
 #' # RNA vs ATAC: peaks mapped to genes, most significant peak per gene
 #' peak2gene <- data.frame(peak = anno$peak_id, gene = anno$SYMBOL)
@@ -221,14 +285,18 @@ plot_fc_quadrant <- function(
     padj.col = NULL,
     map.y = NULL,
     map.summary = c("min_padj", "max_abs"),
-    padj.cutoff = 0.05,
-    logfc.cutoff = 0,
+    padj.cutoff.x = 0.05,
+    padj.cutoff.y = 0.05,
+    logfc.cutoff.x = 0,
+    logfc.cutoff.y = 0,
+    color.by = c("consistency", "direction", "significance"),
     categories = c("both", "x_only", "y_only"),
     show.counts = TRUE,
     correlation = c("spearman", "pearson", "none"),
     cor.on = c("all", "significant"),
     diagonal = TRUE,
     trend = FALSE,
+    trend.interval = c("confidence", "prediction", "none"),
     equal.axes = TRUE,
     label = c("top", "selected", "none"),
     label.n = 5,
@@ -251,11 +319,15 @@ plot_fc_quadrant <- function(
     correlation <- match.arg(correlation)
     cor.on <- match.arg(cor.on)
     label <- match.arg(label)
+    color.by <- match.arg(color.by)
+    trend.interval <- match.arg(trend.interval)
+    if (!missing(categories) && color.by != "significance") {
+        warning("`categories` is used only with `color.by = \"significance\"`; ignored", call. = FALSE)
+    }
     categories <- match.arg(categories, several.ok = TRUE)
-    padj.cutoff <- rep_len(padj.cutoff, 2)
-    logfc.cutoff <- rep_len(logfc.cutoff, 2)
-    for (i in 1:2) check_de_cutoffs(padj.cutoff[i], logfc.cutoff[i])
-    cols <- quadrant_colours(cols)
+    check_de_cutoffs(padj.cutoff.x, logfc.cutoff.x, suffix = ".x")
+    check_de_cutoffs(padj.cutoff.y, logfc.cutoff.y, suffix = ".y")
+    cols <- quadrant_colours(cols, color.by)
 
     read <- function(d, what) {
         # A table already standardized is used as it is
@@ -286,27 +358,45 @@ plot_fc_quadrant <- function(
     message(nrow(df), " feature(s) in both comparisons (", nrow(dx), " in x, ", nrow(dy), " in y)")
     if (nrow(df) < 3) stop("Fewer than 3 features are shared by the two comparisons", call. = FALSE)
 
-    dir_x <- de_direction(df$logfc_x, df$padj_x, padj.cutoff[1], logfc.cutoff[1])
-    dir_y <- de_direction(df$logfc_y, df$padj_y, padj.cutoff[2], logfc.cutoff[2])
+    dir_x <- de_direction(df$logfc_x, df$padj_x, padj.cutoff.x, logfc.cutoff.x)
+    dir_y <- de_direction(df$logfc_y, df$padj_y, padj.cutoff.y, logfc.cutoff.y)
     sig_x <- dir_x != "ns"
     sig_y <- dir_y != "ns"
-    cls <- ifelse(sig_x & sig_y, ifelse(dir_x == dir_y, "concordant", "discordant"),
-                  ifelse(sig_x, "x_only", ifelse(sig_y, "y_only", "ns")))
-    # Classes not asked for are drawn as not significant
-    shown <- c(if ("both" %in% categories) c("concordant", "discordant"), intersect(c("x_only", "y_only"), categories))
-    cls[!(cls %in% shown)] <- "ns"
+    if (color.by == "significance") {
+        cls <- ifelse(sig_x & sig_y, ifelse(dir_x == dir_y, "concordant", "discordant"),
+                      ifelse(sig_x, "x_only", ifelse(sig_y, "y_only", "ns")))
+        # Classes not asked for are drawn as not significant
+        shown <- c(if ("both" %in% categories) c("concordant", "discordant"),
+                   intersect(c("x_only", "y_only"), categories))
+        cls[!(cls %in% shown)] <- "ns"
+        # Classes of features significant in both (larger, labelled)
+        both_cls <- c("concordant", "discordant")
+    } else {
+        # Significant in both: up in both, down in both, or opposite;
+        # significant in one only, or in neither, is "other"
+        cls <- ifelse(sig_x & sig_y, ifelse(dir_x == dir_y, dir_x, "inconsistent"), "other")
+        # "direction" leaves the opposite features in grey with the others
+        if (color.by == "direction") cls[cls == "inconsistent"] <- "other"
+        both_cls <- c("up", "down", "inconsistent")
+    }
     class_labels <- c(
+        up = "Consistently up",
+        down = "Consistently down",
+        inconsistent = "Inconsistent",
+        other = "Others",
         concordant = "Both, same direction",
         discordant = "Both, opposite",
         x_only = paste(name.x, "only"),
         y_only = paste(name.y, "only"),
         ns = "Neither"
     )
-    lv <- c(shown, "ns")
+    # Legend order: the classes of the scheme, as in `cols`
+    lv <- names(cols)
+    if (color.by == "significance") lv <- c(shown, "ns")
     df$category <- factor(class_labels[cls], levels = class_labels[lv])
-    df$labelled <- quadrant_label_flags(df, cls, label, label.n, label.features)
+    df$labelled <- quadrant_label_flags(df, cls %in% both_cls, label, label.n, label.features)
     # Drawn from the least to the most informative class
-    draw_order <- c("ns", "x_only", "y_only", "discordant", "concordant")
+    draw_order <- c("ns", "other", "x_only", "y_only", "inconsistent", "discordant", "down", "up", "concordant")
     # Significant in x or y, whether or not that class is coloured (for the
     # correlation on significant features)
     df$.any_sig <- sig_x | sig_y
@@ -314,23 +404,65 @@ plot_fc_quadrant <- function(
     df <- df[ord, , drop = FALSE]
     cls <- cls[ord]
     rownames(df) <- NULL
-    df$.size <- ifelse(cls %in% c("concordant", "discordant"), pt.size * 1.4, pt.size)
+    df$.size <- ifelse(cls %in% both_cls, pt.size * 1.4, pt.size)
 
     sz <- theme_sizes()
     lw <- pt_to_linewidth(sz$line)
     if (is.null(label.size)) label.size <- pt_to_size(sz$small)
-    m_x <- max(abs(df$logfc_x))
-    m_y <- max(abs(df$logfc_y))
+    # The axes reach the fold change cutoffs, so that their lines are drawn
+    m_x <- max(abs(df$logfc_x), logfc.cutoff.x)
+    m_y <- max(abs(df$logfc_y), logfc.cutoff.y)
     if (equal.axes) m_x <- m_y <- max(m_x, m_y)
     xlim <- c(-1, 1) * m_x
     ylim <- c(-1, 1) * m_y
 
     layer_fun <- points_layer_fun(raster, nrow(df), 5000, raster.dpi)
-    # The zero lines split the quadrants: black and as thick as the axes
+    # Features of the correlation and trend line
+    use <- if (cor.on == "all") rep(TRUE, nrow(df)) else df$.any_sig
+    fit_df <- NULL
+    if (trend) {
+        if (sum(use) >= 3) {
+            fit_df <- quadrant_trend(df$logfc_x[use], df$logfc_y[use], trend.interval, ylim)
+        } else {
+            message("Fewer than 3 features for the trend line; not drawn")
+        }
+    }
+    # The zero lines split the quadrants: grey and as thick as the axes
     axis_lw <- pt_to_linewidth(sz$axis)
     p <- ggplot(df, aes(x = .data$logfc_x, y = .data$logfc_y)) +
-        geom_hline(yintercept = 0, colour = "black", linewidth = axis_lw) +
-        geom_vline(xintercept = 0, colour = "black", linewidth = axis_lw)
+        geom_hline(yintercept = 0, colour = "grey20", linewidth = axis_lw) +
+        geom_vline(xintercept = 0, colour = "grey20", linewidth = axis_lw)
+    # Fold change cutoffs: thin, light dashed lines, finer and lighter than
+    # the diagonal (grey45, 0.5 pt), so that they are seen but do not compete
+    # with the points
+    cut_lw <- pt_to_linewidth(0.4)
+    if (logfc.cutoff.x > 0) {
+        p <- p + geom_vline(
+            xintercept = c(-1, 1) * logfc.cutoff.x,
+            linetype = "dashed",
+            colour = "grey65",
+            linewidth = cut_lw
+        )
+    }
+    if (logfc.cutoff.y > 0) {
+        p <- p + geom_hline(
+            yintercept = c(-1, 1) * logfc.cutoff.y,
+            linetype = "dashed",
+            colour = "grey65",
+            linewidth = cut_lw
+        )
+    }
+    # Band of the trend line under the points: a wide (prediction) band
+    # drawn over them would wash them out
+    if (!is.null(fit_df) && trend.interval != "none") {
+        p <- p + geom_ribbon(
+            data = fit_df,
+            aes(x = .data$x, ymin = .data$lwr, ymax = .data$upr),
+            inherit.aes = FALSE,
+            fill = "grey50",
+            alpha = 0.2
+        )
+    }
     if (diagonal) {
         # Stops short of the corners (at 88% of the shorter half-axis), where
         # the counts are printed
@@ -354,42 +486,41 @@ plot_fc_quadrant <- function(
                                            margin = margin(b = 4))) +
         guides(colour = guide_legend(override.aes = list(size = 2.2, alpha = 1)))
 
-    if (show.counts && "both" %in% categories) {
-        both <- cls %in% c("concordant", "discordant")
+    # Counts of the features significant in both, in the corners (top right,
+    # top left, bottom left, bottom right), in the colour of their class;
+    # with "direction", only the same-sign corners (no counts of "Others")
+    corner_cls <- switch(
+        color.by,
+        consistency = c("up", "inconsistent", "down", "inconsistent"),
+        direction = c("up", NA, "down", NA),
+        significance = c("concordant", "discordant", "concordant", "discordant")
+    )
+    if (show.counts && (color.by != "significance" || "both" %in% categories)) {
+        both <- sig_x[ord] & sig_y[ord]
         q <- quadrant_counts(df$logfc_x[both], df$logfc_y[both])
-        count_size <- pt_to_size(sz$base)
-        # Same-sign quadrants (top right, bottom left) in the concordant
-        # colour, opposite-sign ones in the discordant colour
+        keep <- !is.na(corner_cls)
         p <- p + annotate(
             "text",
-            x = c(Inf, -Inf, -Inf, Inf),
-            y = c(Inf, Inf, -Inf, -Inf),
-            label = format(q, big.mark = ","),
-            hjust = c(1.3, -0.3, -0.3, 1.3),
-            vjust = c(1.5, 1.5, -0.6, -0.6),
-            size = count_size,
+            x = c(Inf, -Inf, -Inf, Inf)[keep],
+            y = c(Inf, Inf, -Inf, -Inf)[keep],
+            label = format(q[keep], big.mark = ","),
+            hjust = c(1.3, -0.3, -0.3, 1.3)[keep],
+            vjust = c(1.5, 1.5, -0.6, -0.6)[keep],
+            size = pt_to_size(sz$base),
             fontface = "bold",
-            colour = cols[c("concordant", "discordant", "concordant", "discordant")]
+            colour = unname(cols[corner_cls[keep]])
         )
     }
 
-    # Features of the correlation and trend line
-    use <- if (cor.on == "all") rep(TRUE, nrow(df)) else df$.any_sig
-    if (trend) {
-        if (sum(use) >= 3) {
-            p <- p + geom_smooth(
-                data = df[use, , drop = FALSE],
-                method = "lm",
-                formula = y ~ x,
-                level = 0.95,
-                colour = "grey15",
-                fill = "grey50",
-                alpha = 0.25,
-                linewidth = pt_to_linewidth(0.75)
-            )
-        } else {
-            message("Fewer than 3 features for the trend line; not drawn")
-        }
+    # Trend line, on top of the points
+    if (!is.null(fit_df)) {
+        p <- p + geom_line(
+            data = fit_df[fit_df$in_panel, , drop = FALSE],
+            aes(x = .data$x, y = .data$fit),
+            inherit.aes = FALSE,
+            colour = "grey15",
+            linewidth = pt_to_linewidth(0.75)
+        )
     }
     if (correlation != "none") {
         n_use <- sum(use)
@@ -435,23 +566,36 @@ plot_fc_quadrant <- function(
 #' Colours of the classes of a quadrant plot
 #'
 #' @param cols NULL, colours named by class (the others keep their default),
-#'             or five unnamed colours in the order concordant, discordant,
-#'             x_only, y_only, ns
+#'             or one unnamed colour per class of the scheme, in its order
 #'
-#' @return Five colours named by class
+#' @param scheme The `color.by` of the plot: "consistency" (up, down,
+#'               inconsistent, other), "direction" (up, down, other) or
+#'               "significance" (concordant, discordant, x_only, y_only, ns)
+#'
+#' @return The colours of the classes of the scheme, named by class
 #'
 #' @keywords internal
-quadrant_colours <- function(cols) {
-    # Paul Tol's PRGn ends (deep purple, deep green) for the features
-    # significant in both, and the blue and red of his BuRd for one only:
-    # blue (x) and red (y) mix into purple (both, same direction)
-    out <- c(concordant = "#762A83", discordant = "#1B7837", x_only = "#4393C3", y_only = "#D6604D",
-             ns = "grey80")
+quadrant_colours <- function(cols,
+                             scheme = "consistency") {
+    out <- switch(
+        scheme,
+        # Up and down as in the volcano plot; opposite directions in Paul
+        # Tol's yellow, colour-blind safe next to red and blue and lighter
+        # than both
+        consistency = c(volcano_colours(NULL)[c("up", "down")], inconsistent = "#DDAA33", other = "grey80"),
+        direction = c(volcano_colours(NULL)[c("up", "down")], other = "grey80"),
+        # Paul Tol's PRGn ends (deep purple, deep green) for the features
+        # significant in both, and the blue and red of his BuRd for one only:
+        # blue (x) and red (y) mix into purple (both, same direction)
+        significance = c(concordant = "#762A83", discordant = "#1B7837", x_only = "#4393C3",
+                         y_only = "#D6604D", ns = "grey80")
+    )
     if (is.null(cols)) return(out)
     if (!all(is_colour(cols))) stop("`cols` must be colours", call. = FALSE)
     if (is.null(names(cols))) {
-        if (length(cols) != 5) {
-            stop("Unnamed `cols` must be five colours: concordant, discordant, x_only, y_only, ns", call. = FALSE)
+        if (length(cols) != length(out)) {
+            stop("Unnamed `cols` must be ", length(out), " colours with `color.by = \"", scheme, "\"`: ",
+                 paste(names(out), collapse = ", "), call. = FALSE)
         }
         names(cols) <- names(out)
     }
@@ -461,6 +605,46 @@ quadrant_colours <- function(cols) {
              paste(unknown, collapse = ", "), call. = FALSE)
     }
     out[names(cols)] <- cols
+    out
+}
+
+
+#' Least-squares trend line of a quadrant plot, with its band
+#'
+#' Fits `y ~ x` and predicts it on 100 points across the range of `x`. The
+#' band is clamped to the y range of the panel (a band beyond the scale
+#' limits would be dropped by ggplot2); the line is drawn only where it lies
+#' inside it.
+#'
+#' @param x,y Fold changes on x and y
+#'
+#' @param interval "confidence", "prediction" or "none" (a band is still
+#'                 computed, as confidence, but not drawn)
+#'
+#' @param ylim The y limits of the panel
+#'
+#' @return A data frame with `x`, `fit`, `lwr`, `upr` and `in_panel`
+#'
+#' @keywords internal
+quadrant_trend <- function(x,
+                           y,
+                           interval,
+                           ylim) {
+    fit <- stats::lm(y ~ x)
+    grid <- data.frame(x = seq(min(x), max(x), length.out = 100))
+    # 95% band of the fitted mean ("confidence") or of a new feature
+    # ("prediction", wider: it adds the scatter of the features around the
+    # line)
+    band <- stats::predict(
+        fit,
+        newdata = grid,
+        interval = if (interval == "prediction") "prediction" else "confidence",
+        level = 0.95
+    )
+    out <- data.frame(grid, band)
+    out$in_panel <- out$fit >= ylim[1] & out$fit <= ylim[2]
+    out$lwr <- pmax(out$lwr, ylim[1])
+    out$upr <- pmin(out$upr, ylim[2])
     out
 }
 
@@ -515,7 +699,8 @@ map_features <- function(d,
 #'
 #' @param df Joined table with `feature`, `logfc_x`, `logfc_y`
 #'
-#' @param cls Class of each row
+#' @param both Whether each row is in a coloured class significant in both
+#'             comparisons (the candidates of `label = "top"`)
 #'
 #' @param label "top", "selected" or "none"
 #'
@@ -527,7 +712,7 @@ map_features <- function(d,
 #'
 #' @keywords internal
 quadrant_label_flags <- function(df,
-                                 cls,
+                                 both,
                                  label,
                                  label.n,
                                  label.features) {
@@ -540,7 +725,6 @@ quadrant_label_flags <- function(df,
         if (!(is.numeric(label.n) && length(label.n) == 1 && label.n >= 0)) {
             stop("`label.n` must be a single number >= 0", call. = FALSE)
         }
-        both <- cls %in% c("concordant", "discordant")
         quadrant <- paste(sign(df$logfc_x), sign(df$logfc_y))
         dist <- sqrt(df$logfc_x^2 + df$logfc_y^2)
         for (q in unique(quadrant[both])) {
