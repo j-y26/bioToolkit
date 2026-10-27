@@ -120,7 +120,7 @@
 #'             features: a vector named `up`, `down` and `ns` (any of them;
 #'             the others keep their default), or three colours in that
 #'             order. NULL (default) is
-#'             `c(up = "firebrick4", down = "midnightblue", ns = "grey75")`
+#'             `c(up = "#C91F28", down = "#174EA6", ns = "grey75")`
 #'
 #' @param up.label,down.label,ns.label Names of the three classes in the
 #'        legend (and next to the arrows with `annotate.counts = "arrow"`).
@@ -684,7 +684,7 @@ ma_x_title <- function(method,
 #' @keywords internal
 volcano_colours <- function(cols,
                             ns = "grey75") {
-    out <- c(up = "firebrick4", down = "midnightblue", ns = ns)
+    out <- c(up = "#C91F28", down = "#174EA6", ns = ns)
     if (is.null(cols)) return(out)
     if (!all(is_colour(cols))) stop("`cols` must be colours", call. = FALSE)
     if (is.null(names(cols))) {

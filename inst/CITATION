@@ -1,15 +1,21 @@
-citHeader("To cite bioToolkit in publications use:")
-
-citEntry(entry = "Unpublished",
-  title        = "bioToolkit: An R package hosting a mix of useful functions
-                  for bioinformatics data analysis",
-  author       = "Jielin Yang",
-  note         = "Unpublished",
-  year         = "2024",
-  url          = "https://github.com/j-y26/bioToolkit",
-
-  textVersion  =
-  paste("Yang, J. (2024) bioToolkit: An R package hosting a mix of useful
-        functions for bioinformatics data analysis. Unpublished.
-        URL https://github.com/j-y26/bioToolkit.")
+bibentry(
+  bibtype = "Manual",
+  header = "To cite bioToolkit in publications use:",
+  title = "bioToolkit: An R package hosting a mix of useful functions for bioinformatics data analysis",
+  author = person(
+    "Jielin",
+    "Yang",
+    email = "jielin.yang@sickkids.ca",
+    comment = c(ORCID = "0000-0003-4207-828X")
+  ),
+  # Version and year are read from DESCRIPTION, so they never need editing
+  # here. DESCRIPTION has no Date field, so the year falls back to the year
+  # the citation is printed (or the site is built).
+  note = paste("R package version", meta$Version),
+  year = if (!is.null(meta$Date)) {
+    substr(meta$Date, 1, 4)
+  } else {
+    format(Sys.Date(), "%Y")
+  },
+  url = "https://github.com/j-y26/bioToolkit"
 )

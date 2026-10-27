@@ -1,3 +1,7 @@
+# bioToolkit 1.1.1
+
+Change default volcano up and down colors to brighter ones.
+
 # bioToolkit 1.1.0
 
 ## Saving
