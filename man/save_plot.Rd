@@ -11,6 +11,7 @@ save_plot(
   height = NULL,
   dpi = 1000,
   bg = NULL,
+  family = "Arial",
   ...
 )
 }
@@ -30,6 +31,13 @@ is NULL}
 \item{bg}{Background colour. If NULL (default), taken from the plot. A
 transparent background is kept in PDF, PNG, TIFF and SVG; formats
 without transparency (JPEG, BMP) get a white one instead}
+
+\item{family}{Font family of all text that has no font of its own (the
+default of ggplot2 and of \code{theme_bioToolkit()}; a
+`base.family` set in the theme is kept). Default is "Arial".
+If the font is not installed, the system substitutes one
+(e.g. Liberation Sans, which has Arial's widths, or the wider
+DejaVu Sans). NULL keeps the devices' default "sans"}
 
 \item{...}{Additional arguments passed to \code{\link[ggplot2]{ggsave}}}
 }
@@ -55,14 +63,15 @@ Saves a ggplot or patchwork to PDF (vector), PNG or any format
              A legend from \code{\link{extract_legend}} is saved on its own,
              sized to fit, with a small margin.
 
-             PDFs are written with \code{\link[grDevices]{cairo_pdf}} when R
-             has cairo support (\code{capabilities("cairo")}): fonts are
-             embedded, Unicode text is drawn, and a hyphen stays a hyphen
-             (base \code{pdf()} draws "-" with the wider minus glyph). Fonts
-             are the system's: the default "sans" family is resolved by
-             cairo (Helvetica or its metric-compatible stand-in) and by
-             ragg for PNGs (e.g. Arial). Without cairo, or when `device` is
-             given, \code{ggsave()}'s device is used.
+             Files are written with cairo when R has it
+             (\code{capabilities("cairo")}): \code{\link[grDevices]{cairo_pdf}}
+             for PDFs, and \code{\link[grDevices]{png}} (or \code{jpeg()},
+             \code{tiff()}, \code{bmp()}) with \code{type = "cairo"} for
+             raster files. Fonts are embedded, Unicode text is drawn, a
+             hyphen stays a hyphen (base \code{pdf()} draws "-" with the
+             wider minus glyph), and PDF and PNG share the same font. Without
+             cairo, for other formats (e.g. SVG), or when `device` is given,
+             \code{ggsave()}'s device is used and `family` is ignored.
 }
 \examples{
 library(ggplot2)

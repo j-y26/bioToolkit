@@ -159,14 +159,15 @@ has_fixed_size <- function(gt) {
 #'              A legend from \code{\link{extract_legend}} is saved on its own,
 #'              sized to fit, with a small margin.
 #'
-#'              PDFs are written with \code{\link[grDevices]{cairo_pdf}} when R
-#'              has cairo support (\code{capabilities("cairo")}): fonts are
-#'              embedded, Unicode text is drawn, and a hyphen stays a hyphen
-#'              (base \code{pdf()} draws "-" with the wider minus glyph). Fonts
-#'              are the system's: the default "sans" family is resolved by
-#'              cairo (Helvetica or its metric-compatible stand-in) and by
-#'              ragg for PNGs (e.g. Arial). Without cairo, or when `device` is
-#'              given, \code{ggsave()}'s device is used.
+#'              Files are written with cairo when R has it
+#'              (\code{capabilities("cairo")}): \code{\link[grDevices]{cairo_pdf}}
+#'              for PDFs, and \code{\link[grDevices]{png}} (or \code{jpeg()},
+#'              \code{tiff()}, \code{bmp()}) with \code{type = "cairo"} for
+#'              raster files. Fonts are embedded, Unicode text is drawn, a
+#'              hyphen stays a hyphen (base \code{pdf()} draws "-" with the
+#'              wider minus glyph), and PDF and PNG share the same font. Without
+#'              cairo, for other formats (e.g. SVG), or when `device` is given,
+#'              \code{ggsave()}'s device is used and `family` is ignored.
 #'
 #' @param plot A ggplot or patchwork object, or a legend from
 #'             \code{\link{extract_legend}}
@@ -183,6 +184,13 @@ has_fixed_size <- function(gt) {
 #' @param bg Background colour. If NULL (default), taken from the plot. A
 #'           transparent background is kept in PDF, PNG, TIFF and SVG; formats
 #'           without transparency (JPEG, BMP) get a white one instead
+#'
+#' @param family Font family of all text that has no font of its own (the
+#'               default of ggplot2 and of \code{theme_bioToolkit()}; a
+#'               `base.family` set in the theme is kept). Default is "Arial".
+#'               If the font is not installed, the system substitutes one
+#'               (e.g. Liberation Sans, which has Arial's widths, or the wider
+#'               DejaVu Sans). NULL keeps the devices' default "sans"
 #'
 #' @param ... Additional arguments passed to \code{\link[ggplot2]{ggsave}}
 #'
@@ -206,30 +214,67 @@ save_plot <- function(plot,
                       height = NULL,
                       dpi = 1000,
                       bg = NULL,
+                      family = "Arial",
                       ...) {
     is_legend <- inherits(plot, "bt_legend")
     if (!(is_ggplot(plot) || inherits(plot, "patchwork") || is_legend)) {
         stop("`plot` must be a ggplot, a patchwork or a legend from extract_legend()", call. = FALSE)
     }
     dots <- list(...)
-    # PDFs are written with cairo_pdf() when R has cairo: base pdf() draws the
-    # hyphen "-" with the minus glyph (ISOLatin1 encoding), cannot draw Unicode
-    # (Greek letters) and does not embed its fonts. cairo keeps its default
-    # "sans" family, resolved by the system's fontconfig
-    pdf_ext <- grepl("\\.pdf$", filename, ignore.case = TRUE)
-    raster_ext <- grepl("\\.(png|jpe?g|tiff?|bmp)$", filename, ignore.case = TRUE)
-    use_cairo <- pdf_ext && capabilities("cairo") && is.null(dots$device)
-    use_ragg <- raster_ext && requireNamespace("ragg", quietly = TRUE)
-    # Build the gtable once, on the same kind of device it will be saved to, and
-    # draw that exact gtable so measured and saved layouts cannot differ
+    # NULL keeps the devices' own default family
+    if (is.null(family)) family <- "sans"
+    # PDFs and raster files are written with cairo when R has it: base pdf()
+    # draws the hyphen "-" with the minus glyph (ISOLatin1 encoding), cannot
+    # draw Unicode (Greek letters) and does not embed its fonts. Both cairo
+    # devices take the same `family`, used for all text without a font of its
+    # own (ggplot2's default ""): left to "sans", cairo PDFs get Helvetica (or
+    # a stand-in) while PNGs get the system's sans-serif
+    ext <- tolower(sub(".*\\.", "", filename))
+    use_cairo <- is.null(dots$device) &&
+        capabilities("cairo") &&
+        ext %in% c("pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp")
+    # Opens the cairo device of the file's format; sizes come in inches
+    cairo_dev <- function(filename, width, height, bg = "white", ...) {
+        if (ext == "pdf") {
+            return(grDevices::cairo_pdf(
+                filename,
+                width = width,
+                height = height,
+                bg = bg,
+                ...,
+                family = family
+            ))
+        }
+        raster_fun <- switch(
+            ext,
+            png = grDevices::png,
+            jpg = ,
+            jpeg = grDevices::jpeg,
+            tif = ,
+            tiff = grDevices::tiff,
+            bmp = grDevices::bmp
+        )
+        # ggsave() passes `res` and `units` only to a device function that
+        # declares them, so both are set here
+        raster_fun(
+            filename,
+            width = width,
+            height = height,
+            units = "in",
+            res = dpi,
+            bg = bg,
+            ...,
+            type = "cairo",
+            family = family
+        )
+    }
+    # Build the gtable once, on the same device it will be saved with, and
+    # draw that exact gtable so measured and saved layouts cannot differ. The
+    # measuring device is kept small (1 inch), as only its fonts matter
     old_dev <- grDevices::dev.cur()
-    if (use_ragg) {
-        tmp <- tempfile(fileext = ".png")
-        ragg::agg_png(tmp, res = dpi)
-        on.exit(unlink(tmp), add = TRUE)
-    } else if (use_cairo) {
-        tmp <- tempfile(fileext = ".pdf")
-        grDevices::cairo_pdf(tmp)
+    if (use_cairo) {
+        tmp <- tempfile(fileext = paste0(".", ext))
+        cairo_dev(tmp, width = 1, height = 1)
         on.exit(unlink(tmp), add = TRUE)
     } else {
         grDevices::pdf(NULL)
@@ -282,7 +327,7 @@ save_plot <- function(plot,
         bg <- "white"
     }
 
-    if (use_cairo) dots$device <- grDevices::cairo_pdf
+    if (use_cairo) dots$device <- cairo_dev
     do.call(
         ggsave,
         c(
