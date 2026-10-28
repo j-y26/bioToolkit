@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -202,7 +202,7 @@ for differences between conditions; use pseudobulk tests for that (see
 </h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DotPlot_bioToolkit.html">DotPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, features <span class="op">=</span> <span class="va">top</span>, group.by <span class="op">=</span> <span class="st">"cell_type"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/dotplot-1.png" class="r-plt" alt="" width="776" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/dotplot-1.png" class="r-plt" alt="" width="747" style="display: block; margin: auto;"></p>
 <p>By default, each gene’s mean expression is z-scored across groups
 (<code>scale</code>), so colours compare groups for a gene, not genes
 with each other. The colour scale is centred on 0 and each side reaches
@@ -242,7 +242,7 @@ blocks, named on the right):</p>
 <span>    split.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
 <span>    group.cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey60"</span>, <span class="st">"#B5338A"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/dot-split-2.png" class="r-plt" alt="" width="430" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/dot-split-2.png" class="r-plt" alt="" width="389" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="bar-colours-and-sides" role="tabpanel" aria-labelledby="bar-colours-and-sides-tab">
 
@@ -262,7 +262,7 @@ beyond the labels (<code>"labels"</code>):</p>
 <span>    split.by.cols <span class="op">=</span> <span class="va">cell_cols</span>,</span>
 <span>    split.by.side <span class="op">=</span> <span class="st">"labels"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/dot-bars-3.png" class="r-plt" alt="" width="585" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/dot-bars-3.png" class="r-plt" alt="" width="544" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="scale-false" role="tabpanel" aria-labelledby="scale-false-tab">
 
@@ -270,7 +270,7 @@ beyond the labels (<code>"labels"</code>):</p>
 genes:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DotPlot_bioToolkit.html">DotPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, features <span class="op">=</span> <span class="va">isg</span>, group.by <span class="op">=</span> <span class="st">"cell_type"</span>, scale <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/dot-unscaled-4.png" class="r-plt" alt="" width="342" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/dot-unscaled-4.png" class="r-plt" alt="" width="318" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="flip" role="tabpanel" aria-labelledby="flip-tab">
 
@@ -285,7 +285,7 @@ dots:</p>
 <span>    flip <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    group.marker <span class="op">=</span> <span class="st">"strip"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/dot-flip-5.png" class="r-plt" alt="" width="504" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/dot-flip-5.png" class="r-plt" alt="" width="466" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="clustering" role="tabpanel" aria-labelledby="clustering-tab">
 
@@ -299,7 +299,7 @@ clustering:</p>
 <span>    cluster.features <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    cluster.groups <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/dot-cluster-6.png" class="r-plt" alt="" width="695" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/dot-cluster-6.png" class="r-plt" alt="" width="666" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="average" role="tabpanel" aria-labelledby="average-tab">
 
@@ -315,7 +315,7 @@ SCpubr) the mean of log values, less driven by a few very high cells.
 <span>    average <span class="op">=</span> <span class="st">"log"</span>,</span>
 <span>    pct.min <span class="op">=</span> <span class="fl">5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/dot-average-7.png" class="r-plt" alt="" width="776" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/dot-average-7.png" class="r-plt" alt="" width="747" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -325,7 +325,7 @@ SCpubr) the mean of log values, less driven by a few very high cells.
 </h2>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/VlnPlot_bioToolkit.html">VlnPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CD14"</span>, <span class="st">"LYZ"</span><span class="op">)</span>, group.by <span class="op">=</span> <span class="st">"cell_type"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/violin-8.png" class="r-plt" alt="" width="645" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/violin-8.png" class="r-plt" alt="" width="642" style="display: block; margin: auto;"></p>
 <p>Each feature has its own panel and axis; points are a random sample
 of at most <code>pt.n</code> cells per violin, rasterized.</p>
 <div class="section level3 tabset tabset-pills">
@@ -356,7 +356,7 @@ log10 axis:</p>
 <span>    flip <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    pt.n <span class="op">=</span> <span class="fl">300</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/vln-qc-9.png" class="r-plt" alt="" width="558" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/vln-qc-9.png" class="r-plt" alt="" width="540" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="split-by-and-zeros" role="tabpanel" aria-labelledby="split-by-and-zeros-tab">
 
@@ -375,7 +375,7 @@ their colours (<code>split.by.cols</code>):</p>
 <span>    cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey60"</span>, <span class="st">"#B5338A"</span><span class="op">)</span>,</span>
 <span>    split.by.cols <span class="op">=</span> <span class="va">cell_cols</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/vln-split-10.png" class="r-plt" alt="" width="638" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/vln-split-10.png" class="r-plt" alt="" width="636" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="stack" role="tabpanel" aria-labelledby="stack-tab">
 
@@ -389,7 +389,7 @@ draws no points:</p>
 <span>    stack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    pt.n <span class="op">=</span> <span class="fl">0</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/vln-stack-11.png" class="r-plt" alt="" width="378" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/vln-stack-11.png" class="r-plt" alt="" width="375" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="y-max" role="tabpanel" aria-labelledby="y-max-tab">
 
@@ -403,7 +403,7 @@ at the top of the axis; points above it are not drawn:</p>
 <span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
 <span>    y.max <span class="op">=</span> <span class="st">"q99"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/vln-ymax-12.png" class="r-plt" alt="" width="306" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/vln-ymax-12.png" class="r-plt" alt="" width="305" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -421,7 +421,7 @@ cell numbers; <code>overlap</code> sets how far they overlap.</p>
 <span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
 <span>    overlap <span class="op">=</span> <span class="fl">1.5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/ridge-13.png" class="r-plt" alt="" width="714" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/ridge-13.png" class="r-plt" alt="" width="692" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RidgePlot_bioToolkit.html">RidgePlot_bioToolkit</a></span><span class="op">(</span></span>
 <span>    <span class="va">pbmc</span>,</span>
@@ -430,7 +430,7 @@ cell numbers; <code>overlap</code> sets how far they overlap.</p>
 <span>    zeros <span class="op">=</span> <span class="st">"annotate"</span>,</span>
 <span>    cells <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">pbmc</span><span class="op">)</span><span class="op">[</span><span class="va">pbmc</span><span class="op">$</span><span class="va">condition</span> <span class="op">==</span> <span class="st">"IFN-beta"</span><span class="op">]</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/ridge-zeros-14.png" class="r-plt" alt="" width="350" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/ridge-zeros-14.png" class="r-plt" alt="" width="339" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level2">
 <h2 id="heatmap">Heatmap<a class="anchor" aria-label="anchor" href="#heatmap"></a>
@@ -447,7 +447,7 @@ drawn, not only those in <code>scale.data</code>.</p>
 <span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
 <span>    max.cells <span class="op">=</span> <span class="fl">100</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/heatmap-15.png" class="r-plt" alt="" width="992" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/heatmap-15.png" class="r-plt" alt="" width="950" style="display: block; margin: auto;"></p>
 <div class="section level3 tabset tabset-pills">
 <h3 class="tabset tabset-pills" id="variants-2">Variants<a class="anchor" aria-label="anchor" href="#variants-2"></a>
 </h3>
@@ -479,7 +479,7 @@ drawn, not only those in <code>scale.data</code>.</p>
 <span>    columns <span class="op">=</span> <span class="st">"groups"</span>,</span>
 <span>    group.cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey60"</span>, <span class="st">"#B5338A"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/heat-groups-16.png" class="r-plt" alt="" width="574" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/heat-groups-16.png" class="r-plt" alt="" width="550" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="bar-colours" role="tabpanel" aria-labelledby="bar-colours-tab">
 
@@ -495,7 +495,7 @@ drawn, not only those in <code>scale.data</code>.</p>
 <span>    feature.group.cols <span class="op">=</span> <span class="va">cell_cols</span>,</span>
 <span>    split.by.cols <span class="op">=</span> <span class="va">cell_cols</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/heat-bars-17.png" class="r-plt" alt="" width="992" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/heat-bars-17.png" class="r-plt" alt="" width="950" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="annotations" role="tabpanel" aria-labelledby="annotations-tab">
 
@@ -512,7 +512,7 @@ of each cell:</p>
 <span>    max.cells <span class="op">=</span> <span class="fl">150</span>,</span>
 <span>    group.cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey60"</span>, <span class="st">"#B5338A"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/heat-annot-18.png" class="r-plt" alt="" width="742" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/heat-annot-18.png" class="r-plt" alt="" width="730" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="label-features" role="tabpanel" aria-labelledby="label-features-tab">
 
@@ -528,7 +528,7 @@ with leader lines:</p>
 <span>    max.cells <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>    label.features <span class="op">=</span> <span class="va">first_genes</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-expression_files/figure-html/heat-label-19.png" class="r-plt" alt="" width="923" style="display: block; margin: auto;"></p>
+<p><img src="sc-expression_files/figure-html/heat-label-19.png" class="r-plt" alt="" width="896" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>

@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -143,7 +143,7 @@ any Seurat object works the same way.</p>
 <code class="sourceCode R"><span><span class="va">pbmc</span> <span class="op">&lt;-</span> <span class="fu">docs_kang</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/DimPlot_bioToolkit.html">DimPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, group.by <span class="op">=</span> <span class="st">"cell_type"</span>, label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">p</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/data-1.png" class="r-plt" alt="" width="564" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/data-1.png" class="r-plt" alt="" width="551" style="display: block; margin: auto;"></p>
 <div class="section level2">
 <h2 id="theme">Theme<a class="anchor" aria-label="anchor" href="#theme"></a>
 </h2>
@@ -178,7 +178,7 @@ plots.</p>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/theme_bioToolkit.html">theme_bioToolkit</a></span><span class="op">(</span><span class="st">"axis"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/panel_size_theme.html">panel_size_theme</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/theme-axis-2.png" class="r-plt" alt="" width="303" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/theme-axis-2.png" class="r-plt" alt="" width="294" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="grid" role="tabpanel" aria-labelledby="grid-tab">
 
@@ -189,7 +189,7 @@ whose rows and columns are categories.</p>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/theme_bioToolkit.html">theme_bioToolkit</a></span><span class="op">(</span><span class="st">"grid"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/panel_size_theme.html">panel_size_theme</a></span><span class="op">(</span><span class="fl">1.2</span>, <span class="fl">1.6</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/theme-grid-3.png" class="r-plt" alt="" width="277" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/theme-grid-3.png" class="r-plt" alt="" width="262" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="embedding" role="tabpanel" aria-labelledby="embedding-tab">
 
@@ -199,7 +199,7 @@ whose rows and columns are categories.</p>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/theme_bioToolkit.html">theme_bioToolkit</a></span><span class="op">(</span><span class="st">"embedding"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/panel_size_theme.html">panel_size_theme</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/theme-embedding-4.png" class="r-plt" alt="" width="282" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/theme-embedding-4.png" class="r-plt" alt="" width="275" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -266,7 +266,7 @@ both, so several dot plots in a figure match each other.</p>
 
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DimPlot_bioToolkit.html">DimPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, group.by <span class="op">=</span> <span class="st">"condition"</span>, panel.width <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/size-panel-5.png" class="r-plt" alt="" width="364" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/size-panel-5.png" class="r-plt" alt="" width="358" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="cell-width-4-genes" role="tabpanel" aria-labelledby="cell-width-4-genes-tab">
 
@@ -276,7 +276,7 @@ both, so several dot plots in a figure match each other.</p>
 <span>    features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CD3E"</span>, <span class="st">"MS4A1"</span>, <span class="st">"CD14"</span>, <span class="st">"FCGR3A"</span><span class="op">)</span>,</span>
 <span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/size-cell-4-6.png" class="r-plt" alt="" width="350" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/size-cell-4-6.png" class="r-plt" alt="" width="321" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="cell-width-8-genes" role="tabpanel" aria-labelledby="cell-width-8-genes-tab">
 
@@ -285,7 +285,7 @@ size.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">genes_8</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CD3E"</span>, <span class="st">"CD8A"</span>, <span class="st">"NKG7"</span>, <span class="st">"MS4A1"</span>, <span class="st">"CD14"</span>, <span class="st">"FCGR3A"</span>, <span class="st">"FCER1A"</span>, <span class="st">"PPBP"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/DotPlot_bioToolkit.html">DotPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, features <span class="op">=</span> <span class="va">genes_8</span>, group.by <span class="op">=</span> <span class="st">"cell_type"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/size-cell-8-7.png" class="r-plt" alt="" width="418" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/size-cell-8-7.png" class="r-plt" alt="" width="390" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="larger-cells" role="tabpanel" aria-labelledby="larger-cells-tab">
 
@@ -299,7 +299,7 @@ size:</p>
 <span>    cell.width <span class="op">=</span> <span class="fl">0.3</span>,</span>
 <span>    cell.height <span class="op">=</span> <span class="fl">0.25</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/size-cell-large-8.png" class="r-plt" alt="" width="407" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/size-cell-large-8.png" class="r-plt" alt="" width="378" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="any-ggplot" role="tabpanel" aria-labelledby="any-ggplot-tab">
 
@@ -310,7 +310,7 @@ behaviour:</p>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/theme_bioToolkit.html">theme_bioToolkit</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/panel_size_theme.html">panel_size_theme</a></span><span class="op">(</span>panel.width <span class="op">=</span> <span class="fl">3</span>, panel.height <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/size-own-9.png" class="r-plt" alt="" width="339" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/size-own-9.png" class="r-plt" alt="" width="337" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -325,10 +325,12 @@ the extension.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/save_plot.html">save_plot</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"cell_types.pdf"</span><span class="op">)</span>   <span class="co"># vector, for journals and editing</span></span>
 <span><span class="fu"><a href="../reference/save_plot.html">save_plot</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"cell_types.png"</span><span class="op">)</span>   <span class="co"># 1000 dpi raster</span></span>
 <span><span class="fu"><a href="../reference/save_plot.html">save_plot</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"cell_types.jpg"</span><span class="op">)</span>   <span class="co"># no transparency: saved on white</span></span></code></pre></div>
-<p>PDFs are written with cairo (<code><a href="https://rdrr.io/r/grDevices/cairo.html" class="external-link">cairo_pdf()</a></code>), which embeds
-the fonts and keeps a hyphen as a hyphen (base <code><a href="https://rdrr.io/r/grDevices/pdf.html" class="external-link">pdf()</a></code> draws
-it as a wider minus sign). Both PDF and PNG use the system’s default
-sans-serif font.</p>
+<p>PDFs and PNGs are both written with cairo, which embeds the fonts in
+PDFs and keeps a hyphen as a hyphen (base <code><a href="https://rdrr.io/r/grDevices/pdf.html" class="external-link">pdf()</a></code> draws it as
+a wider minus sign). Both use the same font, Arial by default;
+<code>family</code> picks another, e.g.
+<code>save_plot(p, "cell_types.pdf", family = "Helvetica")</code>. A
+font set in the theme (<code>base.family</code>) is kept.</p>
 <p>Backgrounds are transparent by default
 (<code>bg = "transparent"</code> in every plot), so figures can be
 placed on any slide or panel; <code>bg = "white"</code> gives an opaque
@@ -340,7 +342,7 @@ one. Patchworks keep the size of every panel:</p>
 <span>    cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey60"</span>, <span class="st">"#B5338A"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">|</span> <span class="va">p_cond</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/patchwork-10.png" class="r-plt" alt="" width="1093" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/patchwork-10.png" class="r-plt" alt="" width="1074" style="display: block; margin: auto;"></p>
 <p>Dense layers (cells, genes of a volcano) are rasterized at 1000 dpi
 once a plot has many points (<code>raster</code>,
 <code>raster.dpi</code>), so PDFs stay small while axes and text stay
@@ -373,14 +375,14 @@ ggplot2’s own legend settings.</p>
 
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/extract_legend.html">extract_legend</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/legend-asis-11.png" class="r-plt" alt="" width="160" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/legend-asis-11.png" class="r-plt" alt="" width="147" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="direction" role="tabpanel" aria-labelledby="direction-tab">
 
 <p>Keys in a row; several legends side by side:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/extract_legend.html">extract_legend</a></span><span class="op">(</span><span class="va">p_cond</span>, direction <span class="op">=</span> <span class="st">"horizontal"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/legend-horizontal-12.png" class="r-plt" alt="" width="195" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/legend-horizontal-12.png" class="r-plt" alt="" width="183" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="title-position" role="tabpanel" aria-labelledby="title-position-tab">
 
@@ -393,7 +395,7 @@ legends:</p>
 <span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/extract_legend.html">extract_legend</a></span><span class="op">(</span><span class="va">p_dot</span>, title.position <span class="op">=</span> <span class="st">"left"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/legend-title-13.png" class="r-plt" alt="" width="165" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/legend-title-13.png" class="r-plt" alt="" width="147" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="restyled" role="tabpanel" aria-labelledby="restyled-tab">
 
@@ -409,7 +411,7 @@ ggplot2 guide):</p>
 <span>    legend.key.spacing.y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">2</span>, <span class="st">"pt"</span><span class="op">)</span>,</span>
 <span>    legend.key.spacing.x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">8</span>, <span class="st">"pt"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/legend-restyled-14.png" class="r-plt" alt="" width="197" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/legend-restyled-14.png" class="r-plt" alt="" width="187" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="several-legends" role="tabpanel" aria-labelledby="several-legends-tab">
 
@@ -418,7 +420,7 @@ both, stacked or (<code>direction = "horizontal"</code>) side by
 side:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/extract_legend.html">extract_legend</a></span><span class="op">(</span><span class="va">p_dot</span>, direction <span class="op">=</span> <span class="st">"horizontal"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/legend-several-15.png" class="r-plt" alt="" width="344" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/legend-several-15.png" class="r-plt" alt="" width="316" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -469,7 +471,7 @@ and layer the values came from.</p>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_discrete.html" class="external-link">scale_y_discrete</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="va">gene_labels</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/theme_bioToolkit.html">theme_bioToolkit</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/panel_size_theme.html">panel_size_theme</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/italic-16.png" class="r-plt" alt="" width="306" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/italic-16.png" class="r-plt" alt="" width="300" style="display: block; margin: auto;"></p>
 <p>Symbols are drawn as given: human genes are upper case
 (<code>CD3E</code>), mouse and rat genes title case (<code>Cd3e</code>).
 Check the case of your object’s gene names before passing features.</p>
@@ -510,7 +512,7 @@ bar shows where 0 is.</p>
 
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DimPlot_bioToolkit.html">DimPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, group.by <span class="op">=</span> <span class="st">"cell_type"</span>, cols <span class="op">=</span> <span class="st">"okabe-ito"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/cols-name-17.png" class="r-plt" alt="" width="564" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/cols-name-17.png" class="r-plt" alt="" width="551" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="named-colours" role="tabpanel" aria-labelledby="named-colours-tab">
 
@@ -521,7 +523,7 @@ colour in every figure:</p>
 <code class="sourceCode R"><span><span class="va">cell_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bt_palette.html">bt_palette</a></span><span class="op">(</span><span class="st">"scanpy-20"</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">5</span>, <span class="fl">4</span>, <span class="fl">6</span>, <span class="fl">7</span>, <span class="fl">8</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">cell_cols</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">pbmc</span><span class="op">$</span><span class="va">cell_type</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/DimPlot_bioToolkit.html">DimPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, group.by <span class="op">=</span> <span class="st">"cell_type"</span>, cols <span class="op">=</span> <span class="va">cell_cols</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/cols-named-18.png" class="r-plt" alt="" width="564" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/cols-named-18.png" class="r-plt" alt="" width="551" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="continuous" role="tabpanel" aria-labelledby="continuous-tab">
 
@@ -531,7 +533,7 @@ colour in every figure:</p>
 <span>    features <span class="op">=</span> <span class="st">"ISG15"</span>,</span>
 <span>    cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey90"</span>, <span class="st">"#B5338A"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="figures_files/figure-html/cols-continuous-19.png" class="r-plt" alt="" width="476" style="display: block; margin: auto;"></p>
+<p><img src="figures_files/figure-html/cols-continuous-19.png" class="r-plt" alt="" width="469" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>

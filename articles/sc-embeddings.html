@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -155,7 +155,7 @@ integration over condition, UMAP; the authors’ cell type labels.</p>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DimPlot_bioToolkit.html">DimPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, group.by <span class="op">=</span> <span class="st">"cell_type"</span>, label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/dimplot-1.png" class="r-plt" alt="" width="564" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/dimplot-1.png" class="r-plt" alt="" width="551" style="display: block; margin: auto;"></p>
 <div class="section level3 tabset tabset-pills">
 <h3 class="tabset tabset-pills" id="variants">Variants<a class="anchor" aria-label="anchor" href="#variants"></a>
 </h3>
@@ -185,7 +185,7 @@ and one size.</p>
 <span>    split.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
 <span>    panel.width <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/dim-split-2.png" class="r-plt" alt="" width="762" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/dim-split-2.png" class="r-plt" alt="" width="748" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="cells-highlight" role="tabpanel" aria-labelledby="cells-highlight-tab">
 
@@ -193,7 +193,7 @@ and one size.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mono</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">pbmc</span><span class="op">)</span><span class="op">[</span><span class="va">pbmc</span><span class="op">$</span><span class="va">cell_type</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CD14 Mono"</span>, <span class="st">"FCGR3A Mono"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="fu"><a href="../reference/DimPlot_bioToolkit.html">DimPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, group.by <span class="op">=</span> <span class="st">"cell_type"</span>, cells.highlight <span class="op">=</span> <span class="va">mono</span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/dim-highlight-3.png" class="r-plt" alt="" width="556" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/dim-highlight-3.png" class="r-plt" alt="" width="550" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="cells" role="tabpanel" aria-labelledby="cells-tab">
 
@@ -206,7 +206,7 @@ the whole object, so that the subset lines up with the full plot:</p>
 <span>    cells <span class="op">=</span> <span class="va">mono</span>,</span>
 <span>    full.extent <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/dim-cells-4.png" class="r-plt" alt="" width="556" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/dim-cells-4.png" class="r-plt" alt="" width="550" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="outline" role="tabpanel" aria-labelledby="outline-tab">
 
@@ -215,7 +215,7 @@ the whole object, so that the subset lines up with the full plot:</p>
 group’s colour.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DimPlot_bioToolkit.html">DimPlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, group.by <span class="op">=</span> <span class="st">"cell_type"</span>, outline <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/dim-outline-5.png" class="r-plt" alt="" width="564" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/dim-outline-5.png" class="r-plt" alt="" width="551" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="mark" role="tabpanel" aria-labelledby="mark-tab">
 
@@ -245,7 +245,7 @@ are not outlined:</p>
 <span>    mark.by <span class="op">=</span> <span class="st">"lineage"</span>,</span>
 <span>    mark.cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey30"</span>, <span class="st">"#B5338A"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/dim-mark-6.png" class="r-plt" alt="" width="564" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/dim-mark-6.png" class="r-plt" alt="" width="551" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="legend" role="tabpanel" aria-labelledby="legend-tab">
 
@@ -277,7 +277,7 @@ reduction of the object can be plotted:</p>
 <span>    reduction <span class="op">=</span> <span class="st">"umap.unintegrated"</span>,</span>
 <span>    cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey60"</span>, <span class="st">"#B5338A"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/dim-reduction-8.png" class="r-plt" alt="" width="514" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/dim-reduction-8.png" class="r-plt" alt="" width="508" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3 tabset tabset-pills">
 <h3 class="tabset tabset-pills" id="where-the-arrows-go">Where the arrows go<a class="anchor" aria-label="anchor" href="#where-the-arrows-go"></a>
@@ -391,7 +391,7 @@ every function that draws the arrows.</p>
 <span>    ncol <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>    panel.width <span class="op">=</span> <span class="fl">2.5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/featureplot-14.png" class="r-plt" alt="" width="678" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/featureplot-14.png" class="r-plt" alt="" width="668" style="display: block; margin: auto;"></p>
 <p>Cells with no expression (0) are drawn in grey, apart from the colour
 scale, so that “not detected” is not confused with “low”
 (<code>na.cutoff = "auto"</code>). Gene names are set in italics.</p>
@@ -421,7 +421,7 @@ interferon-stimulated gene, is induced in every cell type.</p>
 <span>    split.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
 <span>    panel.width <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/feat-split-15.png" class="r-plt" alt="" width="673" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/feat-split-15.png" class="r-plt" alt="" width="666" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="module-score" role="tabpanel" aria-labelledby="module-score-tab">
 
@@ -450,7 +450,7 @@ induce the same genes):</p>
 <span>    panel.width <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>    legend.title <span class="op">=</span> <span class="st">"IFN-α\nresponse"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/feat-score-16.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/feat-score-16.png" class="r-plt" alt="" width="690" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="metadata" role="tabpanel" aria-labelledby="metadata-tab">
 
@@ -464,7 +464,7 @@ it:</p>
 <span>    max.cutoff <span class="op">=</span> <span class="st">"q99"</span>,</span>
 <span>    cols <span class="op">=</span> <span class="st">"viridis"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/feat-meta-17.png" class="r-plt" alt="" width="529" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/feat-meta-17.png" class="r-plt" alt="" width="518" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="label" role="tabpanel" aria-labelledby="label-tab">
 
@@ -477,7 +477,7 @@ the values:</p>
 <span>    label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    label.by <span class="op">=</span> <span class="st">"cell_type"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/feat-label-18.png" class="r-plt" alt="" width="471" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/feat-label-18.png" class="r-plt" alt="" width="464" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -507,7 +507,7 @@ expressed (dropout). Three ways to draw them, here for the chemokine
 <span>    cells <span class="op">=</span> <span class="va">cxcl10</span>,</span>
 <span>    panel.width <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/geom-point-19.png" class="r-plt" alt="" width="389" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/geom-point-19.png" class="r-plt" alt="" width="383" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="hex" role="tabpanel" aria-labelledby="hex-tab">
 
@@ -523,7 +523,7 @@ by the % of cells expressing it.</p>
 <span>    hex.fun <span class="op">=</span> <span class="st">"pct"</span>,</span>
 <span>    panel.width <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/geom-hex-20.png" class="r-plt" alt="" width="464" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/geom-hex-20.png" class="r-plt" alt="" width="446" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="density" role="tabpanel" aria-labelledby="density-tab">
 
@@ -539,7 +539,7 @@ density of the Nebulosa package, scaled to a maximum of 1.</p>
 <span>    geom <span class="op">=</span> <span class="st">"density"</span>,</span>
 <span>    panel.width <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/geom-density-21.png" class="r-plt" alt="" width="488" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/geom-density-21.png" class="r-plt" alt="" width="468" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -560,7 +560,7 @@ a published figure:</p>
 <span>    label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    panel.width <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/transform-22.png" class="r-plt" alt="" width="464" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/transform-22.png" class="r-plt" alt="" width="450" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level2">
 <h2 id="restyling-plots-made-by-seurat">Restyling plots made by Seurat<a class="anchor" aria-label="anchor" href="#restyling-plots-made-by-seurat"></a>
@@ -585,7 +585,7 @@ replaced, so that each plot keeps at most one set.</p>
 <span>    <span class="fu"><a href="../reference/FeaturePlot_bioToolkit.html">FeaturePlot_bioToolkit</a></span><span class="op">(</span><span class="va">pbmc</span>, features <span class="op">=</span> <span class="st">"ISG15"</span>, panel.width <span class="op">=</span> <span class="fl">2.2</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/format_sc_plots.html">format_sc_plots</a></span><span class="op">(</span><span class="va">own_plots</span>, ncol <span class="op">=</span> <span class="fl">2</span>, arrow.panels <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-embeddings_files/figure-html/format-own-24.png" class="r-plt" alt="" width="694" style="display: block; margin: auto;"></p>
+<p><img src="sc-embeddings_files/figure-html/format-own-24.png" class="r-plt" alt="" width="674" style="display: block; margin: auto;"></p>
 <p>For a single plot, <code><a href="../reference/add_dimension_arrows.html">add_dimension_arrows()</a></code> adds the
 arrows and <code><a href="../reference/manipulate_sc_plot.html">manipulate_sc_plot()</a></code> changes its axes, legend or
 grid:</p>

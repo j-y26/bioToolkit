@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -211,7 +211,7 @@ on the <code>n.top</code> = 500 most variable genes, as
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pca.html">plot_pca</a></span><span class="op">(</span><span class="va">logcpm</span>, <span class="va">samples</span>, color.by <span class="op">=</span> <span class="st">"condition"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; PCA of 500 features x 24 samples</span></span></code></pre></div>
-<p><img src="bulk-samples_files/figure-html/pca-1.png" class="r-plt" alt="" width="478" style="display: block; margin: auto;"></p>
+<p><img src="bulk-samples_files/figure-html/pca-1.png" class="r-plt" alt="" width="466" style="display: block; margin: auto;"></p>
 <p>PC1 (62% of the variance) separates <em>Salmonella</em>-infected from
 uninfected macrophages, PC2 (16%) IFN-γ-stimulated from unstimulated
 ones: the two treatments dominate the variation.</p>
@@ -241,14 +241,14 @@ samples, and sample labels:</p>
 <span>    ellipse <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    label.by <span class="op">=</span> <span class="st">"donor"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="bulk-samples_files/figure-html/pca-ellipse-2.png" class="r-plt" alt="" width="478" style="display: block; margin: auto;"></p>
+<p><img src="bulk-samples_files/figure-html/pca-ellipse-2.png" class="r-plt" alt="" width="466" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="scree" role="tabpanel" aria-labelledby="scree-tab">
 
 <p>The % variance of the first PCs, with the plotted ones in dark:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pca.html">plot_pca</a></span><span class="op">(</span><span class="va">logcpm</span>, <span class="va">samples</span>, color.by <span class="op">=</span> <span class="st">"condition"</span>, scree <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bulk-samples_files/figure-html/pca-scree-3.png" class="r-plt" alt="" width="686" style="display: block; margin: auto;"></p>
+<p><img src="bulk-samples_files/figure-html/pca-scree-3.png" class="r-plt" alt="" width="670" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="dims-and-shape-by" role="tabpanel" aria-labelledby="dims-and-shape-by-tab">
 
@@ -263,7 +263,7 @@ samples, and sample labels:</p>
 <span>    shape.by <span class="op">=</span> <span class="st">"ifng"</span>,</span>
 <span>    dims <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="bulk-samples_files/figure-html/pca-dims-4.png" class="r-plt" alt="" width="436" style="display: block; margin: auto;"></p>
+<p><img src="bulk-samples_files/figure-html/pca-dims-4.png" class="r-plt" alt="" width="430" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="continuous-colour" role="tabpanel" aria-labelledby="continuous-colour-tab">
 
@@ -272,7 +272,7 @@ interest:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">samples</span><span class="op">$</span><span class="va">CXCL10</span> <span class="op">&lt;-</span> <span class="va">logcpm</span><span class="op">[</span><span class="st">"CXCL10"</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="fu"><a href="../reference/plot_pca.html">plot_pca</a></span><span class="op">(</span><span class="va">logcpm</span>, <span class="va">samples</span>, color.by <span class="op">=</span> <span class="st">"CXCL10"</span>, cols <span class="op">=</span> <span class="st">"viridis_r"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bulk-samples_files/figure-html/pca-continuous-5.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="bulk-samples_files/figure-html/pca-continuous-5.png" class="r-plt" alt="" width="411" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -305,7 +305,7 @@ sum to 1 with the residuals and do not depend on the order of the
 covariates.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_variance_explained.html">plot_variance_explained</a></span><span class="op">(</span><span class="va">logcpm</span>, <span class="va">samples</span>, covariates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"condition"</span>, <span class="st">"donor"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bulk-samples_files/figure-html/varpart-6.png" class="r-plt" alt="" width="188" style="display: block; margin: auto;"></p>
+<p><img src="bulk-samples_files/figure-html/varpart-6.png" class="r-plt" alt="" width="184" style="display: block; margin: auto;"></p>
 <p>Condition explains about half of the variance of a typical gene
 (median across genes), donor about a quarter. The processing dates are
 shared by all samples of a donor, so they are fully confounded with
@@ -333,7 +333,7 @@ if both are given).</p>
 <span>    covariates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"condition"</span>, <span class="st">"donor"</span><span class="op">)</span>,</span>
 <span>    features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CXCL10"</span>, <span class="st">"IDO1"</span>, <span class="st">"GBP1"</span>, <span class="st">"IL1B"</span>, <span class="st">"ACTB"</span>, <span class="st">"GAPDH"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="bulk-samples_files/figure-html/varpart-features-7.png" class="r-plt" alt="" width="455" style="display: block; margin: auto;"></p>
+<p><img src="bulk-samples_files/figure-html/varpart-features-7.png" class="r-plt" alt="" width="448" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="view-pcs" role="tabpanel" aria-labelledby="view-pcs-tab">
 
@@ -349,7 +349,7 @@ donor, as each donor was harvested on its own date.</p>
 <span>    view <span class="op">=</span> <span class="st">"pcs"</span>,</span>
 <span>    n.pcs <span class="op">=</span> <span class="fl">8</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="bulk-samples_files/figure-html/varpart-pcs-8.png" class="r-plt" alt="" width="478" style="display: block; margin: auto;"></p>
+<p><img src="bulk-samples_files/figure-html/varpart-pcs-8.png" class="r-plt" alt="" width="464" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="variancepartition" role="tabpanel" aria-labelledby="variancepartition-tab">
 
@@ -366,7 +366,7 @@ is:</p>
 <span>    quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_variance_explained.html">plot_variance_explained</a></span><span class="op">(</span><span class="va">vp</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bulk-samples_files/figure-html/varpart-vp-9.png" class="r-plt" alt="" width="188" style="display: block; margin: auto;"></p>
+<p><img src="bulk-samples_files/figure-html/varpart-vp-9.png" class="r-plt" alt="" width="184" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -433,7 +433,7 @@ saves one plot per significant gene there.</p>
 <span><span class="co">#&gt; 4 1.898691e-12 3.939395e-10     pearson Positively correlated</span></span>
 <span><span class="co">#&gt; 5 2.914885e-11 2.914885e-09     pearson Positively correlated</span></span>
 <span><span class="va">corr</span><span class="op">$</span><span class="va">p_volcano</span></span></code></pre></div>
-<p><img src="bulk-samples_files/figure-html/corr-10.png" class="r-plt" alt="" width="449" style="display: block; margin: auto;"></p>
+<p><img src="bulk-samples_files/figure-html/corr-10.png" class="r-plt" alt="" width="440" style="display: block; margin: auto;"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

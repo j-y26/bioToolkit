@@ -13,14 +13,15 @@ Plots without fixed panel sizes are saved at `width` by
              `height` inches, as with ggsave().
 A legend from extract_legend is saved on its own,
              sized to fit, with a small margin.
-PDFs are written with cairo_pdf when R
-             has cairo support (capabilities(&quot;cairo&quot;)): fonts are
-             embedded, Unicode text is drawn, and a hyphen stays a hyphen
-             (base pdf() draws &quot;-&quot; with the wider minus glyph). Fonts
-             are the system's: the default &quot;sans&quot; family is resolved by
-             cairo (Helvetica or its metric-compatible stand-in) and by
-             ragg for PNGs (e.g. Arial). Without cairo, or when `device` is
-             given, ggsave()'s device is used."><meta property="og:description" content="Saves a ggplot or patchwork to PDF (vector), PNG or any format
+Files are written with cairo when R has it
+             (capabilities(&quot;cairo&quot;)): cairo_pdf
+             for PDFs, and png (or jpeg(),
+             tiff(), bmp()) with type = &quot;cairo&quot; for
+             raster files. Fonts are embedded, Unicode text is drawn, a
+             hyphen stays a hyphen (base pdf() draws &quot;-&quot; with the
+             wider minus glyph), and PDF and PNG share the same font. Without
+             cairo, for other formats (e.g. SVG), or when `device` is given,
+             ggsave()'s device is used and `family` is ignored."><meta property="og:description" content="Saves a ggplot or patchwork to PDF (vector), PNG or any format
              ggsave supports.
 For plots whose panels have a fixed size (all plots of this
              package, or any ggplot with panel_size_theme),
@@ -34,14 +35,15 @@ Plots without fixed panel sizes are saved at `width` by
              `height` inches, as with ggsave().
 A legend from extract_legend is saved on its own,
              sized to fit, with a small margin.
-PDFs are written with cairo_pdf when R
-             has cairo support (capabilities(&quot;cairo&quot;)): fonts are
-             embedded, Unicode text is drawn, and a hyphen stays a hyphen
-             (base pdf() draws &quot;-&quot; with the wider minus glyph). Fonts
-             are the system's: the default &quot;sans&quot; family is resolved by
-             cairo (Helvetica or its metric-compatible stand-in) and by
-             ragg for PNGs (e.g. Arial). Without cairo, or when `device` is
-             given, ggsave()'s device is used."></head><body>
+Files are written with cairo when R has it
+             (capabilities(&quot;cairo&quot;)): cairo_pdf
+             for PDFs, and png (or jpeg(),
+             tiff(), bmp()) with type = &quot;cairo&quot; for
+             raster files. Fonts are embedded, Unicode text is drawn, a
+             hyphen stays a hyphen (base pdf() draws &quot;-&quot; with the
+             wider minus glyph), and PDF and PNG share the same font. Without
+             cairo, for other formats (e.g. SVG), or when `device` is given,
+             ggsave()'s device is used and `family` is ignored."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -49,7 +51,7 @@ PDFs are written with cairo_pdf when R
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,14 +117,15 @@ PDFs are written with cairo_pdf when R
              `height` inches, as with <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave()</a></code>.</p>
 <p>A legend from <code><a href="extract_legend.html">extract_legend</a></code> is saved on its own,
              sized to fit, with a small margin.</p>
-<p>PDFs are written with <code><a href="https://rdrr.io/r/grDevices/cairo.html" class="external-link">cairo_pdf</a></code> when R
-             has cairo support (<code>capabilities("cairo")</code>): fonts are
-             embedded, Unicode text is drawn, and a hyphen stays a hyphen
-             (base <code><a href="https://rdrr.io/r/grDevices/pdf.html" class="external-link">pdf()</a></code> draws "-" with the wider minus glyph). Fonts
-             are the system's: the default "sans" family is resolved by
-             cairo (Helvetica or its metric-compatible stand-in) and by
-             ragg for PNGs (e.g. Arial). Without cairo, or when `device` is
-             given, <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave()</a></code>'s device is used.</p>
+<p>Files are written with cairo when R has it
+             (<code>capabilities("cairo")</code>): <code><a href="https://rdrr.io/r/grDevices/cairo.html" class="external-link">cairo_pdf</a></code>
+             for PDFs, and <code><a href="https://rdrr.io/r/grDevices/png.html" class="external-link">png</a></code> (or <code><a href="https://rdrr.io/r/grDevices/png.html" class="external-link">jpeg()</a></code>,
+             <code><a href="https://rdrr.io/r/grDevices/png.html" class="external-link">tiff()</a></code>, <code><a href="https://rdrr.io/r/grDevices/png.html" class="external-link">bmp()</a></code>) with <code>type = "cairo"</code> for
+             raster files. Fonts are embedded, Unicode text is drawn, a
+             hyphen stays a hyphen (base <code><a href="https://rdrr.io/r/grDevices/pdf.html" class="external-link">pdf()</a></code> draws "-" with the
+             wider minus glyph), and PDF and PNG share the same font. Without
+             cairo, for other formats (e.g. SVG), or when `device` is given,
+             <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave()</a></code>'s device is used and `family` is ignored.</p>
     </div>
 
     <div class="section level2">
@@ -134,6 +137,7 @@ PDFs are written with cairo_pdf when R
 <span>  height <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  dpi <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  bg <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  family <span class="op">=</span> <span class="st">"Arial"</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -166,6 +170,15 @@ is NULL</p></dd>
 <dd><p>Background colour. If NULL (default), taken from the plot. A
 transparent background is kept in PDF, PNG, TIFF and SVG; formats
 without transparency (JPEG, BMP) get a white one instead</p></dd>
+
+
+<dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
+<dd><p>Font family of all text that has no font of its own (the
+default of ggplot2 and of <code><a href="theme_bioToolkit.html">theme_bioToolkit()</a></code>; a
+`base.family` set in the theme is kept). Default is "Arial".
+If the font is not installed, the system substitutes one
+(e.g. Liberation Sans, which has Arial's widths, or the wider
+DejaVu Sans). NULL keeps the devices' default "sans"</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

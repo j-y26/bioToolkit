@@ -21,16 +21,19 @@ A legend from
 [`extract_legend`](https://j-y26.github.io/bioToolkit/reference/extract_legend.md)
 is saved on its own, sized to fit, with a small margin.
 
-PDFs are written with
-[`cairo_pdf`](https://rdrr.io/r/grDevices/cairo.html) when R has cairo
-support (`capabilities("cairo")`): fonts are embedded, Unicode text is
-drawn, and a hyphen stays a hyphen (base
-[`pdf()`](https://rdrr.io/r/grDevices/pdf.html) draws "-" with the wider
-minus glyph). Fonts are the system's: the default "sans" family is
-resolved by cairo (Helvetica or its metric-compatible stand-in) and by
-ragg for PNGs (e.g. Arial). Without cairo, or when \`device\` is given,
+Files are written with cairo when R has it (`capabilities("cairo")`):
+[`cairo_pdf`](https://rdrr.io/r/grDevices/cairo.html) for PDFs, and
+[`png`](https://rdrr.io/r/grDevices/png.html) (or
+[`jpeg()`](https://rdrr.io/r/grDevices/png.html),
+[`tiff()`](https://rdrr.io/r/grDevices/png.html),
+[`bmp()`](https://rdrr.io/r/grDevices/png.html)) with `type = "cairo"`
+for raster files. Fonts are embedded, Unicode text is drawn, a hyphen
+stays a hyphen (base [`pdf()`](https://rdrr.io/r/grDevices/pdf.html)
+draws "-" with the wider minus glyph), and PDF and PNG share the same
+font. Without cairo, for other formats (e.g. SVG), or when \`device\` is
+given,
 [`ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html)'s
-device is used.
+device is used and \`family\` is ignored.
 
 ## Usage
 
@@ -42,6 +45,7 @@ save_plot(
   height = NULL,
   dpi = 1000,
   bg = NULL,
+  family = "Arial",
   ...
 )
 ```
@@ -72,6 +76,16 @@ save_plot(
   Background colour. If NULL (default), taken from the plot. A
   transparent background is kept in PDF, PNG, TIFF and SVG; formats
   without transparency (JPEG, BMP) get a white one instead
+
+- family:
+
+  Font family of all text that has no font of its own (the default of
+  ggplot2 and of
+  [`theme_bioToolkit()`](https://j-y26.github.io/bioToolkit/reference/theme_bioToolkit.md);
+  a \`base.family\` set in the theme is kept). Default is "Arial". If
+  the font is not installed, the system substitutes one (e.g. Liberation
+  Sans, which has Arial's widths, or the wider DejaVu Sans). NULL keeps
+  the devices' default "sans"
 
 - ...:
 

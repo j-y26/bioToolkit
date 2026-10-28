@@ -1,5 +1,21 @@
 # Changelog
 
+## bioToolkit 1.2.1
+
+### Saving
+
+- [`save_plot()`](https://j-y26.github.io/bioToolkit/reference/save_plot.md)
+  has a new `family` argument, default `"Arial"`: the font of all text
+  without a font of its own (a `base.family` set in the theme is kept).
+  PDFs used cairo’s “sans” (Helvetica or a stand-in such as Nimbus Sans)
+  while PNGs used the system’s sans-serif (Arial on Windows / Linux,
+  Helvetica on macOS), so the two formats could differ. `family = NULL`
+  keeps the devices’ defaults.
+- PNG, JPEG, TIFF and BMP files are now written with cairo
+  (`png(type = "cairo")`, …) instead of ragg, so that PDF and raster
+  files share one font, set with `family`. `ragg` is no longer in
+  Suggests.
+
 ## bioToolkit 1.2.0
 
 ### DE plots

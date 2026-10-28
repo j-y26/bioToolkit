@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -207,7 +207,7 @@ condition.</p>
 <span>    x <span class="op">=</span> <span class="st">"Control"</span>,</span>
 <span>    y <span class="op">=</span> <span class="st">"IFN-beta"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/composition-1.png" class="r-plt" alt="" width="306" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/composition-1.png" class="r-plt" alt="" width="302" style="display: block; margin: auto;"></p>
 <p>Six hours of IFN-β leave the cell type composition almost unchanged:
 all cell types lie on the line. The response is a change of state, seen
 in the expression of interferon-stimulated genes (see <a href="sc-expression.html">Expression across groups</a>).</p>
@@ -241,7 +241,7 @@ condition).</p>
 <span>    split.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
 <span>    sample.by <span class="op">=</span> <span class="st">"donor"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/comp-samples-2.png" class="r-plt" alt="" width="306" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/comp-samples-2.png" class="r-plt" alt="" width="302" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_composition_scatter.html">plot_composition_scatter</a></span><span class="op">(</span></span>
 <span>    <span class="va">pbmc</span>,</span>
@@ -251,7 +251,7 @@ condition).</p>
 <span>    error <span class="op">=</span> <span class="st">"ci95"</span>,</span>
 <span>    log <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/comp-ci-3.png" class="r-plt" alt="" width="306" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/comp-ci-3.png" class="r-plt" alt="" width="302" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="log-and-fold-lines" role="tabpanel" aria-labelledby="log-and-fold-lines-tab">
 
@@ -265,7 +265,7 @@ and y = x / 2:</p>
 <span>    log <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    fold.lines <span class="op">=</span> <span class="fl">2</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/comp-log-4.png" class="r-plt" alt="" width="306" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/comp-log-4.png" class="r-plt" alt="" width="302" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="value-count" role="tabpanel" aria-labelledby="value-count-tab">
 
@@ -278,7 +278,7 @@ and y = x / 2:</p>
 <span>    value <span class="op">=</span> <span class="st">"count"</span>,</span>
 <span>    log <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/comp-count-5.png" class="r-plt" alt="" width="302" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/comp-count-5.png" class="r-plt" alt="" width="298" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="facet-by" role="tabpanel" aria-labelledby="facet-by-tab">
 
@@ -298,7 +298,7 @@ within each, e.g. within lymphoid and myeloid cells:</p>
 <span>    panel.width <span class="op">=</span> <span class="fl">2.2</span>,</span>
 <span>    cells <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">pbmc</span><span class="op">)</span><span class="op">[</span><span class="va">pbmc</span><span class="op">$</span><span class="va">cell_type</span> <span class="op">!=</span> <span class="st">"Megakaryocyte"</span><span class="op">]</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/comp-facet-6.png" class="r-plt" alt="" width="529" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/comp-facet-6.png" class="r-plt" alt="" width="522" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -327,7 +327,7 @@ types:</p>
 <span>    label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    label.by <span class="op">=</span> <span class="st">"cell_type"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/density-7.png" class="r-plt" alt="" width="579" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/density-7.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
 <p>On the UMAP <strong>before integration</strong>, IFN-β-stimulated
 cells of every type sit apart from their controls, and the map shows
 that response as a separation:</p>
@@ -341,7 +341,7 @@ that response as a separation:</p>
 <span>    label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    label.by <span class="op">=</span> <span class="st">"cell_type"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/density-raw-8.png" class="r-plt" alt="" width="579" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/density-raw-8.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
 <div class="section level3 tabset tabset-pills">
 <h3 class="tabset tabset-pills" id="variants-1">Variants<a class="anchor" aria-label="anchor" href="#variants-1"></a>
 </h3>
@@ -366,7 +366,7 @@ changes, which also show sparse regions.</p>
 <span>    sample.by <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    measure <span class="op">=</span> <span class="st">"log2ratio"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/density-ratio-9.png" class="r-plt" alt="" width="574" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/density-ratio-9.png" class="r-plt" alt="" width="548" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="draw-raster-and-contour" role="tabpanel" aria-labelledby="draw-raster-and-contour-tab">
 
@@ -381,7 +381,7 @@ of the density of all cells:</p>
 <span>    draw <span class="op">=</span> <span class="st">"raster"</span>,</span>
 <span>    contour <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/density-raster-10.png" class="r-plt" alt="" width="579" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/density-raster-10.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="density-adjust" role="tabpanel" aria-labelledby="density-adjust-tab">
 
@@ -395,7 +395,7 @@ smooths more.</p>
 <span>    sample.by <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    density.adjust <span class="op">=</span> <span class="fl">0.5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/density-adjust-11.png" class="r-plt" alt="" width="579" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/density-adjust-11.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>

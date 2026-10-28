@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -247,18 +247,18 @@ result is one panel, with its colour bar and size legend side by
 side:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_enrichment_dots.html">plot_enrichment_dots</a></span><span class="op">(</span><span class="va">ora</span><span class="op">[[</span><span class="st">"Up in IFN-γ"</span><span class="op">]</span><span class="op">]</span>, n <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/dots-one-1.png" class="r-plt" alt="" width="532" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/dots-one-1.png" class="r-plt" alt="" width="504" style="display: block; margin: auto;"></p>
 <p>A GSEA result alone, on the NES (sizes: leading-edge genes):</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_enrichment_dots.html">plot_enrichment_dots</a></span><span class="op">(</span><span class="va">gsea</span><span class="op">[[</span><span class="st">"CD14 Mono"</span><span class="op">]</span><span class="op">]</span>, x <span class="op">=</span> <span class="st">"nes"</span>, n <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/dots-one-gsea-2.png" class="r-plt" alt="" width="532" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/dots-one-gsea-2.png" class="r-plt" alt="" width="504" style="display: block; margin: auto;"></p>
 <p>A named list gives one panel per result, each in its own palette. All
 strips have the same thickness, their names centred, and the legends sit
 in two columns: the colour bars of the panels (top panel first), then
 the size legend (one, since the panels share their limits):</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_enrichment_dots.html">plot_enrichment_dots</a></span><span class="op">(</span><span class="va">ora</span>, n <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/dots-3.png" class="r-plt" alt="" width="576" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/dots-3.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
 <div class="section level3 tabset tabset-pills">
 <h3 class="tabset tabset-pills" id="variants">Variants<a class="anchor" aria-label="anchor" href="#variants"></a>
 </h3>
@@ -284,7 +284,7 @@ the size legend (one, since the panels share their limits):</p>
 <span>    n <span class="op">=</span> <span class="fl">6</span>,</span>
 <span>    nrow <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/dots-nes-4.png" class="r-plt" alt="" width="925" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/dots-nes-4.png" class="r-plt" alt="" width="883" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="order-by-and-term-replace" role="tabpanel" aria-labelledby="order-by-and-term-replace-tab">
 
@@ -296,7 +296,7 @@ the size legend (one, since the panels share their limits):</p>
 <span>    order.by <span class="op">=</span> <span class="st">"padj"</span>,</span>
 <span>    term.replace <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Interferon"</span> <span class="op">=</span> <span class="st">"IFN"</span>, <span class="st">" response"</span> <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/dots-replace-5.png" class="r-plt" alt="" width="555" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/dots-replace-5.png" class="r-plt" alt="" width="542" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="shared-scale" role="tabpanel" aria-labelledby="shared-scale-tab">
 
@@ -305,7 +305,7 @@ size range, when the results differ in strength; each panel then has its
 own size legend:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_enrichment_dots.html">plot_enrichment_dots</a></span><span class="op">(</span><span class="va">ora</span>, n <span class="op">=</span> <span class="fl">6</span>, shared.scale <span class="op">=</span> <span class="cn">FALSE</span>, cols <span class="op">=</span> <span class="st">"seq-blue"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/dots-scale-6.png" class="r-plt" alt="" width="576" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/dots-scale-6.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="legend-layout-stacked" role="tabpanel" aria-labelledby="legend-layout-stacked-tab">
 
@@ -313,7 +313,7 @@ own size legend:</p>
 turn:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_enrichment_dots.html">plot_enrichment_dots</a></span><span class="op">(</span><span class="va">ora</span>, n <span class="op">=</span> <span class="fl">6</span>, legend.layout <span class="op">=</span> <span class="st">"stacked"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/dots-stacked-7.png" class="r-plt" alt="" width="515" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/dots-stacked-7.png" class="r-plt" alt="" width="489" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -346,7 +346,7 @@ names sit on the opposite side of 0 from their bars:</p>
 <span>    n.down <span class="op">=</span> <span class="fl">6</span>,</span>
 <span>    fill <span class="op">=</span> <span class="st">"padj"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/bars-padj-9.png" class="r-plt" alt="" width="482" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/bars-padj-9.png" class="r-plt" alt="" width="478" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="show-ns" role="tabpanel" aria-labelledby="show-ns-tab">
 
@@ -360,7 +360,7 @@ significant ones, faded:</p>
 <span>    n.down <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>    show.ns <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/bars-ns-10.png" class="r-plt" alt="" width="528" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/bars-ns-10.png" class="r-plt" alt="" width="515" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -374,7 +374,7 @@ results faded; by default the top <code>n</code> sets of each
 comparison, clustered:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_enrichment_grid.html">plot_enrichment_grid</a></span><span class="op">(</span><span class="va">gsea</span>, n <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/grid-11.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/grid-11.png" class="r-plt" alt="" width="386" style="display: block; margin: auto;"></p>
 <div class="section level3 tabset tabset-pills">
 <h3 class="tabset tabset-pills" id="variants-2">Variants<a class="anchor" aria-label="anchor" href="#variants-2"></a>
 </h3>
@@ -397,7 +397,7 @@ comparison, clustered:</p>
 <span>    Proliferation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"E2F targets"</span>, <span class="st">"G2M checkpoint"</span>, <span class="st">"MYC targets v1"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_enrichment_grid.html">plot_enrichment_grid</a></span><span class="op">(</span><span class="va">gsea</span>, terms <span class="op">=</span> <span class="va">chosen</span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/grid-terms-12.png" class="r-plt" alt="" width="521" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/grid-terms-12.png" class="r-plt" alt="" width="472" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="ora" role="tabpanel" aria-labelledby="ora-tab">
 
@@ -405,13 +405,13 @@ comparison, clustered:</p>
 the number of genes:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_enrichment_grid.html">plot_enrichment_grid</a></span><span class="op">(</span><span class="va">ora</span>, n <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/grid-ora-13.png" class="r-plt" alt="" width="350" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/grid-ora-13.png" class="r-plt" alt="" width="316" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="significance-and-flip" role="tabpanel" aria-labelledby="significance-and-flip-tab">
 
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_enrichment_grid.html">plot_enrichment_grid</a></span><span class="op">(</span><span class="va">gsea</span>, n <span class="op">=</span> <span class="fl">3</span>, significance <span class="op">=</span> <span class="st">"hide"</span>, flip <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/grid-flip-14.png" class="r-plt" alt="" width="280" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/grid-flip-14.png" class="r-plt" alt="" width="272" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -434,7 +434,7 @@ with an arrow to their ticks:</p>
 <span>    gene.sets <span class="op">=</span> <span class="va">hallmark_list</span>,</span>
 <span>    metric.title <span class="op">=</span> <span class="st">"Signed\n-log10 p"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/rank-15.png" class="r-plt" alt="" width="444" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/rank-15.png" class="r-plt" alt="" width="440" style="display: block; margin: auto;"></p>
 <p>The band under the gene positions is the ranking metric along the
 list, as in the GSEA desktop plot: magenta where genes rank up (metric
 above 0), white around 0, blue where they rank down. It is the same for
@@ -471,7 +471,7 @@ most down-ranked gene:</p>
 <span>    gene.sets <span class="op">=</span> <span class="va">hallmark_list</span>,</span>
 <span>    metric.title <span class="op">=</span> <span class="st">"Signed\n-log10 p"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/rank-negative-16.png" class="r-plt" alt="" width="358" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/rank-negative-16.png" class="r-plt" alt="" width="356" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="chosen-genes" role="tabpanel" aria-labelledby="chosen-genes-tab">
 
@@ -490,7 +490,7 @@ most down-ranked gene:</p>
 <span>    band <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: `label.features` not in the gene set: IFIT1</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/rank-selected-17.png" class="r-plt" alt="" width="444" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/rank-selected-17.png" class="r-plt" alt="" width="440" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="clusterprofiler" role="tabpanel" aria-labelledby="clusterprofiler-tab">
 
@@ -512,7 +512,7 @@ named by its cleaned name:</p>
 <span>    comparison <span class="op">=</span> <span class="st">"B"</span>,</span>
 <span>    metric.title <span class="op">=</span> <span class="st">"Signed\n-log10 p"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="enrichment_files/figure-html/rank-cp-18.png" class="r-plt" alt="" width="452" style="display: block; margin: auto;"></p>
+<p><img src="enrichment_files/figure-html/rank-cp-18.png" class="r-plt" alt="" width="449" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>

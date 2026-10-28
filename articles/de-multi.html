@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -161,7 +161,7 @@ cutoffs (±<code>logfc.cutoff</code>, default 1) as dashed lines; counts
 of up- and down-regulated genes above and below.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_multi_volcano.html">plot_multi_volcano</a></span><span class="op">(</span><span class="va">de</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-1.png" class="r-plt" alt="" width="514" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-1.png" class="r-plt" alt="" width="508" style="display: block; margin: auto;"></p>
 <p>CD14 monocytes respond with the most genes; the top genes of every
 cell type include interferon-stimulated genes. Colour is the −log10
 adjusted p-value (warm for up, cool for down), saturating at the 95th
@@ -202,7 +202,7 @@ comparison names).</p>
 <span>    <span class="st">"FCGR3A Mono"</span> <span class="op">=</span> <span class="st">"Myeloid"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_multi_volcano.html">plot_multi_volcano</a></span><span class="op">(</span><span class="va">de</span>, groups <span class="op">=</span> <span class="va">lineage</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-groups-2.png" class="r-plt" alt="" width="524" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-groups-2.png" class="r-plt" alt="" width="517" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="flip" role="tabpanel" aria-labelledby="flip-tab">
 
@@ -218,7 +218,7 @@ comparison (e.g. the cell type colours of the embedding plots):</p>
 <span>    comparison.cols <span class="op">=</span> <span class="st">"okabe-ito"</span>,</span>
 <span>    label.n <span class="op">=</span> <span class="fl">2</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-flip-3.png" class="r-plt" alt="" width="632" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-flip-3.png" class="r-plt" alt="" width="616" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="layout" role="tabpanel" aria-labelledby="layout-tab">
 
@@ -230,7 +230,7 @@ the default layout; <code>"jitter"</code> spreads all genes
 uniformly.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_multi_volcano.html">plot_multi_volcano</a></span><span class="op">(</span><span class="va">de</span>, layout <span class="op">=</span> <span class="st">"pvalue"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-layout-4.png" class="r-plt" alt="" width="514" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-layout-4.png" class="r-plt" alt="" width="508" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="color-by" role="tabpanel" aria-labelledby="color-by-tab">
 
@@ -239,7 +239,7 @@ they are DE in: responses shared by all cell types versus specific to
 one. <code>"direction"</code> uses one colour per direction.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_multi_volcano.html">plot_multi_volcano</a></span><span class="op">(</span><span class="va">de</span>, color.by <span class="op">=</span> <span class="st">"sharing"</span>, label <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-sharing-5.png" class="r-plt" alt="" width="527" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-sharing-5.png" class="r-plt" alt="" width="514" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="order" role="tabpanel" aria-labelledby="order-tab">
 
@@ -248,7 +248,7 @@ first; <code>"cluster"</code> groups comparisons with similar
 fold-change profiles.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_multi_volcano.html">plot_multi_volcano</a></span><span class="op">(</span><span class="va">de</span>, order <span class="op">=</span> <span class="st">"cluster"</span>, label.n <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-order-6.png" class="r-plt" alt="" width="510" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-order-6.png" class="r-plt" alt="" width="504" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="cutoffs-and-show-ns" role="tabpanel" aria-labelledby="cutoffs-and-show-ns-tab">
 
@@ -261,7 +261,7 @@ fold-change profiles.</p>
 <span>    logfc.cutoff <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>    label <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/multi-ns-7.png" class="r-plt" alt="" width="514" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/multi-ns-7.png" class="r-plt" alt="" width="508" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -277,7 +277,7 @@ or <code>"none"</code>). Without <code>features</code>, the top
 <code>n</code> genes of each comparison:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_de_dots.html">plot_de_dots</a></span><span class="op">(</span><span class="va">de</span>, n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/dots-8.png" class="r-plt" alt="" width="495" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/dots-8.png" class="r-plt" alt="" width="478" style="display: block; margin: auto;"></p>
 <p>The colour scale is centred on 0 and runs from the most negative to
 the most positive fold change of the significant dots, each side to its
 own full colour; give <code>logfc.limits</code> to share one scale
@@ -306,7 +306,7 @@ between figures.</p>
 <span>    <span class="st">"Chemokines"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CXCL10"</span>, <span class="st">"CCL2"</span>, <span class="st">"CCL8"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_de_dots.html">plot_de_dots</a></span><span class="op">(</span><span class="va">de</span>, features <span class="op">=</span> <span class="va">genes</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/dots-features-9.png" class="r-plt" alt="" width="438" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/dots-features-9.png" class="r-plt" alt="" width="421" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="significance" role="tabpanel" aria-labelledby="significance-tab">
 
@@ -314,7 +314,7 @@ between figures.</p>
 <code>"hide"</code> leaves them out:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_de_dots.html">plot_de_dots</a></span><span class="op">(</span><span class="va">de</span>, features <span class="op">=</span> <span class="va">genes</span>, significance <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/dots-grey-10.png" class="r-plt" alt="" width="434" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/dots-grey-10.png" class="r-plt" alt="" width="417" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="clustering-and-flip" role="tabpanel" aria-labelledby="clustering-and-flip-tab">
 
@@ -329,7 +329,7 @@ genes as rows, comparisons as columns marked by colour strips:</p>
 <span>    flip <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    comparison.marker <span class="op">=</span> <span class="st">"strip"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/dots-cluster-11.png" class="r-plt" alt="" width="317" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/dots-cluster-11.png" class="r-plt" alt="" width="304" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="groups-1" role="tabpanel" aria-labelledby="groups-1-tab">
 
@@ -343,7 +343,7 @@ genes as rows, comparisons as columns marked by colour strips:</p>
 <span>    groups.cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Lymphoid <span class="op">=</span> <span class="st">"#2C5DA8"</span>, Myeloid <span class="op">=</span> <span class="st">"#B5338A"</span><span class="op">)</span>,</span>
 <span>    groups.side <span class="op">=</span> <span class="st">"labels"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/dots-groups-12.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/dots-groups-12.png" class="r-plt" alt="" width="478" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -365,7 +365,7 @@ monocytes and B cells respond to IFN-β with the same genes?</p>
 <span>    name.y <span class="op">=</span> <span class="st">"B"</span>,</span>
 <span>    label.n <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-13.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-13.png" class="r-plt" alt="" width="485" style="display: block; margin: auto;"></p>
 <p>Most genes changed in both change in the same direction (top-right
 and bottom-left), and B cells respond to fewer genes, more weakly (the
 cloud lies below the diagonal on the right). “Consistent” needs
@@ -406,7 +406,7 @@ neither.</p>
 <span>    color.by <span class="op">=</span> <span class="st">"direction"</span>,</span>
 <span>    label <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-color-by-14.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-color-by-14.png" class="r-plt" alt="" width="485" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_fc_quadrant.html">plot_fc_quadrant</a></span><span class="op">(</span></span>
 <span>    <span class="va">de</span><span class="op">[[</span><span class="st">"CD14 Mono"</span><span class="op">]</span><span class="op">]</span>,</span>
@@ -416,7 +416,7 @@ neither.</p>
 <span>    color.by <span class="op">=</span> <span class="st">"significance"</span>,</span>
 <span>    label <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-color-by-15.png" class="r-plt" alt="" width="516" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-color-by-15.png" class="r-plt" alt="" width="498" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="trend" role="tabpanel" aria-labelledby="trend-tab">
 
@@ -440,7 +440,7 @@ the two responses.</p>
 <span>    trend.interval <span class="op">=</span> <span class="st">"prediction"</span>,</span>
 <span>    label <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-trend-16.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-trend-16.png" class="r-plt" alt="" width="485" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="two-treatments" role="tabpanel" aria-labelledby="two-treatments-tab">
 
@@ -469,7 +469,7 @@ thin dashed lines:</p>
 <span>    logfc.cutoff.x <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>    logfc.cutoff.y <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-mac-17.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-mac-17.png" class="r-plt" alt="" width="485" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="categories-and-cor-on" role="tabpanel" aria-labelledby="categories-and-cor-on-tab">
 
@@ -487,7 +487,7 @@ comparison:</p>
 <span>    cor.on <span class="op">=</span> <span class="st">"significant"</span>,</span>
 <span>    correlation <span class="op">=</span> <span class="st">"pearson"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-both-18.png" class="r-plt" alt="" width="516" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-both-18.png" class="r-plt" alt="" width="498" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="label-selected" role="tabpanel" aria-labelledby="label-selected-tab">
 
@@ -500,7 +500,7 @@ comparison:</p>
 <span>    label <span class="op">=</span> <span class="st">"selected"</span>,</span>
 <span>    label.features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ISG15"</span>, <span class="st">"CXCL10"</span>, <span class="st">"IFIT1"</span>, <span class="st">"MX1"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-selected-19.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-selected-19.png" class="r-plt" alt="" width="485" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="peaks-to-genes-map-y" role="tabpanel" aria-labelledby="peaks-to-genes-map-y-tab">
 
@@ -537,7 +537,7 @@ to show the input format:</p>
 <span>    name.y <span class="op">=</span> <span class="st">"ATAC (simulated)"</span>,</span>
 <span>    map.y <span class="op">=</span> <span class="va">peak_to_gene</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="de-multi_files/figure-html/quadrant-peaks-20.png" class="r-plt" alt="" width="502" style="display: block; margin: auto;"></p>
+<p><img src="de-multi_files/figure-html/quadrant-peaks-20.png" class="r-plt" alt="" width="485" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
