@@ -1,3 +1,28 @@
+# bioToolkit 1.3.0
+
+## Ranked values
+
+* New `plot_rank()`: any rankable metric along its rank (x) against a value
+  (y, by default the metric itself), for gene rankings, NES, specificity
+  scores (e.g. SCENIC's regulon specificity score) or reporter metabolite
+  z-scores. Generalizes a reporter-metabolite rank plot to any table:
+  * Ties of `rank.by` get distinct positions, broken by `value` then by
+    name (never by row order); the source data hold the position (`rank`)
+    and the competition rank to report (`rank_tied`). A message names
+    features tied with a labelled one at the `label.n` cutoff.
+  * `label.side = "auto"` names both ends of a signed metric and the first
+    ranks otherwise; `"first"`, `"last"`, `"both"`; `label = "selected"`
+    with `label.features`.
+  * `split.by` ranks within each level, one panel each (free scales).
+  * `color.by`: numeric (reversed magma by default, `color.limits` to share
+    one scale between figures) or discrete; without it, labelled points in
+    red on light grey.
+  * Small by default (2.5 x 1.8 in panels), with 7 pt labels placed next to
+    their points, clear of each other, of the points and of the leader
+    lines, made smaller (to 5 pt) when they do not fit. The layout is
+    computed by the package (deterministic, no ggrepel).
+* New guide "Ranked values" on the website.
+
 # bioToolkit 1.2.1
 
 ## Saving

@@ -91,6 +91,15 @@ Over-representation and GSEA results from clusterProfiler, fgsea or GSEA.
 `plot_enrichment_dots()` `plot_enrichment_grid()` `plot_gsea_rank()`
 :::
 
+::: {.bt-card}
+[**Ranked values**](articles/rank-plots.html)
+
+Any ranked metric along its rank, the top features named: fold changes, NES,
+specificity scores, reporter metabolites.
+
+`plot_rank()`
+:::
+
 :::
 
 All functions, grouped the same way, are listed in the

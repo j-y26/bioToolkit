@@ -62,6 +62,10 @@ navbar:
       - text: Gene sets
       - text: Gene-set enrichment
         href: articles/enrichment.html
+      - text: -------
+      - text: Rankings
+      - text: Ranked values
+        href: articles/rank-plots.html
     reference:
       text: Functions
       href: reference/index.html
@@ -92,6 +96,9 @@ articles:
 - title: Gene sets
   contents:
   - articles/enrichment
+- title: Rankings
+  contents:
+  - articles/rank-plots
 
 reference:
 - title: Figure essentials
@@ -202,3 +209,11 @@ reference:
   - plot_enrichment_grid
   - plot_gsea_rank
   - format_gene_sets
+
+- title: Ranked values
+  desc: >
+    Any rankable metric along its rank, with the ends of the ranking named:
+    gene rankings, NES, specificity scores, reporter metabolites.
+    Guide: [Ranked values](../articles/rank-plots.html).
+  contents:
+  - plot_rank
