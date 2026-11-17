@@ -1,5 +1,31 @@
 # Changelog
 
+## bioToolkit 1.3.1
+
+### Enrichment plots
+
+- New `padj.scale` in
+  [`plot_enrichment_dots()`](https://j-y26.github.io/bioToolkit/reference/plot_enrichment_dots.md),
+  [`plot_enrichment_grid()`](https://j-y26.github.io/bioToolkit/reference/plot_enrichment_grid.md)
+  and
+  [`plot_enrichment_bars()`](https://j-y26.github.io/bioToolkit/reference/plot_enrichment_bars.md):
+  how adjusted p-values are coloured.
+  - `"log"` (default): colours on the -log10 scale as before, but the
+    colour bar is labelled in adjusted p-values (`0.01`, `10^-5`);
+    decimals when every break is at least 0.001, powers of ten otherwise
+    (never mixed). Legend title “padj”.
+  - `"-log10"`: the former legend, in -log10 padj.
+  - `"linear"`: colour linear in the adjusted p-value (sets below about
+    0.001 then look alike; for results of one order of magnitude).
+  - The smallest adjusted p-value is always the darkest. In the grid, a
+    `size = "padj"` legend is labelled in adjusted p-values too.
+- [`plot_enrichment_dots()`](https://j-y26.github.io/bioToolkit/reference/plot_enrichment_dots.md)
+  draws a single result (a table, or a list of one) in reversed magma,
+  trimmed at both ends, instead of “seq-purple”; several results keep
+  their single-hue palettes.
+- Adjusted p-values of 0 are drawn as the smallest non-zero one (their
+  -log10 was infinite); the source data keep the reported value.
+
 ## bioToolkit 1.3.0
 
 ### Ranked values

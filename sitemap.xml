@@ -99,7 +99,9 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/fix_nested_patchworks.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/fixed_gtable_size.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/fixed_size_figure.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/floor_padj.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/format_gene_sets.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/format_padj.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/format_sc_plots.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/generate_de_rank_file.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/genes_in_assay.html</loc></url>
@@ -161,6 +163,7 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/legend_title_label.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/list_palettes.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/ma_x_title.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/magma_r_trimmed.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/manipulate_sc_plot.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/map_features.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/mark_layer.html</loc></url>
@@ -169,6 +172,8 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/multi_volcano_offsets.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/outline_layers.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/overflow_fit.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/padj_colour_guide.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/padj_colour_value.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/palette_list.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/palette_rows_input.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/palette_swatches.html</loc></url>

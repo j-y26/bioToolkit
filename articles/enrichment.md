@@ -133,8 +133,9 @@ object can be passed as it is.
 
 The most significant gene sets of a result. For ORA, the x-axis is the
 gene ratio (genes of the set in the list / genes in the list), the size
-the number of genes and the colour the −log10 adjusted p-value. One
-result is one panel, with its colour bar and size legend side by side:
+the number of genes and the colour the adjusted p-value, darker for
+smaller. One result is one panel in reversed magma, with its colour bar
+and size legend side by side:
 
 ``` r
 
@@ -169,6 +170,7 @@ plot_enrichment_dots(ora, n = 8)
 - `x = "nes"`
 - `order.by` and `term.replace`
 - `shared.scale`
+- `padj.scale`
 - `legend.layout = "stacked"`
 
 GSEA results on the NES; several cell types side by side (`nrow = 1`):
@@ -210,6 +212,23 @@ plot_enrichment_dots(ora, n = 6, shared.scale = FALSE, cols = "seq-blue")
 
 ![](enrichment_files/figure-html/dots-scale-6.png)
 
+Colours are on the −log10 scale, so that 10⁻³ and 10⁻⁸ look different,
+but the colour bar reads in adjusted p-values (`padj.scale = "log"`, the
+default). `"-log10"` labels it in −log10 padj; `"linear"` colours
+linearly in the adjusted p-value, so that all sets below about 0.001
+look alike (suited to results of one order of magnitude). The same
+argument is in
+[`plot_enrichment_grid()`](https://j-y26.github.io/bioToolkit/reference/plot_enrichment_grid.md)
+and
+[`plot_enrichment_bars()`](https://j-y26.github.io/bioToolkit/reference/plot_enrichment_bars.md):
+
+``` r
+
+plot_enrichment_dots(ora[["Up in IFN-γ"]], n = 8, padj.scale = "-log10")
+```
+
+![](enrichment_files/figure-html/dots-padj-scale-7.png)
+
 All legends in one column, each panel’s colour bar and size legend in
 turn:
 
@@ -218,7 +237,7 @@ turn:
 plot_enrichment_dots(ora, n = 6, legend.layout = "stacked")
 ```
 
-![](enrichment_files/figure-html/dots-stacked-7.png)
+![](enrichment_files/figure-html/dots-stacked-8.png)
 
 ## One comparison: NES bars
 
@@ -230,7 +249,7 @@ names sit on the opposite side of 0 from their bars:
 plot_enrichment_bars(gsea, comparison = "CD14 Mono", n.up = 6, n.down = 6)
 ```
 
-![](enrichment_files/figure-html/bars-8.png)
+![](enrichment_files/figure-html/bars-9.png)
 
 ### Variants
 
@@ -248,7 +267,7 @@ plot_enrichment_bars(
 )
 ```
 
-![](enrichment_files/figure-html/bars-padj-9.png)
+![](enrichment_files/figure-html/bars-padj-10.png)
 
 Non-significant gene sets fill the bars when there are fewer significant
 ones, faded:
@@ -264,21 +283,21 @@ plot_enrichment_bars(
 )
 ```
 
-![](enrichment_files/figure-html/bars-ns-10.png)
+![](enrichment_files/figure-html/bars-ns-11.png)
 
 ## Many comparisons: grid
 
 Gene sets × comparisons: colour is the NES (centred on 0, each side to
-its own extreme), size the −log10 adjusted p-value, non-significant
-results faded; by default the top `n` sets of each comparison,
-clustered:
+its own extreme), size the adjusted p-value (larger for smaller),
+non-significant results faded; by default the top `n` sets of each
+comparison, clustered:
 
 ``` r
 
 plot_enrichment_grid(gsea, n = 4)
 ```
 
-![](enrichment_files/figure-html/grid-11.png)
+![](enrichment_files/figure-html/grid-12.png)
 
 ### Variants
 
@@ -298,7 +317,7 @@ chosen <- list(
 plot_enrichment_grid(gsea, terms = chosen)
 ```
 
-![](enrichment_files/figure-html/grid-terms-12.png)
+![](enrichment_files/figure-html/grid-terms-13.png)
 
 Over-representation results are coloured by significance and sized by
 the number of genes:
@@ -308,14 +327,14 @@ the number of genes:
 plot_enrichment_grid(ora, n = 6)
 ```
 
-![](enrichment_files/figure-html/grid-ora-13.png)
+![](enrichment_files/figure-html/grid-ora-14.png)
 
 ``` r
 
 plot_enrichment_grid(gsea, n = 3, significance = "hide", flip = TRUE)
 ```
 
-![](enrichment_files/figure-html/grid-flip-14.png)
+![](enrichment_files/figure-html/grid-flip-15.png)
 
 ## One gene set: running score
 
@@ -338,7 +357,7 @@ plot_gsea_rank(
 )
 ```
 
-![](enrichment_files/figure-html/rank-15.png)
+![](enrichment_files/figure-html/rank-16.png)
 
 The band under the gene positions is the ranking metric along the list,
 as in the GSEA desktop plot: magenta where genes rank up (metric above
@@ -374,7 +393,7 @@ plot_gsea_rank(
 )
 ```
 
-![](enrichment_files/figure-html/rank-negative-16.png)
+![](enrichment_files/figure-html/rank-negative-17.png)
 
 `label = "selected"` names the genes given (`label.features`); `"none"`
 names none. `band = "none"` leaves the band out:
@@ -394,7 +413,7 @@ plot_gsea_rank(
 #> Warning: `label.features` not in the gene set: IFIT1
 ```
 
-![](enrichment_files/figure-html/rank-selected-17.png)
+![](enrichment_files/figure-html/rank-selected-18.png)
 
 A clusterProfiler `GSEA()` result holds the ranked list and the gene
 sets, so it is plotted directly; a gene set can also be named by its
@@ -418,4 +437,4 @@ plot_gsea_rank(
 )
 ```
 
-![](enrichment_files/figure-html/rank-cp-18.png)
+![](enrichment_files/figure-html/rank-cp-19.png)

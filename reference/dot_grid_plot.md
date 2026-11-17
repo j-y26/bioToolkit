@@ -19,6 +19,9 @@ dot_grid_plot(
   fill.limits,
   fill.center = NULL,
   fill.title,
+  fill.breaks = waiver(),
+  fill.labels = waiver(),
+  fill.reverse = FALSE,
   na.value = "grey85",
   outline.labels = NULL,
   outline.title = NULL,
@@ -88,6 +91,15 @@ dot_grid_plot(
 - fill.title:
 
   Title of the fill legend
+
+- fill.breaks, fill.labels:
+
+  Breaks and labels of the fill legend, default waiver() (ggplot2's)
+
+- fill.reverse:
+
+  Whether the colour bar is flipped (low values at its top), default is
+  FALSE
 
 - na.value:
 

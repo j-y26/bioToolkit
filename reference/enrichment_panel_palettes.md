@@ -5,7 +5,7 @@ Palettes of the panels of an enrichment dot plot
 ## Usage
 
 ``` r
-enrichment_panel_palettes(cols, panels)
+enrichment_panel_palettes(cols, panels, single = FALSE)
 ```
 
 ## Arguments
@@ -18,6 +18,13 @@ enrichment_panel_palettes(cols, panels)
 - panels:
 
   Panel names
+
+- single:
+
+  Whether the plot has one result; with \`cols = NULL\`, it is drawn in
+  reversed magma
+  ([`magma_r_trimmed()`](https://j-y26.github.io/bioToolkit/reference/magma_r_trimmed.md)).
+  Default is FALSE
 
 ## Value
 
