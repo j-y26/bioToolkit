@@ -100,6 +100,14 @@ GSEA.
 [`plot_enrichment_grid()`](https://j-y26.github.io/bioToolkit/reference/plot_enrichment_grid.md)
 [`plot_gsea_rank()`](https://j-y26.github.io/bioToolkit/reference/plot_gsea_rank.md)
 
+[**Ranked
+values**](https://j-y26.github.io/bioToolkit/articles/rank-plots.md)
+
+Any ranked metric along its rank, the top features named: fold changes,
+NES, specificity scores, reporter metabolites.
+
+[`plot_rank()`](https://j-y26.github.io/bioToolkit/reference/plot_rank.md)
+
 All functions, grouped the same way, are listed in the [function
 index](https://j-y26.github.io/bioToolkit/reference/index.md).
 

@@ -1,0 +1,29 @@
+# Whether segments cross
+
+Proper crossings only: segments that touch at an end (e.g. two leader
+lines from neighbouring points) do not count, nor do crossings within
+\`min.dist\` of the start of the first segment.
+
+## Usage
+
+``` r
+segments_cross(ax1, ay1, ax2, ay2, bx1, by1, bx2, by2, min.dist = 0)
+```
+
+## Arguments
+
+- ax1, ay1, ax2, ay2:
+
+  First segment(s), vectorized
+
+- bx1, by1, bx2, by2:
+
+  Second segment
+
+- min.dist:
+
+  Crossings nearer than this to (ax1, ay1) are ignored
+
+## Value
+
+A logical vector along the first segments

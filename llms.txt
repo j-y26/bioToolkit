@@ -100,6 +100,14 @@ GSEA.
 [`plot_enrichment_grid()`](https://j-y26.github.io/bioToolkit/reference/plot_enrichment_grid.md)
 [`plot_gsea_rank()`](https://j-y26.github.io/bioToolkit/reference/plot_gsea_rank.md)
 
+[**Ranked
+values**](https://j-y26.github.io/bioToolkit/articles/rank-plots.md)
+
+Any ranked metric along its rank, the top features named: fold changes,
+NES, specificity scores, reporter metabolites.
+
+[`plot_rank()`](https://j-y26.github.io/bioToolkit/reference/plot_rank.md)
+
 All functions, grouped the same way, are listed in the [function
 index](https://j-y26.github.io/bioToolkit/reference/index.md).
 
@@ -290,6 +298,16 @@ enrichment](https://j-y26.github.io/bioToolkit/articles/enrichment.md).
 - [`format_gene_sets()`](https://j-y26.github.io/bioToolkit/reference/format_gene_sets.md)
   : Convert gene sets between formats
 
+## Ranked values
+
+Any rankable metric along its rank, with the ends of the ranking named:
+gene rankings, NES, specificity scores, reporter metabolites. Guide:
+[Ranked
+values](https://j-y26.github.io/bioToolkit/articles/rank-plots.md).
+
+- [`plot_rank()`](https://j-y26.github.io/bioToolkit/reference/plot_rank.md)
+  : Rank plot of a metric
+
 # Articles
 
 ### Figures
@@ -360,3 +378,12 @@ enrichment](https://j-y26.github.io/bioToolkit/articles/enrichment.md).
   or the GSEA application: standardize_enrichment(),
   plot_enrichment_dots(), plot_enrichment_bars(),
   plot_enrichment_grid(), plot_gsea_rank() and format_gene_sets().
+
+### Rankings
+
+- [Ranked
+  values](https://j-y26.github.io/bioToolkit/articles/rank-plots.md):
+
+  Draw any ranked metric along its rank, with the top features named:
+  plot_rank() for gene rankings, NES, specificity scores, reporter
+  metabolites or regulon specificity.

@@ -10,6 +10,7 @@
 <url><loc>https://j-y26.github.io/bioToolkit/articles/figures.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/articles/index.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/articles/palettes.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/articles/rank-plots.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/articles/sc-conditions.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/articles/sc-embeddings.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/articles/sc-expression.html</loc></url>
@@ -189,6 +190,7 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/plot_ma.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/plot_multi_volcano.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/plot_pca.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/plot_rank.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/plot_variance_explained.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/plot_volcano.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/point_marks.html</loc></url>
@@ -201,6 +203,15 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/quadrant_label_flags.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/quadrant_trend.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/rank_de_genes.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/rank_highlight_colours.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/rank_input.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/rank_label_extent.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/rank_label_flags.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/rank_label_inversions.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/rank_label_positions.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/rank_panel_limits.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/rank_place_labels.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/rank_positions.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/ratio_part.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/read_de_table.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/read_enrichment_table.html</loc></url>
@@ -224,6 +235,7 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/sample_per_unit.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/save_plot.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/scale_columns.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/segments_cross.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/seurat_feature_ncol.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/show_palettes.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/significance_labels.html</loc></url>
@@ -257,5 +269,6 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/volcano_y_limits.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/with_seed.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/wrap_labels.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/wrap_name.html</loc></url>
 </urlset>
 

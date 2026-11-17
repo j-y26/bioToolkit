@@ -20,6 +20,8 @@ object works the same way.
 ``` r
 
 pbmc <- docs_kang()
+#> Warning: Feature names cannot have underscores ('_'), replacing with dashes
+#> ('-')
 p <- DimPlot_bioToolkit(pbmc, group.by = "cell_type", label = TRUE)
 p
 ```
@@ -300,10 +302,10 @@ a patchwork to XLSX) and returns it:
 
 src <- export_source_data(p_cond)
 head(src[[1]], 3)
-#>                row        x          y    group highlight
-#> 1 GCGGAGCTCTTACT-1 11.98873  0.4388136  Control      TRUE
-#> 2 AACTACCTAAGCCT-1 12.34284 -2.1304214 IFN-beta      TRUE
-#> 3 GAGGTTACACCTGA-1 10.95205 -1.5232978  Control      TRUE
+#>                row         x           y    group highlight
+#> 1 GCGGAGCTCTTACT-1 -14.04730  0.07375865  Control      TRUE
+#> 2 AACTACCTAAGCCT-1 -11.83630  1.36838348 IFN-beta      TRUE
+#> 3 GAGGTTACACCTGA-1 -11.83237 -0.29598908  Control      TRUE
 ```
 
 ``` r

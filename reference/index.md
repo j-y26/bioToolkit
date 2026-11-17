@@ -170,3 +170,13 @@ enrichment](https://j-y26.github.io/bioToolkit/articles/enrichment.md).
   : GSEA running enrichment score plot
 - [`format_gene_sets()`](https://j-y26.github.io/bioToolkit/reference/format_gene_sets.md)
   : Convert gene sets between formats
+
+## Ranked values
+
+Any rankable metric along its rank, with the ends of the ranking named:
+gene rankings, NES, specificity scores, reporter metabolites. Guide:
+[Ranked
+values](https://j-y26.github.io/bioToolkit/articles/rank-plots.md).
+
+- [`plot_rank()`](https://j-y26.github.io/bioToolkit/reference/plot_rank.md)
+  : Rank plot of a metric

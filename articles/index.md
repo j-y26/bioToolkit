@@ -68,3 +68,12 @@
   or the GSEA application: standardize_enrichment(),
   plot_enrichment_dots(), plot_enrichment_bars(),
   plot_enrichment_grid(), plot_gsea_rank() and format_gene_sets().
+
+### Rankings
+
+- [Ranked
+  values](https://j-y26.github.io/bioToolkit/articles/rank-plots.md):
+
+  Draw any ranked metric along its rank, with the top features named:
+  plot_rank() for gene rankings, NES, specificity scores, reporter
+  metabolites or regulon specificity.
