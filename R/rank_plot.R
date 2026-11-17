@@ -294,7 +294,7 @@ plot_rank <- function(
         pal <- if (is.null(cols)) {
             # Reversed magma, trimmed as in the user's reporter-metabolite
             # plot: neither white nor black at the ends
-            viridisLite::magma(256, begin = 0.05, end = 0.92, direction = -1)
+            magma_r_trimmed()
         } else {
             resolve_continuous_palette(cols, diverging = FALSE)
         }

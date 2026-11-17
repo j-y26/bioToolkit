@@ -4,13 +4,17 @@
 \alias{enrichment_panel_palettes}
 \title{Palettes of the panels of an enrichment dot plot}
 \usage{
-enrichment_panel_palettes(cols, panels)
+enrichment_panel_palettes(cols, panels, single = FALSE)
 }
 \arguments{
 \item{cols}{NULL; one palette name or colour vector for all panels;
 palette names, one per panel; or a list of colour vectors}
 
 \item{panels}{Panel names}
+
+\item{single}{Whether the plot has one result; with `cols = NULL`, it is
+drawn in reversed magma (\code{magma_r_trimmed()}). Default
+is FALSE}
 }
 \value{
 A list of colour vectors, named by panel

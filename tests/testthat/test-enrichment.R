@@ -129,6 +129,89 @@ test_that("plot_enrichment_dots takes GSEA results, with counts from the leading
     expect_error(plot_enrichment_dots(ora_fixture(), x = "nes"), "no NES")
 })
 
+test_that("one enrichment result is drawn in reversed magma, several in single-hue palettes", {
+    # A table, or a list of one: reversed magma (light = least significant)
+    expect_equal(enrichment_panel_palettes(NULL, "A", single = TRUE)$A, magma_r_trimmed())
+    p1 <- plot_enrichment_dots(ora_fixture(), n = 5)
+    expect_equal(p1$scales$get_scales("colour")$palette(1), utils::tail(magma_r_trimmed(), 1))
+    p_list <- plot_enrichment_dots(list(Only = ora_fixture()), n = 5)
+    expect_equal(p_list$scales$get_scales("colour")$palette(0), magma_r_trimmed()[1])
+    # Given colours win over the default
+    p_cols <- plot_enrichment_dots(ora_fixture(), n = 5, cols = "seq-blue")
+    expect_equal(p_cols$scales$get_scales("colour")$palette(1), utils::tail(bt_palette("seq-blue"), 1))
+})
+
+test_that("padj.scale colours on -log10 and labels adjusted p-values", {
+    d <- ora_fixture()
+    # "log" (default): colour values are -log10 padj, the legend in padj
+    p_log <- plot_enrichment_dots(d, n = 5)
+    sc <- p_log$scales$get_scales("colour")
+    expect_equal(p_log$data$padj_colour, -log10(p_log$data$padj))
+    expect_equal(sc$name, "padj")
+    expect_true(all(10^-sc$breaks <= 1))
+    expect_false(isTRUE(p_log$scales$get_scales("colour")$guide$params$reverse))
+    # "-log10": the former legend
+    p_m <- plot_enrichment_dots(d, n = 5, padj.scale = "-log10")
+    expect_true(is.call(p_m$scales$get_scales("colour")$name))
+    expect_s3_class(p_m$scales$get_scales("colour")$breaks, "waiver")
+    # "linear": colour values are padj, the palette reversed (smallest
+    # darkest) and the colour bar flipped (most significant at its top)
+    p_lin <- plot_enrichment_dots(d, n = 5, padj.scale = "linear")
+    sc_lin <- p_lin$scales$get_scales("colour")
+    expect_equal(p_lin$data$padj_colour, p_lin$data$padj)
+    expect_equal(sc_lin$palette(0), utils::tail(magma_r_trimmed(), 1))
+    expect_true(sc_lin$guide$params$reverse)
+    expect_gte(sc_lin$limits[1], 0)
+    expect_error(plot_enrichment_dots(d, padj.scale = "ln"), "should be one of")
+})
+
+test_that("adjusted p-value labels are decimals or powers of ten, never mixed", {
+    expect_equal(format_padj(c(0.05, 0.01, 0.001)), c("0.05", "0.01", "0.001"))
+    lab <- format_padj(c(1e-8, 2.5e-4, 0.01, 1))
+    expect_true(is.expression(lab))
+    expect_equal(lab[[1]], quote(10^"-8"))
+    expect_equal(lab[[2]], quote(2.5 %*% 10^"-4"))
+    expect_equal(lab[[4]], quote(1))
+    # Wide ranges: powers of ten at round exponents; narrow: 1-2-5 steps
+    g <- padj_colour_guide(c(2, 26), "log")
+    expect_true(all(g$breaks == round(g$breaks)))
+    expect_equal(diff(range(diff(g$breaks))), 0)
+    g2 <- padj_colour_guide(-log10(c(0.05, 0.01)), "log")
+    expect_equal(sort(signif(10^-g2$breaks, 3)), c(0.01, 0.02, 0.03, 0.05))
+    expect_true(all(10^-g2$breaks >= 0.01 - 1e-12 & 10^-g2$breaks <= 0.05 + 1e-12))
+})
+
+test_that("adjusted p-values of 0 take the smallest non-zero one", {
+    expect_equal(floor_padj(c(0, 1e-5, NA, 0.01)), c(1e-5, 1e-5, NA, 0.01))
+    expect_equal(floor_padj(0), .Machine$double.xmin)
+    d <- ora_fixture()
+    d$p.adjust[which.min(d$p.adjust)] <- 0
+    p <- plot_enrichment_dots(d, n = 5)
+    expect_true(all(is.finite(p$data$padj_colour)))
+    # The source data keep the reported value
+    expect_true(0 %in% attr(p, "source_data")$padj)
+})
+
+test_that("plot_enrichment_grid and plot_enrichment_bars take padj.scale", {
+    # Grid: colour and the -log10 padj sizes labelled in adjusted p-values
+    p <- plot_enrichment_grid(fgsea_fixture(), n = 2, fill = "padj", size = "padj")
+    expect_equal(p$scales$get_scales("fill")$name, "padj")
+    expect_equal(p$scales$get_scales("size")$name, "padj")
+    expect_true(is.expression(p$scales$get_scales("size")$labels))
+    p_m <- plot_enrichment_grid(fgsea_fixture(), n = 2, fill = "padj", size = "padj", padj.scale = "-log10")
+    expect_true(is.call(p_m$scales$get_scales("size")$name))
+    p_lin <- plot_enrichment_grid(fgsea_fixture(), n = 2, fill = "padj", padj.scale = "linear")
+    expect_true(p_lin$scales$get_scales("fill")$guide$params$reverse)
+    # NES colours are unchanged
+    expect_equal(plot_enrichment_grid(fgsea_fixture(), n = 2)$scales$get_scales("fill")$name, "NES")
+    # Bars
+    b <- plot_enrichment_bars(fgsea_fixture(), n.up = 1, n.down = 1, fill = "padj")
+    expect_equal(b$scales$get_scales("fill")$name, "padj")
+    expect_equal(b$data$padj_colour, -log10(b$data$padj))
+    b_lin <- plot_enrichment_bars(fgsea_fixture(), n.up = 1, n.down = 1, fill = "padj", padj.scale = "linear")
+    expect_equal(b_lin$data$padj_colour, b_lin$data$padj)
+})
+
 test_that("plot_enrichment_bars writes names opposite their bars", {
     p <- plot_enrichment_bars(fgsea_fixture(), n.up = 5, n.down = 5)
     d <- p$data

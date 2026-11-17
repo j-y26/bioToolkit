@@ -11,6 +11,7 @@ plot_enrichment_grid(
   fill = NULL,
   size = NULL,
   padj.cutoff = 0.05,
+  padj.scale = c("log", "-log10", "linear"),
   significance = c("fade", "grey", "hide"),
   size.max = NULL,
   cluster.terms = TRUE,
@@ -38,16 +39,28 @@ comparison, combined}
 \item{n}{Number of top gene sets per comparison when `terms` is NULL,
 default is 5}
 
-\item{fill}{What the colour shows: "nes" or "padj" (-log10 adjusted
-p-value). If NULL (default), "nes" when the results have NES
-(GSEA), else "padj"}
+\item{fill}{What the colour shows: "nes" or "padj" (adjusted p-value, see
+`padj.scale`). If NULL (default), "nes" when the results have
+NES (GSEA), else "padj"}
 
-\item{size}{What the dot size shows: "padj" (-log10 adjusted p-value),
-"count" or "gene_ratio". If NULL (default), "padj" when colour
-shows NES, else "count"}
+\item{size}{What the dot size shows: "padj" (larger for smaller adjusted
+p-values: size grows with -log10 padj), "count" or
+"gene_ratio". If NULL (default), "padj" when colour shows NES,
+else "count"}
 
 \item{padj.cutoff}{Adjusted p-value below which a result is significant,
 default is 0.05}
+
+\item{padj.scale}{How adjusted p-values are coloured (with
+`fill = "padj"`): "log" (default; on the -log10 scale,
+the legend labelled in adjusted p-values, e.g. 0.01 and
+\eqn{10^{-5}}), "-log10" (legend in -log10 padj) or
+"linear" (linear in the adjusted p-value; sets below
+about 0.001 then look alike, so it suits results of one
+order of magnitude). The smallest adjusted p-value is
+always the darkest. With `size = "padj"`, the size
+legend is labelled in adjusted p-values too, unless
+"-log10"}
 
 \item{significance}{"fade" (default; significant dots opaque with a dark
 ring, the others faded), "grey" (non-significant dots
@@ -71,8 +84,9 @@ expressions and their replacements, e.g.
 characters, default is 40}
 
 \item{cols}{Colours of the colour scale: NULL (default; "blue-magenta" for
-NES, "seq-purple" for -log10 adjusted p-values), a palette name
-or colours from low to high}
+NES, "seq-purple" for adjusted p-values), a palette name
+or colours from low to high (from the least to the most
+significant for adjusted p-values)}
 
 \item{flip}{Whether to draw comparisons as rows and gene sets as columns,
 default is FALSE}
@@ -94,8 +108,8 @@ A ggplot object; its source data (\code{\link{export_source_data}})
 \description{
 Shows gene sets (rows) across comparisons (columns), e.g. the
              Hallmark sets across cell types: colour is the normalized
-             enrichment score (GSEA) or -log10 adjusted p-value
-             (over-representation), size the -log10 adjusted p-value or the
+             enrichment score (GSEA) or adjusted p-value
+             (over-representation), size the adjusted p-value or the
              number of genes, and non-significant results are faded. For
              the top gene sets of one or a few results, see
              \code{\link{plot_enrichment_dots}}.

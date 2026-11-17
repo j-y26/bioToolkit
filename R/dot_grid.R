@@ -81,6 +81,12 @@
 #'
 #' @param fill.title Title of the fill legend
 #'
+#' @param fill.breaks,fill.labels Breaks and labels of the fill legend,
+#'                                default waiver() (ggplot2's)
+#'
+#' @param fill.reverse Whether the colour bar is flipped (low values at its
+#'                     top), default is FALSE
+#'
 #' @param na.value Fill of dots whose `fill` is NA
 #'
 #' @param outline.labels Legend labels of significant and other dots, when
@@ -127,6 +133,9 @@ dot_grid_plot <- function(df,
                           fill.limits,
                           fill.center = NULL,
                           fill.title,
+                          fill.breaks = waiver(),
+                          fill.labels = waiver(),
+                          fill.reverse = FALSE,
                           na.value = "grey85",
                           outline.labels = NULL,
                           outline.title = NULL,
@@ -355,8 +364,11 @@ dot_grid_plot <- function(df,
                 rescale_diverging(fill.center)
             },
             na.value = na.value, name = bold_title(fill.title),
+            breaks = fill.breaks,
+            labels = fill.labels,
             guide = guide_colourbar(
                 order = 1,
+                reverse = fill.reverse,
                 direction = if (vertical) "vertical" else "horizontal",
                 theme = theme(
                     legend.key.height = unit(if (vertical) 0.9 else 0.12, "in"),

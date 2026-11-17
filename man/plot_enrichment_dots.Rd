@@ -11,6 +11,7 @@ plot_enrichment_dots(
   x = c("gene_ratio", "nes", "count", "padj"),
   order.by = c("x", "padj"),
   padj.cutoff = 0.05,
+  padj.scale = c("log", "-log10", "linear"),
   show.ns = FALSE,
   term.replace = NULL,
   wrap.width = 45,
@@ -56,6 +57,14 @@ first)}
 \item{padj.cutoff}{Adjusted p-value below which a gene set is significant,
 default is 0.05}
 
+\item{padj.scale}{How adjusted p-values are coloured: "log" (default;
+on the -log10 scale, the legend labelled in adjusted
+p-values, e.g. 0.01 and \eqn{10^{-5}}), "-log10" (legend
+in -log10 padj) or "linear" (linear in the adjusted
+p-value; sets below about 0.001 then look alike, so it
+suits results of one order of magnitude). The smallest
+adjusted p-value is always the darkest}
+
 \item{show.ns}{Whether non-significant gene sets may fill a panel that has
 fewer than `n` significant ones, default is FALSE}
 
@@ -71,11 +80,13 @@ Default is NULL}
 \item{wrap.width}{Gene set names are wrapped onto lines of at most this
 many characters, default is 45}
 
-\item{cols}{Colours of the -log10 adjusted p-value: NULL (default) gives
-each panel its own single-hue palette, in the order
-"seq-purple", "seq-blue", "seq-green", "seq-orange", "seq-red",
-"seq-teal", "seq-magenta"; one palette name (or colours from
-low to high) for every panel; or palette names, one per panel
+\item{cols}{Colours of the adjusted p-value, from the least to the most
+significant. NULL (default) gives one result reversed magma
+(light orange to near-black purple, trimmed at both ends), and
+several results each their own single-hue palette, in the
+order "seq-purple", "seq-blue", "seq-green", "seq-orange",
+"seq-red", "seq-teal", "seq-magenta"; one palette name (or
+colours) for every panel; or palette names, one per panel
 (named by panel, or in panel order), or a list of colour
 vectors}
 
@@ -91,7 +102,8 @@ side}
 \item{title}{Title of the figure. Default is NULL}
 
 \item{fill.title, size.title}{Titles of the colour and size legends. If NULL
-(default), "-log10 padj" and "Genes"}
+(default), "padj" (-log10 padj with
+`padj.scale = "-log10"`) and "Genes"}
 
 \item{cell.height}{Height of a gene set's row in inches, default is 0.2
 (rows of names wrapped onto several lines are taller)}
@@ -122,8 +134,9 @@ A patchwork of one panel per result (a ggplot for a single
 Shows the most significant gene sets of one enrichment result,
              or of several side by side (e.g. the gene sets enriched in up-
              and in down-regulated genes): the gene ratio (or NES) on the
-             x-axis, the number of genes as dot size and the -log10 adjusted
-             p-value as colour. Each result is a panel named by a strip and
+             x-axis, the number of genes as dot size and the adjusted
+             p-value as colour (darker for smaller). One result is drawn in
+             reversed magma; several are panels named by strips, each
              drawn in its own single-hue palette, so that panels read apart
              at a glance; panels are stacked (default), placed side by side,
              or in a grid. Panels have a fixed size, so the figure combines

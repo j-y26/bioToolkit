@@ -124,8 +124,9 @@ object can be passed as it is.
 
 The most significant gene sets of a result. For ORA, the x-axis is the gene
 ratio (genes of the set in the list / genes in the list), the size the number
-of genes and the colour the −log10 adjusted p-value. One result is one panel,
-with its colour bar and size legend side by side:
+of genes and the colour the adjusted p-value, darker for smaller. One result
+is one panel in reversed magma, with its colour bar and size legend side by
+side:
 
 ```{r dots-one}
 plot_enrichment_dots(ora[["Up in IFN-γ"]], n = 8)
@@ -183,6 +184,19 @@ the results differ in strength; each panel then has its own size legend:
 plot_enrichment_dots(ora, n = 6, shared.scale = FALSE, cols = "seq-blue")
 ```
 
+#### `padj.scale`
+
+Colours are on the −log10 scale, so that 10^-3^ and 10^-8^ look different,
+but the colour bar reads in adjusted p-values (`padj.scale = "log"`, the
+default). `"-log10"` labels it in −log10 padj; `"linear"` colours linearly in
+the adjusted p-value, so that all sets below about 0.001 look alike (suited
+to results of one order of magnitude). The same argument is in
+`plot_enrichment_grid()` and `plot_enrichment_bars()`:
+
+```{r dots-padj-scale}
+plot_enrichment_dots(ora[["Up in IFN-γ"]], n = 8, padj.scale = "-log10")
+```
+
 #### `legend.layout = "stacked"`
 
 All legends in one column, each panel's colour bar and size legend in turn:
@@ -232,7 +246,7 @@ plot_enrichment_bars(
 ## Many comparisons: grid
 
 Gene sets × comparisons: colour is the NES (centred on 0, each side to its
-own extreme), size the −log10 adjusted p-value, non-significant results
+own extreme), size the adjusted p-value (larger for smaller), non-significant results
 faded; by default the top `n` sets of each comparison, clustered:
 
 ```{r grid}

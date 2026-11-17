@@ -11,6 +11,7 @@ plot_enrichment_bars(
   n.down = 10,
   fill = c("direction", "padj"),
   padj.cutoff = 0.05,
+  padj.scale = c("log", "-log10", "linear"),
   show.ns = FALSE,
   cols = NULL,
   term.replace = NULL,
@@ -33,10 +34,18 @@ If NULL (default), the first}
 show, the most significant first, default is 10 each}
 
 \item{fill}{Bar colours: "direction" (default; one colour for positive and
-one for negative NES) or "padj" (-log10 adjusted p-value)}
+one for negative NES) or "padj" (adjusted p-value, see
+`padj.scale`)}
 
 \item{padj.cutoff}{Adjusted p-value below which a gene set is significant,
 default is 0.05}
+
+\item{padj.scale}{How adjusted p-values are coloured (with
+`fill = "padj"`): "log" (default; on the -log10 scale,
+the legend labelled in adjusted p-values, e.g. 0.01 and
+\eqn{10^{-5}}), "-log10" (legend in -log10 padj) or
+"linear" (linear in the adjusted p-value). The smallest
+adjusted p-value is always the darkest}
 
 \item{show.ns}{Whether non-significant gene sets may be shown (faded, and
 explained in a "Significance" legend), when there are
@@ -47,8 +56,8 @@ FALSE}
 negative NES: a vector named `up` and / or `down`, or two
 colours (up, down). NULL (default) takes the ends of the
 "blue-magenta" palette. With `fill = "padj"`, a sequential
-palette name or colours from low to high, default
-"seq-purple"}
+palette name or colours from the least to the most
+significant, default "seq-purple"}
 
 \item{term.replace}{Replacements in gene set names, applied after
 cleaning: a named character vector of regular

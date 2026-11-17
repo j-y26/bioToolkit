@@ -33,6 +33,13 @@
 #   colour bars in the first, size legends in the second, each in panel
 #   order (a legend block, R/legends.R). A single panel has its colour bar
 #   and size legend side by side.
+#   Revision of 2026-11-17 (user, 1.3.1): one result (a table or a list of
+#   one) is drawn in reversed magma, trimmed (magma_r_trimmed(); plasma was
+#   tried: its pale-yellow end vanishes on white). `padj.scale` (also in the
+#   grid and bars): "log" (default) colours on the -log10 scale but labels
+#   the colour bar in adjusted p-values (0.01, 10^-5), which readers report;
+#   "-log10" (the former legend); "linear" (raw padj; sets below ~1e-3 look
+#   alike). Adjusted p-values of 0 are drawn as the smallest non-zero one.
 # * `plot_enrichment_grid()` draws terms x comparisons on the dot-grid engine
 #   (G0): colour = NES (GSEA; diverging, centred on 0) or -log10 padj (ORA),
 #   size = -log10 padj or gene count, non-significant results faded (as G2).
@@ -327,12 +334,135 @@ wrap_labels <- function(x,
 }
 
 
+# Adjusted p-value colour scales -----------------------------------------
+#
+# `padj.scale` of plot_enrichment_dots(), plot_enrichment_grid() and
+# plot_enrichment_bars() sets how adjusted p-values map to colour:
+#   "log"     colour on the -log10 scale (as "-log10"), legend labelled in
+#             adjusted p-values (0.01, 10^-5): the values a reader reports
+#   "-log10"  colour and legend in -log10 padj
+#   "linear"  colour linear in the adjusted p-value itself, the smallest
+#             darkest; sets below ~1e-3 all look alike, so it suits results
+#             whose adjusted p-values are of one order of magnitude
+# The helpers below give the colour value of each row and the breaks, labels,
+# title and direction of the colour bar.
+
+#' Adjusted p-values of 0 replaced by the smallest non-zero one
+#'
+#' @param padj Adjusted p-values
+#'
+#' @return `padj`, without zeros
+#'
+#' @details Some tools report adjusted p-values of 0 (below machine
+#'          precision), whose -log10 is infinite. They are drawn as the
+#'          most significant non-zero value of the results (or the smallest
+#'          positive double, when all are 0).
+#'
+#' @keywords internal
+floor_padj <- function(padj) {
+    zero <- !is.na(padj) & padj <= 0
+    if (!any(zero)) return(padj)
+    positive <- padj[!is.na(padj) & padj > 0]
+    padj[zero] <- if (length(positive)) min(positive) else .Machine$double.xmin
+    padj
+}
+
+
+#' Colour values of adjusted p-values
+#'
+#' @param padj Adjusted p-values
+#'
+#' @param padj.scale "log", "-log10" or "linear"
+#'
+#' @return -log10 padj (zeros floored, see \code{floor_padj()}) for "log" and
+#'         "-log10", padj for "linear"
+#'
+#' @keywords internal
+padj_colour_value <- function(padj,
+                              padj.scale) {
+    if (padj.scale == "linear") return(padj)
+    -log10(floor_padj(padj))
+}
+
+
+#' Labels of adjusted p-values
+#'
+#' @param x Adjusted p-values (legend breaks)
+#'
+#' @return Plain decimals ("0.05", "0.001") when every value is at least
+#'         0.001 (or 0); otherwise all in powers of ten ("10^-5",
+#'         "2.5 x 10^-4"), as an expression vector, so that one legend never
+#'         mixes the two
+#'
+#' @keywords internal
+format_padj <- function(x) {
+    if (all(x == 0 | x >= 1e-3)) {
+        return(format(x, scientific = FALSE, drop0trailing = TRUE, trim = TRUE))
+    }
+    labels <- lapply(x, function(v) {
+        if (v == 0) return(quote(0))
+        if (v == 1) return(quote(1))
+        e <- floor(log10(v))
+        m <- signif(v / 10^e, 2)
+        # Rounding up to 10 (e.g. 9.99e-5) moves to the next power
+        if (m >= 10) {
+            m <- m / 10
+            e <- e + 1
+        }
+        # The exponent as a string: drawn with the plain hyphen, as ggplot2
+        # draws negative numbers on axes (plotmath would use a minus sign)
+        exponent <- as.character(e)
+        if (m == 1) bquote(10^.(exponent)) else bquote(.(m) %*% 10^.(exponent))
+    })
+    as.expression(labels)
+}
+
+
+#' Breaks, labels, title and direction of an adjusted p-value colour bar
+#'
+#' @param limits Limits of the colour scale, in the values of
+#'               \code{padj_colour_value()}
+#'
+#' @param padj.scale "log", "-log10" or "linear"
+#'
+#' @return A list: `breaks` and `labels` (waiver() for "-log10"), `title`,
+#'         and `reverse` (TRUE when the colour bar is flipped so that the
+#'         most significant values are at its top, as on the -log10 scales)
+#'
+#' @keywords internal
+padj_colour_guide <- function(limits,
+                              padj.scale) {
+    if (padj.scale == "-log10") {
+        return(list(breaks = waiver(), labels = waiver(), title = quote(-log[10] ~ "padj"), reverse = FALSE))
+    }
+    if (padj.scale == "log") {
+        # Breaks chosen among adjusted p-values, placed at their -log10:
+        # over 3 or more orders of magnitude, powers of ten at round steps
+        # of the exponent (10^-5, 10^-10, ...); over narrower ranges, 1-2-5
+        # steps (0.01, 0.02, 0.05)
+        if (diff(range(limits)) >= 3) {
+            k <- scales::breaks_extended(5, Q = c(1, 2, 5))(limits)
+            k <- k[k == round(k) & k >= min(limits) & k <= max(limits)]
+            b <- 10^-k
+        } else {
+            p_range <- sort(10^-limits)
+            b <- scales::breaks_log(5)(p_range)
+            b <- b[b >= p_range[1] * (1 - 1e-9) & b <= p_range[2] * (1 + 1e-9)]
+        }
+        return(list(breaks = -log10(b), labels = format_padj(b), title = "padj", reverse = FALSE))
+    }
+    b <- scales::breaks_extended(4)(limits)
+    b <- b[b >= limits[1] - 1e-12 & b <= limits[2] + 1e-12]
+    list(breaks = b, labels = format_padj(b), title = "padj", reverse = TRUE)
+}
+
+
 #' @title Grid of pathway enrichment across comparisons
 #'
 #' @description Shows gene sets (rows) across comparisons (columns), e.g. the
 #'              Hallmark sets across cell types: colour is the normalized
-#'              enrichment score (GSEA) or -log10 adjusted p-value
-#'              (over-representation), size the -log10 adjusted p-value or the
+#'              enrichment score (GSEA) or adjusted p-value
+#'              (over-representation), size the adjusted p-value or the
 #'              number of genes, and non-significant results are faded. For
 #'              the top gene sets of one or a few results, see
 #'              \code{\link{plot_enrichment_dots}}.
@@ -349,16 +479,28 @@ wrap_labels <- function(x,
 #' @param n Number of top gene sets per comparison when `terms` is NULL,
 #'          default is 5
 #'
-#' @param fill What the colour shows: "nes" or "padj" (-log10 adjusted
-#'             p-value). If NULL (default), "nes" when the results have NES
-#'             (GSEA), else "padj"
+#' @param fill What the colour shows: "nes" or "padj" (adjusted p-value, see
+#'             `padj.scale`). If NULL (default), "nes" when the results have
+#'             NES (GSEA), else "padj"
 #'
-#' @param size What the dot size shows: "padj" (-log10 adjusted p-value),
-#'             "count" or "gene_ratio". If NULL (default), "padj" when colour
-#'             shows NES, else "count"
+#' @param size What the dot size shows: "padj" (larger for smaller adjusted
+#'             p-values: size grows with -log10 padj), "count" or
+#'             "gene_ratio". If NULL (default), "padj" when colour shows NES,
+#'             else "count"
 #'
 #' @param padj.cutoff Adjusted p-value below which a result is significant,
 #'                    default is 0.05
+#'
+#' @param padj.scale How adjusted p-values are coloured (with
+#'                   `fill = "padj"`): "log" (default; on the -log10 scale,
+#'                   the legend labelled in adjusted p-values, e.g. 0.01 and
+#'                   \eqn{10^{-5}}), "-log10" (legend in -log10 padj) or
+#'                   "linear" (linear in the adjusted p-value; sets below
+#'                   about 0.001 then look alike, so it suits results of one
+#'                   order of magnitude). The smallest adjusted p-value is
+#'                   always the darkest. With `size = "padj"`, the size
+#'                   legend is labelled in adjusted p-values too, unless
+#'                   "-log10"
 #'
 #' @param significance "fade" (default; significant dots opaque with a dark
 #'                     ring, the others faded), "grey" (non-significant dots
@@ -382,8 +524,9 @@ wrap_labels <- function(x,
 #'                   characters, default is 40
 #'
 #' @param cols Colours of the colour scale: NULL (default; "blue-magenta" for
-#'             NES, "seq-purple" for -log10 adjusted p-values), a palette name
-#'             or colours from low to high
+#'             NES, "seq-purple" for adjusted p-values), a palette name
+#'             or colours from low to high (from the least to the most
+#'             significant for adjusted p-values)
 #'
 #' @param flip Whether to draw comparisons as rows and gene sets as columns,
 #'             default is FALSE
@@ -426,6 +569,7 @@ plot_enrichment_grid <- function(
     fill = NULL,
     size = NULL,
     padj.cutoff = 0.05,
+    padj.scale = c("log", "-log10", "linear"),
     significance = c("fade", "grey", "hide"),
     size.max = NULL,
     cluster.terms = TRUE,
@@ -440,6 +584,7 @@ plot_enrichment_grid <- function(
     ...
 ) {
     significance <- match.arg(significance)
+    padj.scale <- match.arg(padj.scale)
     legend.position <- match.arg(legend.position)
     check_de_cutoffs(padj.cutoff, 0)
     res <- as_enrichment(enrichment, ...)
@@ -454,7 +599,8 @@ plot_enrichment_grid <- function(
     if (size != "padj" && all(is.na(res[[size]]))) {
         stop("The results have no `", size, "` (GSEA results have no gene counts); use size = \"padj\"", call. = FALSE)
     }
-    res$neg_log10_padj <- -log10(res$padj)
+    # Adjusted p-values of 0 are drawn as the smallest non-zero one
+    res$neg_log10_padj <- -log10(floor_padj(res$padj))
     res$significant <- !is.na(res$padj) & res$padj < padj.cutoff
 
     # Gene sets: given (by cleaned name or original id), or the top `n`
@@ -492,16 +638,20 @@ plot_enrichment_grid <- function(
     df$significant <- df$significant %in% TRUE
     df$comparison <- factor(df$comparison, levels = cmp)
 
-    fill_v <- if (fill == "nes") df$nes else df$neg_log10_padj
+    # Colour: NES, or the adjusted p-value on the scale of `padj.scale`
+    fill_v <- if (fill == "nes") df$nes else padj_colour_value(df$padj, padj.scale)
     size_v <- switch(size, padj = df$neg_log10_padj, count = df$count, gene_ratio = df$gene_ratio)
     drawn <- !is.na(df$padj) & !is.na(size_v)
     if (significance == "hide") drawn <- drawn & df$significant
     if (significance == "grey") fill_v[!df$significant] <- NA
 
-    # Order of gene sets: clustered on the colour values, or as given
+    # Order of gene sets: clustered on the colour values (adjusted p-values
+    # on the -log10 scale, whatever `padj.scale`), or as given
     term_lv <- unique(ft$id)
     if (cluster.terms && length(term_lv) > 2) {
-        m <- tapply(fill_v, list(df$id, as.character(df$comparison)), function(v) v[1])
+        cluster_v <- if (fill == "nes" || padj.scale != "linear") fill_v else df$neg_log10_padj
+        if (significance == "grey") cluster_v[!df$significant] <- NA
+        m <- tapply(cluster_v, list(df$id, as.character(df$comparison)), function(v) v[1])
         term_lv <- cluster_order(m[term_lv, cmp, drop = FALSE], ft$feature_group)
     }
 
@@ -510,21 +660,40 @@ plot_enrichment_grid <- function(
     }
     breaks <- scales::breaks_extended(4)(c(0, size.max))
     breaks <- breaks[breaks > 0 & breaks <= size.max]
-    blabels <- format(breaks, trim = TRUE)
-    if (any(size_v[drawn] > size.max, na.rm = TRUE)) {
-        if (utils::tail(breaks, 1) != size.max) {
-            breaks <- c(breaks, size.max)
-            blabels <- c(blabels, format(size.max, trim = TRUE))
+    capped <- any(size_v[drawn] > size.max, na.rm = TRUE)
+    if (capped && utils::tail(breaks, 1) != size.max) breaks <- c(breaks, size.max)
+    # Sizes grow with -log10 padj whatever `padj.scale`; unless "-log10",
+    # their legend is labelled in adjusted p-values, as the colour bar
+    padj_size <- size == "padj" && padj.scale != "-log10"
+    blabels <- if (padj_size) format_padj(10^-breaks) else format(breaks, trim = TRUE)
+    if (capped) {
+        # The largest dot stands for this value and beyond: at least this
+        # -log10 padj, at most this adjusted p-value
+        sign <- if (padj_size) "\u2264" else "\u2265"
+        k <- length(blabels)
+        if (is.expression(blabels)) {
+            blabels[[k]] <- bquote(.(sign) * .(blabels[[k]]))
+        } else {
+            blabels[k] <- paste0(sign, blabels[k])
         }
-        blabels[length(blabels)] <- paste0("\u2265", blabels[length(blabels)])
     }
     fv <- fill_v[drawn & !is.na(fill_v)]
     limits <- if (fill == "nes") {
         # Centred on 0, each side to its own extreme (diverging_limits())
         diverging_limits(fv, center = 0)
+    } else if (padj.scale == "linear") {
+        c(0, max(c(fv, padj.cutoff)))
     } else {
         c(0, max(c(fv, -log10(padj.cutoff))))
     }
+    fill_cols <- resolve_continuous_palette(cols, diverging = fill == "nes", default = "seq-purple")
+    fill_guide <- if (fill == "nes") {
+        list(breaks = waiver(), labels = waiver(), title = "NES", reverse = FALSE)
+    } else {
+        padj_colour_guide(limits, padj.scale)
+    }
+    # Linear adjusted p-values: the smallest (most significant) darkest
+    if (fill == "padj" && padj.scale == "linear") fill_cols <- rev(fill_cols)
 
     term_f <- factor(df$id, levels = term_lv)
     cmp_f <- df$comparison
@@ -548,11 +717,19 @@ plot_enrichment_grid <- function(
         size.limits = c(0, size.max),
         size.breaks = breaks,
         size.labels = blabels,
-        size.title = switch(size, padj = quote(-log[10] ~ "padj"), count = "Genes", gene_ratio = "Gene ratio"),
-        fill.colours = resolve_continuous_palette(cols, diverging = fill == "nes", default = "seq-purple"),
+        size.title = switch(
+            size,
+            padj = if (padj_size) "padj" else quote(-log[10] ~ "padj"),
+            count = "Genes",
+            gene_ratio = "Gene ratio"
+        ),
+        fill.colours = fill_cols,
         fill.limits = limits,
         fill.center = if (fill == "nes") 0 else NULL,
-        fill.title = if (fill == "nes") "NES" else quote(-log[10] ~ "padj"),
+        fill.title = fill_guide$title,
+        fill.breaks = fill_guide$breaks,
+        fill.labels = fill_guide$labels,
+        fill.reverse = fill_guide$reverse,
         na.value = "grey80",
         outline.labels = significance_labels(padj.cutoff),
         outline.title = "Significance",
@@ -594,8 +771,9 @@ replace_terms <- function(x,
 #' @description Shows the most significant gene sets of one enrichment result,
 #'              or of several side by side (e.g. the gene sets enriched in up-
 #'              and in down-regulated genes): the gene ratio (or NES) on the
-#'              x-axis, the number of genes as dot size and the -log10 adjusted
-#'              p-value as colour. Each result is a panel named by a strip and
+#'              x-axis, the number of genes as dot size and the adjusted
+#'              p-value as colour (darker for smaller). One result is drawn in
+#'              reversed magma; several are panels named by strips, each
 #'              drawn in its own single-hue palette, so that panels read apart
 #'              at a glance; panels are stacked (default), placed side by side,
 #'              or in a grid. Panels have a fixed size, so the figure combines
@@ -628,6 +806,14 @@ replace_terms <- function(x,
 #' @param padj.cutoff Adjusted p-value below which a gene set is significant,
 #'                    default is 0.05
 #'
+#' @param padj.scale How adjusted p-values are coloured: "log" (default;
+#'                   on the -log10 scale, the legend labelled in adjusted
+#'                   p-values, e.g. 0.01 and \eqn{10^{-5}}), "-log10" (legend
+#'                   in -log10 padj) or "linear" (linear in the adjusted
+#'                   p-value; sets below about 0.001 then look alike, so it
+#'                   suits results of one order of magnitude). The smallest
+#'                   adjusted p-value is always the darkest
+#'
 #' @param show.ns Whether non-significant gene sets may fill a panel that has
 #'                fewer than `n` significant ones, default is FALSE
 #'
@@ -643,11 +829,13 @@ replace_terms <- function(x,
 #' @param wrap.width Gene set names are wrapped onto lines of at most this
 #'                   many characters, default is 45
 #'
-#' @param cols Colours of the -log10 adjusted p-value: NULL (default) gives
-#'             each panel its own single-hue palette, in the order
-#'             "seq-purple", "seq-blue", "seq-green", "seq-orange", "seq-red",
-#'             "seq-teal", "seq-magenta"; one palette name (or colours from
-#'             low to high) for every panel; or palette names, one per panel
+#' @param cols Colours of the adjusted p-value, from the least to the most
+#'             significant. NULL (default) gives one result reversed magma
+#'             (light orange to near-black purple, trimmed at both ends), and
+#'             several results each their own single-hue palette, in the
+#'             order "seq-purple", "seq-blue", "seq-green", "seq-orange",
+#'             "seq-red", "seq-teal", "seq-magenta"; one palette name (or
+#'             colours) for every panel; or palette names, one per panel
 #'             (named by panel, or in panel order), or a list of colour
 #'             vectors
 #'
@@ -663,7 +851,8 @@ replace_terms <- function(x,
 #' @param title Title of the figure. Default is NULL
 #'
 #' @param fill.title,size.title Titles of the colour and size legends. If NULL
-#'                              (default), "-log10 padj" and "Genes"
+#'                              (default), "padj" (-log10 padj with
+#'                              `padj.scale = "-log10"`) and "Genes"
 #'
 #' @param cell.height Height of a gene set's row in inches, default is 0.2
 #'                    (rows of names wrapped onto several lines are taller)
@@ -734,6 +923,7 @@ plot_enrichment_dots <- function(
     x = c("gene_ratio", "nes", "count", "padj"),
     order.by = c("x", "padj"),
     padj.cutoff = 0.05,
+    padj.scale = c("log", "-log10", "linear"),
     show.ns = FALSE,
     term.replace = NULL,
     wrap.width = 45,
@@ -753,6 +943,7 @@ plot_enrichment_dots <- function(
 ) {
     x <- match.arg(x)
     order.by <- match.arg(order.by)
+    padj.scale <- match.arg(padj.scale)
     legend.position <- match.arg(legend.position)
     legend.layout <- match.arg(legend.layout)
     check_de_cutoffs(padj.cutoff, 0)
@@ -762,8 +953,15 @@ plot_enrichment_dots <- function(
     has_strip <- !is.null(res$comparison)
     if (!has_strip) res$comparison <- factor("Enrichment")
     res$comparison <- droplevels(res$comparison)
+    # One result (a table, or a list of one) is drawn in reversed magma;
+    # counted before panels without gene sets are left out, so that the
+    # palettes do not change with the results
+    single_result <- nlevels(res$comparison) == 1
     res <- res[!is.na(res$padj), , drop = FALSE]
-    res$neg_log10_padj <- -log10(res$padj)
+    # Adjusted p-values of 0 are drawn as the smallest non-zero one
+    res$neg_log10_padj <- -log10(floor_padj(res$padj))
+    # Colour value: -log10 padj ("log", "-log10") or padj ("linear")
+    res$padj_colour <- padj_colour_value(res$padj, padj.scale)
     res$significant <- res$padj < padj.cutoff
 
     # GSEA: count and gene ratio from the leading edge
@@ -807,7 +1005,7 @@ plot_enrichment_dots <- function(
     if (length(picked) == 0) stop("No gene sets to draw", call. = FALSE)
 
     # Colours: one palette per panel
-    pals <- enrichment_panel_palettes(cols, names(picked))
+    pals <- enrichment_panel_palettes(cols, names(picked), single = single_result)
 
     # Shared limits: colour, size and x range over all panels
     all_d <- do.call(rbind, picked)
@@ -818,7 +1016,7 @@ plot_enrichment_dots <- function(
     sz <- theme_sizes()
     max_size <- 0.85 * min(cell.height, 0.25) * 72 / (0.75 * ggplot2::.pt)
     same_palette <- length(unique(vapply(pals, paste, "", collapse = ""))) == 1
-    fill.title <- if (is.null(fill.title)) quote(-log[10] ~ "padj") else fill.title
+    if (is.null(fill.title)) fill.title <- if (padj.scale == "-log10") quote(-log[10] ~ "padj") else "padj"
     size.title <- if (is.null(size.title)) "Genes" else size.title
     x_title <- switch(x, gene_ratio = "Gene ratio", nes = "Normalized enrichment score", count = "Genes",
                       padj = quote(-log[10] ~ "padj"))
@@ -872,8 +1070,15 @@ plot_enrichment_dots <- function(
         d$id <- factor(d$term_id, levels = y_levels)
         d$panel <- factor(strip_names[i], levels = strip_names[i])
         pal <- pals[[pn]]
+        # Colour scale of the adjusted p-values: limits, breaks and labels
+        # (see padj_colour_guide()); linear adjusted p-values run the palette
+        # backwards, so that the smallest is the darkest
+        colour_lim <- range_of(lim_d$padj_colour)
+        if (padj.scale == "linear") colour_lim[1] <- max(colour_lim[1], 0)
+        colour_guide <- padj_colour_guide(colour_lim, padj.scale)
+        scale_pal <- if (padj.scale == "linear") rev(pal) else pal
         fill_guide <- if (show_fill[i]) {
-            guide_colourbar(order = 1, theme = theme(
+            guide_colourbar(order = 1, reverse = colour_guide$reverse, theme = theme(
                 legend.key.height = unit(min(0.9, max(0.5, nrow(d) * row_h * 0.8)), "in"),
                 legend.key.width = unit(0.12, "in"),
                 legend.frame = element_rect(colour = "black", linewidth = 0.3),
@@ -886,14 +1091,21 @@ plot_enrichment_dots <- function(
         # Solid dots without an outline (a ring would darken the pale end of
         # the palette); without counts (GSEA desktop reports) all of one size
         dots <- if (has_count) {
-            geom_point(aes(colour = .data$neg_log10_padj, size = .data$count), shape = 16)
+            geom_point(aes(colour = .data$padj_colour, size = .data$count), shape = 16)
         } else {
-            geom_point(aes(colour = .data$neg_log10_padj), shape = 16, size = max_size * 0.6)
+            geom_point(aes(colour = .data$padj_colour), shape = 16, size = max_size * 0.6)
         }
         p <- ggplot(d, aes(x = .data$x, y = .data$id)) +
             dots +
-            scale_colour_gradientn(colours = pal, limits = range_of(lim_d$neg_log10_padj),
-                                   oob = scales::oob_squish, name = bold_title(fill.title), guide = fill_guide) +
+            scale_colour_gradientn(
+                colours = scale_pal,
+                limits = colour_lim,
+                breaks = colour_guide$breaks,
+                labels = colour_guide$labels,
+                oob = scales::oob_squish,
+                name = bold_title(fill.title),
+                guide = fill_guide
+            ) +
             # Padding rows have no tick, grid line or name
             scale_y_discrete(limits = y_levels, breaks = setdiff(y_levels, pad), labels = labels,
                              expand = grid_expansion()) +
@@ -1037,11 +1249,17 @@ plot_enrichment_dots <- function(
 #'
 #' @param panels Panel names
 #'
+#' @param single Whether the plot has one result; with `cols = NULL`, it is
+#'               drawn in reversed magma (\code{magma_r_trimmed()}). Default
+#'               is FALSE
+#'
 #' @return A list of colour vectors, named by panel
 #'
 #' @keywords internal
 enrichment_panel_palettes <- function(cols,
-                                      panels) {
+                                      panels,
+                                      single = FALSE) {
+    if (is.null(cols) && single) return(stats::setNames(list(magma_r_trimmed()), panels))
     defaults <- c("seq-purple", "seq-blue", "seq-green", "seq-orange", "seq-red", "seq-teal", "seq-magenta")
     per_panel <- if (is.null(cols)) {
         as.list(rep_len(defaults, length(panels)))
@@ -1085,10 +1303,18 @@ enrichment_panel_palettes <- function(cols,
 #'                    show, the most significant first, default is 10 each
 #'
 #' @param fill Bar colours: "direction" (default; one colour for positive and
-#'             one for negative NES) or "padj" (-log10 adjusted p-value)
+#'             one for negative NES) or "padj" (adjusted p-value, see
+#'             `padj.scale`)
 #'
 #' @param padj.cutoff Adjusted p-value below which a gene set is significant,
 #'                    default is 0.05
+#'
+#' @param padj.scale How adjusted p-values are coloured (with
+#'                   `fill = "padj"`): "log" (default; on the -log10 scale,
+#'                   the legend labelled in adjusted p-values, e.g. 0.01 and
+#'                   \eqn{10^{-5}}), "-log10" (legend in -log10 padj) or
+#'                   "linear" (linear in the adjusted p-value). The smallest
+#'                   adjusted p-value is always the darkest
 #'
 #' @param show.ns Whether non-significant gene sets may be shown (faded, and
 #'                explained in a "Significance" legend), when there are
@@ -1099,8 +1325,8 @@ enrichment_panel_palettes <- function(cols,
 #'             negative NES: a vector named `up` and / or `down`, or two
 #'             colours (up, down). NULL (default) takes the ends of the
 #'             "blue-magenta" palette. With `fill = "padj"`, a sequential
-#'             palette name or colours from low to high, default
-#'             "seq-purple"
+#'             palette name or colours from the least to the most
+#'             significant, default "seq-purple"
 #'
 #' @param term.replace Replacements in gene set names, applied after
 #'                     cleaning: a named character vector of regular
@@ -1145,6 +1371,7 @@ plot_enrichment_bars <- function(
     n.down = 10,
     fill = c("direction", "padj"),
     padj.cutoff = 0.05,
+    padj.scale = c("log", "-log10", "linear"),
     show.ns = FALSE,
     cols = NULL,
     term.replace = NULL,
@@ -1156,6 +1383,7 @@ plot_enrichment_bars <- function(
     ...
 ) {
     fill <- match.arg(fill)
+    padj.scale <- match.arg(padj.scale)
     check_de_cutoffs(padj.cutoff, 0)
     res <- as_enrichment(enrichment, ...)
     res$term <- replace_terms(res$term, term.replace)
@@ -1177,7 +1405,8 @@ plot_enrichment_bars <- function(
     df <- rbind(pick(res[res$nes > 0, , drop = FALSE], n.up), pick(res[res$nes < 0, , drop = FALSE], n.down))
     if (nrow(df) == 0) stop("No significant gene sets to draw; see `show.ns`", call. = FALSE)
     df <- df[order(df$nes), , drop = FALSE]
-    df$neg_log10_padj <- -log10(df$padj)
+    # Colour value of the adjusted p-values on the scale of `padj.scale`
+    df$padj_colour <- padj_colour_value(df$padj, padj.scale)
 
     sz <- theme_sizes()
     text_size <- sz$small
@@ -1204,13 +1433,23 @@ plot_enrichment_bars <- function(
         bar_fill <- scale_fill_manual(values = dir_cols, guide = "none")
         bar_aes <- aes(fill = .data$direction, alpha = .data$significant)
     } else {
-        bar_fill <- scale_fill_gradientn(colours = resolve_continuous_palette(cols, FALSE, default = "seq-purple"),
-                                         limits = c(0, NA), name = bold_title(quote(-log[10] ~ "padj")),
-                                         guide = guide_colourbar(order = 1))
-        bar_aes <- aes(fill = .data$neg_log10_padj, alpha = .data$significant)
+        fill_cols <- resolve_continuous_palette(cols, FALSE, default = "seq-purple")
+        # Linear adjusted p-values: the smallest (most significant) darkest
+        if (padj.scale == "linear") fill_cols <- rev(fill_cols)
+        limits <- c(0, max(df$padj_colour))
+        guide <- padj_colour_guide(limits, padj.scale)
+        bar_fill <- scale_fill_gradientn(
+            colours = fill_cols,
+            limits = limits,
+            breaks = guide$breaks,
+            labels = guide$labels,
+            name = bold_title(guide$title),
+            guide = guide_colourbar(order = 1, reverse = guide$reverse)
+        )
+        bar_aes <- aes(fill = .data$padj_colour, alpha = .data$significant)
     }
     # With direction colours, non-significant bars are faded and a legend
-    # says so whenever there are any. With -log10 padj colours the colour
+    # says so whenever there are any. With adjusted p-value colours the colour
     # already shows significance; fading as well would hide the palest bars
     sig_lab <- significance_labels(padj.cutoff)
     df$significant <- factor(ifelse(df$significant, sig_lab[1], sig_lab[2]), levels = sig_lab)

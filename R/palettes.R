@@ -693,6 +693,23 @@ group_colours <- function(cols,
 }
 
 
+#' Reversed magma without its ends
+#'
+#' Light orange (low) to near-black purple (high): magma reversed and trimmed
+#' (5% at the dark end, 8% at the light end), so that the lowest values are
+#' still visible on a white or transparent background and the highest are not
+#' black. The default of \code{plot_rank()} (numeric colours) and of a single
+#' panel of \code{plot_enrichment_dots()}.
+#'
+#' @return 256 colours, from low to high
+#'
+#' @keywords internal
+magma_r_trimmed <- function() {
+    # "#RRGGBB", as the registry stores colours (viridisLite adds an alpha)
+    substr(viridisLite::magma(256, begin = 0.05, end = 0.92, direction = -1), 1, 7)
+}
+
+
 #' Resolve the `cols` argument of a continuous colour scale into colours
 #'
 #' Shared by every continuous scale of the package (feature plots, dot plots,
