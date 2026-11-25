@@ -51,6 +51,7 @@ DimPlot_bioToolkit(pbmc, group.by = "cell_type", label = TRUE)
 ### Variants
 
 - `split.by`
+- `show.n`
 - `cells.highlight`
 - `cells`
 - `outline`
@@ -72,6 +73,23 @@ DimPlot_bioToolkit(
 
 ![](sc-embeddings_files/figure-html/dim-split-2.png)
 
+The number of plotted cells in a corner of each panel, bottom right by
+default (`n.position` for the other corners). With `split.by`, each
+panel shows its own count.
+
+``` r
+
+DimPlot_bioToolkit(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "condition",
+    show.n = TRUE,
+    panel.width = 3
+)
+```
+
+![](sc-embeddings_files/figure-html/dim-show-n-3.png)
+
 Colour some cells and draw the rest in grey, e.g. one cell type:
 
 ``` r
@@ -80,7 +98,7 @@ mono <- colnames(pbmc)[pbmc$cell_type %in% c("CD14 Mono", "FCGR3A Mono")]
 DimPlot_bioToolkit(pbmc, group.by = "cell_type", cells.highlight = mono)
 ```
 
-![](sc-embeddings_files/figure-html/dim-highlight-3.png)
+![](sc-embeddings_files/figure-html/dim-highlight-4.png)
 
 Plot a subset only. `full.extent = TRUE` keeps the axes of the whole
 object, so that the subset lines up with the full plot:
@@ -95,7 +113,7 @@ DimPlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/dim-cells-4.png)
+![](sc-embeddings_files/figure-html/dim-cells-5.png)
 
 An outline around the cell clouds; `outline.color = "darken"` uses a
 darker shade of each group’s colour.
@@ -105,7 +123,7 @@ darker shade of each group’s colour.
 DimPlot_bioToolkit(pbmc, group.by = "cell_type", outline = TRUE)
 ```
 
-![](sc-embeddings_files/figure-html/dim-outline-5.png)
+![](sc-embeddings_files/figure-html/dim-outline-6.png)
 
 Colour by a fine annotation and outline a broader one (`mark.by`) with a
 dashed line around each cloud. Cells with no `mark.by` group (here the
@@ -136,7 +154,7 @@ DimPlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/dim-mark-6.png)
+![](sc-embeddings_files/figure-html/dim-mark-7.png)
 
 `legend.position` takes “right”, “left”, “top”, “bottom”, “inside” (in
 the empty corner of the panel) or “none”.
@@ -151,7 +169,7 @@ DimPlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/dim-legend-7.png)
+![](sc-embeddings_files/figure-html/dim-legend-8.png)
 
 ### Integration and the embedding
 
@@ -171,7 +189,7 @@ DimPlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/dim-reduction-8.png)
+![](sc-embeddings_files/figure-html/dim-reduction-9.png)
 
 ### Where the arrows go
 
@@ -203,7 +221,7 @@ DimPlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/arrows-bl-9.png)
+![](sc-embeddings_files/figure-html/arrows-bl-10.png)
 
 ``` r
 
@@ -218,7 +236,7 @@ DimPlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/arrows-left-10.png)
+![](sc-embeddings_files/figure-html/arrows-left-11.png)
 
 ``` r
 
@@ -233,7 +251,7 @@ DimPlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/arrows-bottom-11.png)
+![](sc-embeddings_files/figure-html/arrows-bottom-12.png)
 
 ``` r
 
@@ -248,7 +266,7 @@ DimPlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/arrows-all-12.png)
+![](sc-embeddings_files/figure-html/arrows-all-13.png)
 
 ### Arrow size
 
@@ -271,7 +289,7 @@ DimPlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/arrow-scale-13.png)
+![](sc-embeddings_files/figure-html/arrow-scale-14.png)
 
 ## Genes and scores
 
@@ -285,7 +303,7 @@ FeaturePlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/featureplot-14.png)
+![](sc-embeddings_files/figure-html/featureplot-15.png)
 
 Cells with no expression (0) are drawn in grey, apart from the colour
 scale, so that “not detected” is not confused with “low”
@@ -312,7 +330,7 @@ FeaturePlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/feat-split-15.png)
+![](sc-embeddings_files/figure-html/feat-split-16.png)
 
 Scores centred on 0 get a diverging scale automatically
 (`diverging = "auto"`): the centre colour stays at 0 and each side
@@ -342,7 +360,7 @@ FeaturePlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/feat-score-16.png)
+![](sc-embeddings_files/figure-html/feat-score-17.png)
 
 Any metadata column, e.g. a QC metric; `max.cutoff` caps the scale at a
 quantile so that a few extreme cells do not compress it:
@@ -357,7 +375,7 @@ FeaturePlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/feat-meta-17.png)
+![](sc-embeddings_files/figure-html/feat-meta-18.png)
 
 Label groups (active identities, or `label.by`) on top of the values:
 
@@ -371,7 +389,7 @@ FeaturePlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/feat-label-18.png)
+![](sc-embeddings_files/figure-html/feat-label-19.png)
 
 ### Sparse genes: `geom`
 
@@ -396,7 +414,7 @@ FeaturePlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/geom-point-19.png)
+![](sc-embeddings_files/figure-html/geom-point-20.png)
 
 Cells binned into hexagons. `hex.fun = "mean"` colours by the mean value
 in a tile (zeros included); `hex.fun = "pct"` by the % of cells
@@ -414,7 +432,7 @@ FeaturePlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/geom-hex-20.png)
+![](sc-embeddings_files/figure-html/geom-hex-21.png)
 
 Values smoothed over neighbouring cells. `density.method = "smooth"` (a
 kernel-weighted mean, in the units of the feature); `"wkde"` is the
@@ -432,7 +450,7 @@ FeaturePlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/geom-density-21.png)
+![](sc-embeddings_files/figure-html/geom-density-22.png)
 
 ## Orienting an embedding
 
@@ -453,7 +471,7 @@ DimPlot_bioToolkit(
 )
 ```
 
-![](sc-embeddings_files/figure-html/transform-22.png)
+![](sc-embeddings_files/figure-html/transform-23.png)
 
 ## Restyling plots made by Seurat
 
@@ -477,7 +495,7 @@ seurat_plots <- list(
 format_sc_plots(seurat_plots, ncol = 2)
 ```
 
-![](sc-embeddings_files/figure-html/format-seurat-23.png)
+![](sc-embeddings_files/figure-html/format-seurat-24.png)
 
 ``` r
 
@@ -488,7 +506,7 @@ own_plots <- list(
 format_sc_plots(own_plots, ncol = 2, arrow.panels = "all")
 ```
 
-![](sc-embeddings_files/figure-html/format-own-24.png)
+![](sc-embeddings_files/figure-html/format-own-25.png)
 
 For a single plot,
 [`add_dimension_arrows()`](https://j-y26.github.io/bioToolkit/reference/add_dimension_arrows.md)
@@ -503,7 +521,7 @@ p <- manipulate_sc_plot(p, remove.grid = TRUE, legend.title = "Condition")
 add_dimension_arrows(p, reduction = "umap", arrow.scale = 0.8)
 ```
 
-![](sc-embeddings_files/figure-html/arrows-seurat-25.png)
+![](sc-embeddings_files/figure-html/arrows-seurat-26.png)
 
 Plots made by Seurat have no fixed panel size, so give
 [`save_plot()`](https://j-y26.github.io/bioToolkit/reference/save_plot.md)

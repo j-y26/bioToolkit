@@ -20,8 +20,6 @@ object works the same way.
 ``` r
 
 pbmc <- docs_kang()
-#> Warning: Feature names cannot have underscores ('_'), replacing with dashes
-#> ('-')
 p <- DimPlot_bioToolkit(pbmc, group.by = "cell_type", label = TRUE)
 p
 ```

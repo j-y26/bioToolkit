@@ -35,6 +35,9 @@ DimPlot_bioToolkit(
   outline.darken = 0.4,
   label = FALSE,
   label.size = 3.5,
+  show.n = FALSE,
+  n.position = c("bottom.right", "bottom.left", "top.right", "top.left"),
+  n.size = NULL,
   mark = FALSE,
   mark.by = NULL,
   mark.cols = NULL,
@@ -162,6 +165,26 @@ DimPlot_bioToolkit(
 - label.size:
 
   Size of the group labels in mm, default is 3.5
+
+- show.n:
+
+  Whether to write the number of plotted cells ("n = 1,234") in a corner
+  of each panel, default is FALSE. All plotted cells are counted (after
+  \`cells\`), including those not in \`cells.highlight\`; with
+  \`split.by\`, each panel shows its own count
+
+- n.position:
+
+  Corner for the count: "bottom.right" (default), "bottom.left",
+  "top.right" or "top.left". The dimension arrows are drawn in the
+  bottom left corner
+
+- n.size:
+
+  Font size of the count in points. If NULL (default), the base text
+  size of
+  [`theme_bioToolkit`](https://j-y26.github.io/bioToolkit/reference/theme_bioToolkit.md)
+  (11)
 
 - mark:
 
