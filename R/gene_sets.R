@@ -1,9 +1,4 @@
-# Gene set formats
-#
-# format_gene_sets() converts between the common ways gene sets are stored
-# (GMT file, named list, GSEABase GeneSetCollection). It was kept from the
-# former R/module_scoring_rnaseq.R when the module scoring functions were
-# retired in 0.10.0 (backup in dev/legacy/).
+# Gene set format conversion
 
 #' @title Convert gene sets between formats
 #'

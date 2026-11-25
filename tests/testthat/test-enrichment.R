@@ -1,5 +1,4 @@
-# standardize_enrichment(), plot_enrichment_grid(), plot_enrichment_dots(),
-# plot_enrichment_bars() and plot_gsea_rank() (G3)
+# Enrichment readers and plots
 
 fgsea_fixture <- function(seed = 1) {
     set.seed(seed)
@@ -150,7 +149,7 @@ test_that("padj.scale colours on -log10 and labels adjusted p-values", {
     expect_equal(sc$name, "padj")
     expect_true(all(10^-sc$breaks <= 1))
     expect_false(isTRUE(p_log$scales$get_scales("colour")$guide$params$reverse))
-    # "-log10": the former legend
+    # "-log10" legend
     p_m <- plot_enrichment_dots(d, n = 5, padj.scale = "-log10")
     expect_true(is.call(p_m$scales$get_scales("colour")$name))
     expect_s3_class(p_m$scales$get_scales("colour")$breaks, "waiver")
@@ -306,7 +305,7 @@ test_that("plot_enrichment_dots lines up panels side by side and collects legend
     expect_s3_class(block, "bt_legend_block")
     expect_length(block$columns, 2)
     expect_no_warning(save_plot(p, tempfile(fileext = ".pdf")))
-    # Stacked: collected by patchwork, as before 1.0.0
+    # Stacked: collected by patchwork
     p_stacked <- plot_enrichment_dots(list(A = ora(6), B = ora(2)), n = 6, nrow = 1, legend.layout = "stacked")
     expect_identical(p_stacked$patches$layout$guides, "collect")
 })

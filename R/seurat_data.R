@@ -1,27 +1,4 @@
 # Fetching expression from Seurat objects
-#
-# Design
-# ------
-# A Seurat object often holds several assays with the same genes: "RNA"
-# (LogNormalize), "SCT" (SCTransform), "integrated" (corrected values for a
-# few thousand genes), ATAC gene activities... Seurat functions read the
-# *default* assay unless told otherwise, so the same call can plot different
-# numbers depending on what `DefaultAssay()` was last set to, and FetchData()
-# silently falls back to other assays for genes missing from the default one.
-# Every plot of expression in this package therefore:
-#   * takes an `assay` argument (NULL = the default assay, as in Seurat), and
-#     says which assay and layer it read, every time (`resolve_assay()`);
-#   * fails with a clear message when that assay lacks the layer (e.g. a
-#     Seurat v5 "RNA" assay with only counts, never normalized);
-#   * fetches genes with the assay key prefix (e.g. "sct_Cdh5"), so that the
-#     values come from that assay and nowhere else (`fetch_features()`). This
-#     also reads Seurat v5 split layers ("data.sample1", "data.sample2", ...)
-#     as one, as FetchData() joins them;
-#   * records the assay and layer in its source data.
-#
-# This mirrors SCpubr's check_and_set_assay() (assay = NULL -> default
-# assay), but without changing the default assay of the object and with the
-# choice reported.
 
 
 #' Resolve the assay and layer expression is read from

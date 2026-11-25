@@ -1,4 +1,4 @@
-# plot_de_dots() (G2) and plot_multi_volcano() (G4)
+# plot_de_dots() and plot_multi_volcano()
 
 multi_de_fixture <- function() {
     set.seed(2)

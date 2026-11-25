@@ -1,50 +1,4 @@
-# Per-cell distributions: violin and ridge plots (roadmap item S1)
-#
-# Design
-# ------
-# `VlnPlot_bioToolkit()` and `RidgePlot_bioToolkit()` replace
-# Seurat::VlnPlot() / RidgePlot() and the user's own QC violin and ridge
-# plots (`qc_violin()`, `qc_ridge()`), whose look is kept as the default:
-# violins without outline, scaled to the same width; a white box of the
-# inter-quartile range and median, without whiskers or outliers; a random
-# sample of the cells as rasterized points; ridges with a white outline.
-#
-# * Any feature: genes (read from one assay and layer, reported in a message;
-#   R/seurat_data.R), metadata columns (QC metrics, module scores) and
-#   embedding dimensions, mixed in one call. `object` may also be a data
-#   frame (e.g. a QC table before a Seurat object exists).
-# * One plot per feature, combined with patchwork, so that each feature gets
-#   its own value axis: `log` and `percent` take TRUE or the names of the
-#   features they apply to, since one call often mixes counts (log axis),
-#   fractions (% axis) and expression (linear axis).
-# * `y.max` (Seurat's name) zooms the value axis to a number or a quantile
-#   ("q99") of the values: densities and boxes are still computed from all
-#   cells (coord_cartesian()), unlike scale limits, which drop cells. The
-#   panels are not clipped (the split.by bars sit outside them), so violins
-#   and boxes are cut at the top themselves (`GeomViolinTop`,
-#   `GeomBoxplotTop`) and points above it are not drawn (2026-10-14; they
-#   used to run past the axis).
-# * Genes are sparse: most cells of a group may have 0, and the violin is
-#   then a spike at 0. `zeros = "exclude"` draws the cells above 0 only;
-#   "annotate" also prints the % of cells above 0 for each group.
-# * `group.by` / `split.by` (package-wide rule, 2026-10-13): `group.by` gives
-#   the violins, compared with each other and filled with the group colours
-#   (as in DimPlot_bioToolkit()); `split.by` gives labelled blocks of violins
-#   with gaps, like facets (e.g. group.by = "condition", split.by =
-#   "cell_type"), each marked by a bar and its name (R/group_bars.R), by
-#   default opposite the group names (`split.by.side`). Seurat's dodged
-#   violins are not drawn.
-# * Orientation: `flip = FALSE` draws vertical violins (groups on x);
-#   `flip = TRUE` horizontal ones (groups on y, the first at the top). The
-#   meaning of `flip` is that of DotPlot_bioToolkit(); Seurat's `flip` only
-#   applies to stacked violins. Ridges are horizontal only (ggridges).
-# * `stack = TRUE`: one thin panel per feature, sharing the group axis (the
-#   compact layout for many markers, as scanpy's stacked violin).
-# * Sizes (F2): one violin is `cell.width` (vertical) or `cell.height`
-#   (horizontal) inches wide; the value axis is `panel.height` /
-#   `panel.width` inches long.
-# * No p-values: tests on cells treat cells as independent replicates and
-#   overstate significance.
+# Per-cell distributions: violin and ridge plots
 
 
 #' @title Violin plot of genes or per-cell values
@@ -732,10 +686,10 @@ violin_panel <- function(d,
         text_size <- pt_to_size(theme_sizes()$small * 0.85)
         p <- p + if (flip) {
             geom_text(data = pct, aes(x = Inf, y = .data$group, label = .data$label), inherit.aes = FALSE,
-                      hjust = 1.1, size = text_size, colour = "grey30")
+                      hjust = 1.1, size = text_size, colour = "black")
         } else {
             geom_text(data = pct, aes(x = .data$group, y = Inf, label = .data$label), inherit.aes = FALSE,
-                      vjust = 1.3, size = text_size, colour = "grey30")
+                      vjust = 1.3, size = text_size, colour = "black")
         }
     }
     p <- p + scale_fill_manual(values = group_cols, drop = TRUE, guide = guide_legend(reverse = flip))
@@ -828,7 +782,7 @@ ridge_panel <- function(d,
         pct$label <- pct_label(pct$pct)
         p <- p + geom_text(data = pct, aes(x = Inf, y = .data$pos, label = .data$label),
                            inherit.aes = FALSE, hjust = 1, vjust = -0.4,
-                           size = pt_to_size(theme_sizes()$small * 0.85), colour = "grey30")
+                           size = pt_to_size(theme_sizes()$small * 0.85), colour = "black")
     }
     p
 }

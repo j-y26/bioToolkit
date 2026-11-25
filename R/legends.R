@@ -1,21 +1,4 @@
 # Legends as separate figures
-#
-# Design
-# ------
-# * Manual figure layout (e.g. in Illustrator) often needs the legend on its
-#   own: `extract_legend()` takes it out of a plot, and `save_plot()` saves it
-#   to a file sized to fit, like a plot.
-# * By default the legend is exactly as it is drawn in the plot. Changes
-#   (direction, title position, text sizes, ...) are made by re-drawing the
-#   legend with ggplot2's own theme settings before taking it out, never by
-#   editing the drawn legend, so anything ggplot2 can do to a legend works.
-# * ggplot2 measures text when it builds a plot, with the font metrics of the
-#   open device; a legend built for a PDF and written to a PNG (different
-#   fonts) gets clipped text. The extracted legend therefore keeps the plot it
-#   came from, and `save_plot()` re-builds it on the kind of device it saves
-#   with, as it does for plots.
-# * The legend is returned as a grob, so it can also be drawn with
-#   `grid::grid.draw()` or placed in a patchwork.
 
 
 #' @title Extract the legend of a plot
@@ -172,8 +155,8 @@ print.bt_legend <- function(x,
 }
 
 
-# Legend blocks (revision of 2026-10-14)
-# ---------------------------------------
+# Legend blocks
+# -------------
 # Legends of several plots arranged in columns, e.g. the colour bars of the
 # panels of plot_enrichment_dots() in one column and their size legends in
 # the next, each column in panel order. Like extract_legend(), the legends

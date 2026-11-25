@@ -1,12 +1,4 @@
-# Source data behind figures (roadmap item F6)
-#
-# Design
-# ------
-# Journals ask for the numbers behind each figure panel. Every plot function
-# of the package keeps the tidy table it built: either as the plot's own data
-# (`plot$data`), or, when its layers use different data, as the
-# "source_data" attribute, which takes precedence. `export_source_data()`
-# writes that table out, one table per plot of a patchwork.
+# Source data behind figures
 
 
 #' @title Export the data behind a plot

@@ -1,4 +1,4 @@
-# Shared DE-table reader (roadmap item F5)
+# DE-table reader
 
 # One small fixture per method, with the columns each tool writes
 de_fixtures <- function() {

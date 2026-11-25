@@ -1,4 +1,4 @@
-# Volcano plot (roadmap item R2); de_dot_plot() (R3) was replaced by plot_de_dots() (G2)
+# Volcano plot
 
 # A small edgeR-like table with known significance:
 #   Up1..Up3     significant, logFC > 0 (Up1 most significant)

@@ -7,19 +7,23 @@
 summarize_group_meta(
   object,
   group.by,
-  split.by,
+  split.by = NULL,
   facet.by = NULL,
   sample.by = NULL,
-  cells = NULL
+  cells = NULL,
+  unit = "cells"
 )
 }
 \arguments{
-\item{object}{A Seurat object, or a data frame with one row per cell (e.g.
-its metadata)}
+\item{object}{A Seurat object, or a table with one row per cell, gene,
+peak... (its metadata, a gene or peak annotation): anything
+\code{as.data.frame()} converts, e.g. a data frame, tibble,
+data.table, Bioconductor \code{DataFrame} or \code{GRanges}}
 
 \item{group.by}{Column of the groups counted (e.g. cell type)}
 
-\item{split.by}{Column of the conditions (e.g. genotype)}
+\item{split.by}{Column of the conditions (e.g. genotype), or NULL (default)
+to count all cells as one condition, "All <unit>"}
 
 \item{facet.by}{Column within whose levels proportions are computed
 separately (e.g. stage), or NULL (default)}
@@ -28,7 +32,12 @@ separately (e.g. stage), or NULL (default)}
 or NULL (default) to pool cells}
 
 \item{cells}{Cells (rows) to use, as names or indices. If NULL (default),
-all}
+all. A table without row names of its own is numbered, and
+then takes row indices only}
+
+\item{unit}{What a row is, used in messages and in the name of the single
+condition when `split.by` is NULL: "cells" (default), "genes",
+"peaks"...}
 }
 \value{
 A data frame with one row per group and condition (and facet and
@@ -38,11 +47,17 @@ A data frame with one row per group and condition (and facet and
         without a value in any of the columns are left out, with a message
 }
 \description{
-Counts the cells of each group (e.g. cell type) in each
-             condition, and the proportion they make up of that
-             condition's cells, optionally within panels (`facet.by`) and
-             per sample (`sample.by`). The data behind
-             \code{\link{plot_composition_scatter}}.
+Counts the cells (or genes, peaks...) of each group (e.g. cell
+             type) in each condition, and the proportion they make up of
+             that condition's cells, optionally within panels (`facet.by`)
+             and per sample (`sample.by`). The data behind
+             \code{\link{plot_composition_scatter}} and
+             \code{\link{plot_composition_bars}}.
+}
+\details{
+Columns must be categorical: factors, characters, logicals, or
+whole numbers (e.g. cluster numbers), which become factors in increasing
+order. Other numbers must be binned first, e.g. with \code{cut()}.
 }
 \examples{
 meta <- data.frame(
@@ -51,7 +66,11 @@ meta <- data.frame(
 )
 summarize_group_meta(meta, group.by = "cell_type", split.by = "genotype")
 
+# One condition: the share of all rows in each group
+summarize_group_meta(meta, group.by = "cell_type", unit = "genes")
+
 }
 \seealso{
-\code{\link{plot_composition_scatter}}
+\code{\link{plot_composition_scatter}},
+         \code{\link{plot_composition_bars}}
 }

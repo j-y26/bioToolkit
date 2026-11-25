@@ -1,37 +1,4 @@
-# Volcano and MA plots of differential expression results (roadmap items R2, B1)
-#
-# Design
-# ------
-# * One function, `plot_volcano()`, replaces `plot_volcano()` and
-#   `plot_volcano2()` of bioToolkit <= 0.5.0. The two only differed in how the
-#   numbers of up- and down-regulated features were shown, which is now
-#   `annotate.counts = "corner"` (old plot_volcano) or `"arrow"` (old
-#   plot_volcano2).
-# * DE results are read with `standardize_de()` (F5), so edgeR, DESeq2, limma
-#   and Seurat tables work without naming columns, p-values of 0 sit just above
-#   the others instead of at 1e-300, and NA adjusted p-values (DESeq2
-#   independent filtering) are handled in one place.
-# * The y-axis is the -log10 *adjusted* p-value (decided 2026-10-12). The
-#   colours are decided by the same adjusted p-value, so the dashed line at
-#   `padj.cutoff` separates exactly the coloured points from the grey ones and
-#   the figure can be read without the legend.
-# * Every point is drawn at its own value: no capping of extreme logFC or
-#   p-values (decided 2026-10-12).
-# * Labels are bold (bold italic for genes), to stay legible over the points
-#   and at print sizes (decided 2026-10-13).
-# * `plot_ma()` (B1) shares the classes, colours, labels and point drawing
-#   of the volcano (`de_direction()`, `volcano_colours()`,
-#   `volcano_label_flags()`); only the axes differ. The mean is drawn as the
-#   DE tool reports it: log2 values (edgeR logCPM, limma AveExpr) as they are,
-#   linear ones (DESeq2 baseMean) on a log10 axis. Its counts sit in the
-#   right corners, up above and down below 0. No capping, as in the volcano.
-# * Labels are chosen explicitly (`label` = "top", "selected" or "none"). The
-#   old functions silently replaced the requested genes by the top 10 per
-#   direction when many were requested; that behaviour is gone.
-# * Non-significant points are drawn first, so that they never hide DE points.
-# * Fixed panel size (F2) and `theme_bioToolkit("axis")` (F3). With more than
-#   5,000 features the points are rasterized (`raster.dpi`, default 1000),
-#   while labels, lines and text stay vector.
+# Volcano and MA plots of differential expression results
 
 
 #' @title Volcano plot of differential expression results
@@ -316,7 +283,7 @@ plot_volcano <- function(
             aes(label = .data$feature),
             size = label.size,
             # Bold so that labels stay legible over the points and at print
-            # sizes (user decision 2026-10-13); italic for gene names
+            # sizes; italic for gene names
             fontface = if (italic.genes) "bold.italic" else "bold",
             colour = "black",
             # Every requested label is drawn (ggrepel drops crowded labels by

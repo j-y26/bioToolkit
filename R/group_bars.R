@@ -1,30 +1,4 @@
-# Group annotation bars (revision of 2026-10-14)
-#
-# Design
-# ------
-# A higher-level grouping of the rows or columns of a plot (genes grouped by
-# cell type, `split.by` blocks, `groups` of comparisons) is drawn the same way
-# in every plot of the package: a bar along the cells of the group, set a
-# little off the grid, with the group's name in bold beyond it. Decisions
-# (user, 2026-10-14):
-#
-# * The bar is 3.5 pt thick by default (`group.bar.width`): about a quarter of
-#   a default 0.18 in (13 pt) cell, so it reads as a label band, not as an
-#   axis line, and is wide enough to show a colour. It is black by default,
-#   or coloured by group through the plot's `*.cols` argument (the same
-#   values as `cols`: a qualitative palette name, or colours named by group).
-# * By default the bar and name sit on the side opposite the axis labels
-#   (e.g. genes labelled at the bottom: gene groups on top). `*.side =
-#   "labels"` moves them to the side of the labels, beyond the labels.
-#
-# Geometry. The bar is drawn by a layer (`GeomGroupBar`) on the outermost
-# panel of that side, outside the panel (the plot is drawn with
-# `clip = "off"`): `GROUP_BAR_GAP` points from the panel edge, or from the far
-# edge of the tick labels on the label side, whose size is measured when the
-# plot is drawn (`label_extent()`). The group names are the facet strips;
-# their margin on the panel side leaves room for the bar
-# (`group_bar_margin()`). The bar spans exactly the cells of the group, so
-# the bars of neighbouring groups are set apart by the gap between panels.
+# Group annotation bars
 
 
 # Gaps (pt): between the grid (or the tick labels) and the bar, and between

@@ -1,62 +1,4 @@
-# Rank plot of any rankable metric (addition 2026-11-16)
-#
-# Design
-# ------
-# `plot_rank()` draws features (genes, regulons, metabolites, gene sets...)
-# along their rank on x, with a value on y: usually the metric they are
-# ranked by, e.g. the regulon specificity score (RSS) of SCENIC, the reporter
-# z-score of reporter metabolites, a log2 fold change or an NES. It
-# generalizes the user's reporter-metabolite rank plot: any table, any two
-# numeric columns (they can be the same).
-#
-# * Ties (user decision 2026-11-16, "option c"). Every point gets its own x
-#   position, so tied points never sit on top of each other. Ties of
-#   `rank.by` are broken by `value`, then by the feature name (radix sort, so
-#   independent of the locale), never by the row order of the input: the
-#   same data in another order gives the same plot and labels the same
-#   features. The source data hold both the position (`rank`) and the tied,
-#   competition rank (`rank_tied`, "1, 2, 2, 4") to report. `label.n` counts
-#   positions; when the cutoff falls inside a run of ties, a message names
-#   the tied features left out (labelling them all would flood the plot when
-#   a metric has many ties, e.g. many zeros).
-# * Which end is labelled (`label.side = "auto"`, user decision): both ends
-#   for a signed metric (values on both sides of 0: z-scores, fold changes,
-#   NES), where both directions mean something; only the first ranks
-#   otherwise (RSS, specificity, -log10 p), where the end of the ranking is
-#   not of interest. "first" / "last" name ends of the ranking rather than
-#   high / low values, so that they keep their meaning with
-#   `decreasing = FALSE` (e.g. p-values ranked from the smallest).
-# * Labels (user decision 2026-11-16): each label is placed on its own
-#   next to its point (no layout in columns), scattered around the corners
-#   the curve leaves empty. ggrepel was tried first and dropped: in small
-#   panels with long names (e.g. Hallmark sets) it left labels on top of
-#   each other, piled against the panel edges. The labels are placed here
-#   instead (`rank_place_labels()`), in inches, from the panel size: each
-#   label goes to the nearest position around its point (centres of a
-#   0.025 in grid over the panel) that is inside the panel and clear of the other
-#   labels, of every point and of the leader lines (no line crosses a label
-#   or another line). Positions on the side of the curve cost more, so that
-#   labels of the first ranks sit towards higher ranks and those of the
-#   last ranks towards lower ranks, where a monotone curve leaves room.
-#   Labels nearest the ends are placed first. When a panel is too crowded,
-#   the conditions are relaxed (lines, then points, then labels) with a
-#   warning. The layout is deterministic (no seed) and needs no ggrepel.
-#   For it, the panel limits are set by the function (ranks +-4%, values
-#   +-10%, drawn as invisible corners with unexpanded scales), so the panel
-#   size must be set with `panel.width` / `panel.height`. Labels are small
-#   (7 pt, under the 9 pt tick labels) with a thin leader line each.
-# * Colours: by default light grey points, the labelled ones in red (the
-#   volcano's "up" red) and 1.3 times larger. `color.by` colours by a
-#   column: numeric values with reversed magma (user decision; trimmed to
-#   0.05-0.92 of the ramp as in the user's own plot, so that the lowest
-#   values are not white and the highest not black), discrete ones with
-#   group colours. Points with larger values are drawn on top.
-#   `color.limits` fixes the colour scale, so that several figures (e.g.
-#   time points) share it; values beyond it get the end colours.
-# * Size: small panels (2.5 x 1.8 in) for a small space in a figure; text
-#   sizes are those of `theme_sizes()`, as everywhere. `split.by` ranks
-#   within each level and draws one panel per level (free scales), e.g. the
-#   RSS of each cell type.
+# Rank plot of any rankable metric
 
 
 #' @title Rank plot of a metric
@@ -292,8 +234,7 @@ plot_rank <- function(
         )
     } else if (numeric_colour) {
         pal <- if (is.null(cols)) {
-            # Reversed magma, trimmed as in the user's reporter-metabolite
-            # plot: neither white nor black at the ends
+            # Reversed magma, trimmed: neither white nor black at the ends
             magma_r_trimmed()
         } else {
             resolve_continuous_palette(cols, diverging = FALSE)

@@ -1,4 +1,4 @@
-# Violin and ridge plots (S1)
+# Violin and ridge plots
 
 test_that("feature_flags takes TRUE / FALSE or feature names", {
     f <- c("a", "b", "c")

@@ -29,8 +29,8 @@ plot_composition_scatter(
 )
 }
 \arguments{
-\item{object}{A Seurat object, or a data frame with one row per cell (e.g.
-its metadata)}
+\item{object}{A Seurat object, or a table with one row per cell (e.g. its
+metadata): anything \code{as.data.frame()} converts}
 
 \item{group.by}{Column of the groups, one point each (e.g. cell state)}
 

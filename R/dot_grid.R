@@ -1,50 +1,4 @@
-# Internal dot-grid engine (roadmap item G0)
-#
-# Design
-# ------
-# The marker dot plot (`DotPlot_bioToolkit()`, G1), the DE dot plot
-# (`plot_de_dots()`, G2) and the enrichment dot plot
-# (`plot_enrichment_grid()`, G3) are the same plot: a grid of rows x columns
-# of dots, each with a size and a fill, rows and columns optionally split into
-# groups. Each plot function computes its own values and orders the rows and
-# columns; `dot_grid_plot()` only draws them, so that the three look and size
-# alike.
-#
-# Geometry (F2). Every row and column is a fixed number of inches
-# (`cell.width`, `cell.height`). Discrete scales are expanded by exactly half
-# a category (`grid_expansion()`), so that n categories fill n cells. Numbers
-# outside 1..n on a discrete scale would widen its range and break this, so
-# everything drawn outside the cells uses either its own facet or the panel
-# edge (`-Inf` / `Inf`, which do not train scales):
-#   * Groups are facets (`facet_grid(space = "free")`), one panel per group,
-#     with the group name in the strip. Each group is marked by a bar along
-#     its cells, set off from the grid, with its name beyond it
-#     (R/group_bars.R; revision of 2026-10-14, replacing a thin bracket line
-#     that read as another axis). By default the groups of columns are on
-#     top and those of rows on the right, opposite the tick labels
-#     (`x.group.side` / `y.group.side` = "opposite"); "labels" moves them to
-#     the side of the labels, beyond the labels.
-#   * The group markers (e.g. cell-type colours next to the cell-type rows)
-#     are a facet of its own, with no axis label or tick, between the labels
-#     and the axis: either one narrow column (or row) of tiles (a colour
-#     strip), or one cell-wide column (or row) of coloured dots.
-# Axes (2026-10-13). 1 pt black axis lines and ticks, as the "axis" plots,
-# along the left and bottom edges of the data panels. ggplot2 draws axes
-# around the outermost panels, which would put them outside the marker facet
-# (labels, ticks, line, then the markers); so the theme axis lines and ticks
-# are blank, the theme axis only places the labels, and the line and ticks
-# are drawn by a layer (`GeomGridAxis`) on the data panels, with the markers
-# outside them. Grid lines are likewise a layer drawn on the data panels
-# only, so that none runs through the markers. The axes are set off from the
-# first row and column of dots by a gap added to the expansion (`axis.gap`).
-# Significance (`outline`): significant dots are drawn opaque with a dark
-# ring, the others faded with a light ring, so that the two read apart at
-# any dot size and the fill (e.g. fold change) of every dot is still shown.
-# Both are explained by one legend (ring colour and opacity share its title
-# and labels, so ggplot2 merges them).
-# Dot sizes are areas (`scale_size_area()`), with the largest dot filling 85%
-# of the smaller cell side, so that dots never touch and the size of a dot
-# for a given value is the same in every figure with the same cell size.
+# Internal dot-grid engine
 
 
 #' Draw a grid of dots
@@ -350,7 +304,7 @@ dot_grid_plot <- function(df,
         scale_size_area(
             max_size = max_size, limits = size.limits, breaks = size.breaks,
             labels = size.labels, oob = scales::oob_squish, name = bold_title(size.title),
-            # Black keys (user decision 2026-10-14): the size legend explains
+            # Black keys: the size legend explains
             # size only, so its dots carry no colour of the fill scale
             guide = guide_legend(order = 2, override.aes = list(fill = "black", colour = "black"))
         ) +

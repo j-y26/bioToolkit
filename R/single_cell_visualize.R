@@ -125,13 +125,9 @@ ARROW_ARG_RENAMES <- c(
 )
 
 
-# Dimension arrows scaled with the panel (revision of 2026-10-15)
-# ---------------------------------------------------------------
-# The arrows used to have a fixed size in cm: right on a 3.5-4 inch panel,
-# but on a small panel they were too big and their corner, at a fixed 0.25 cm
-# from the panel edge, ran into cells near the left or bottom edge (the
-# panel's 5% expansion is only 0.19 cm on a 1.5-inch panel). User decision
-# (2026-10-15): the arrows keep the proportions they have on a 3.5-inch panel
+# Dimension arrows scaled with the panel
+# --------------------------------------
+# The arrows keep the proportions they have on a 3.5-inch panel
 # (ARROW_REF_PANEL) at every panel size. All of their geometry (lengths, line
 # width, label size) is multiplied by
 #     arrow.scale * (shorter side of the panel) / 3.5 in

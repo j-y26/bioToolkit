@@ -3,7 +3,8 @@ title: "Single-cell: comparing conditions"
 description: >
   Does a condition change which cells are present, or where they sit on the
   embedding? summarize_group_meta(), get_meta_pivot(),
-  plot_composition_scatter() and DensityDiffPlot_bioToolkit().
+  plot_composition_scatter(), plot_composition_bars() and
+  DensityDiffPlot_bioToolkit().
 ---
 
 ```{r setup, include = FALSE}
@@ -18,6 +19,7 @@ and where on the embedding are cells gained or lost?
 | `summarize_group_meta()` | counts and proportions per group, condition (and sample) |
 | `get_meta_pivot()` | a quick two-way table of two metadata columns |
 | `plot_composition_scatter()` | proportion of each group in one condition against another |
+| `plot_composition_bars()` | stacked bars of the composition of each condition or sample, from any table |
 | `DensityDiffPlot_bioToolkit()` | where on an embedding a condition has more or fewer cells |
 
 These plots describe differences; they do not test them. Cells from one
@@ -163,6 +165,172 @@ plot_composition_scatter(
     facet.by = "lineage",
     panel.width = 2.2,
     cells = colnames(pbmc)[pbmc$cell_type != "Megakaryocyte"]
+)
+```
+
+## Composition bars
+
+Stacked bars: one bar per level of `split.by`, one coloured segment per level
+of `group.by`, and one panel per level of `facet.by`. The segments of a bar
+are shares of that bar's cells, so every bar adds up to 100%. One bar per
+donor, in a panel per condition, shows how much samples vary:
+
+```{r bars}
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "donor",
+    facet.by = "condition"
+)
+```
+
+Swapping `group.by` and `split.by` answers another question: which samples
+make up each cell type (e.g. whether a cluster comes from one sample only).
+
+Bars have a fixed width (`bar.width`), gap (`bar.gap`) and length
+(`bar.length`) in inches, and panels a fixed gap (`panel.spacing`), so the
+figure keeps its proportions whatever the number of bars. Bars and segments
+have black borders (`border.width`, in points), and the value axis shows its
+ticks and labels without a line (`value.axis.line = TRUE` draws it).
+
+### Variants {.tabset .tabset-pills}
+
+#### `connect`
+
+Bands joining each group's segments in neighbouring bars of a panel, in a
+light tone of its colour: `"curve"` (as in alluvial plots) or `"straight"`.
+Off by default (`"none"`). `connect.lighten` sets how light the bands are,
+as the share of white mixed into the colour (default 0.8; 0 is the group's
+own colour).
+
+```{r bars-connect}
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "donor",
+    facet.by = "condition",
+    connect = "curve"
+)
+```
+
+```{r bars-straight}
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "condition",
+    connect = "straight",
+    bar.width = 0.5,
+    bar.gap = 0.5
+)
+```
+
+#### `flip` and `label`
+
+Horizontal bars, first bar on top. `label = TRUE` writes each segment's
+share inside it (white on dark segments), for segments of at least
+`label.min` (5%) whose text fits:
+
+```{r bars-flip}
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "condition",
+    flip = TRUE,
+    label = TRUE,
+    bar.width = 0.4
+)
+```
+
+#### `value` and `show.n`
+
+`"fraction"` (0 to 1) or `"count"` (numbers of cells, bars of different
+lengths) instead of percentages; `show.n = TRUE` writes each bar's number of
+cells beyond its end:
+
+```{r bars-fraction}
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "condition",
+    value = "fraction"
+)
+```
+
+```{r bars-count}
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "donor",
+    facet.by = "condition",
+    value = "count",
+    show.n = TRUE
+)
+```
+
+#### `order.by`
+
+Bars of each panel sorted by decreasing share of one group:
+
+```{r bars-order}
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "donor",
+    facet.by = "condition",
+    order.by = "CD14 Mono"
+)
+```
+
+#### Legend
+
+`legend.title`, `legend.position` and `legend.ncol`, as in
+`DimPlot_bioToolkit()`:
+
+```{r bars-legend}
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "donor",
+    facet.by = "condition",
+    legend.title = "Cell type",
+    legend.position = "bottom",
+    legend.ncol = 4
+)
+```
+
+#### Any table
+
+The rows need not be cells: any table with categorical columns works (a
+gene or peak annotation, DE results), and `unit` names what a row is. Here,
+the direction of each gene in the pseudobulk DE of IFN-β against control,
+per cell type:
+
+```{r bars-genes}
+de <- docs_kang_de()
+direction_of <- function(res) {
+    sig <- res$FDR < 0.05
+    out <- ifelse(res$logFC > 0, "Up", "Down")
+    out[!sig] <- "Not significant"
+    factor(out, levels = c("Up", "Down", "Not significant"))
+}
+de_genes <- do.call(rbind, lapply(names(de), function(ct) {
+    data.frame(
+        cell_type = factor(ct, levels = names(de)),
+        direction = direction_of(de[[ct]])
+    )
+}))
+direction_cols <- c(
+    "Up" = "#D62728",
+    "Down" = "#1F77B4",
+    "Not significant" = "#D9D9D9"
+)
+plot_composition_bars(
+    de_genes,
+    group.by = "direction",
+    split.by = "cell_type",
+    unit = "genes",
+    cols = direction_cols,
+    show.n = TRUE
 )
 ```
 

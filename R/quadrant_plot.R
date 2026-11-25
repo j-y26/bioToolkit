@@ -1,66 +1,4 @@
-# logFC-logFC quadrant plot of two DE comparisons (roadmap item B5)
-#
-# Design
-# ------
-# `plot_fc_quadrant()` compares two DE results feature by feature: the log2
-# fold change in one comparison on x, in the other on y. Typical uses: the
-# same contrast at two time points or in two tissues, a knockout vs a drug,
-# or RNA vs chromatin (ATAC / ChIP) changes of the same genes.
-#
-# * Both tables are read with `standardize_de()` (F5), each with its own
-#   detected method, so e.g. an edgeR RNA table can be compared with a DESeq2
-#   ATAC table. Tables already standardized are used as they are.
-# * Features are joined by name (inner join, reported in a message). For
-#   peaks (ATAC / ChIP), `map.y` maps the features of `de.y` to genes; many
-#   peaks can map to one gene, and `map.summary` picks one peak per gene: the
-#   most significant one ("min_padj", default), whose fold change is the most
-#   reliable, or the one with the largest absolute fold change ("max_abs"),
-#   which can be a noisy, weakly supported peak. Averaging fold changes was
-#   not offered: peaks of one gene can change in opposite directions, and
-#   their mean has no p-value to decide significance.
-# * Five classes, drawn in this order so that the informative ones are on
-#   top: neither significant (grey), significant in x only, in y only (light
-#   colours), in both with the same sign (concordant) or opposite signs
-#   (discordant), slightly larger and in deep colours. The defaults follow
-#   one idea: x only is blue, y only is red, both in the same direction is
-#   purple (the two mixed), opposite directions is green (from Paul Tol's
-#   colour-blind safe schemes).
-# * Counts of the features significant in both in each quadrant, in the
-#   corners and in the colour of their class; the correlation of the fold
-#   changes (Spearman by default: robust to the long tails of fold changes)
-#   and its n as a subtitle, outside the panel, where it never covers points.
-# * The same symmetric range on both axes by default (`equal.axes`), so that
-#   the y = x diagonal (dashed) is the line of equal change and a slope
-#   flatter than it reads as a weaker effect in y. Square panel (F2). No
-#   capping: every feature is drawn at its value.
-# * Labels: the `label.n` features farthest from the origin in each quadrant,
-#   among those significant in both (so discordant genes are named too), or
-#   only `label.features`; bold italic as in the volcano.
-# * Revision of 2026-10-14 (user): the x = 0 and y = 0 lines are 1 pt black,
-#   as the axes; the correlation is set larger (11 pt), bold and black; an
-#   optional least-squares trend line with its 95% confidence band (`trend`),
-#   on the same features as the correlation. Both fold changes are noisy
-#   estimates, so the least-squares slope is biased toward 0 (regression
-#   dilution): the line shows the trend, its slope is not an effect ratio.
-# * Revision of 2026-10-27 (user, 1.2.0): three colour schemes (`color.by`).
-#   The default, "consistency", colours what most readers look for first:
-#   features significant in both comparisons and changed the same way
-#   ("Consistently up" in the volcano red, "Consistently down" in its blue),
-#   or opposite ways ("Inconsistent", Paul Tol's yellow #DDAA33: colour-blind
-#   safe next to red and blue, and lighter than both), all 1.4 times larger;
-#   everything else is grey ("Others"). "direction" drops "Inconsistent"
-#   into "Others" (counts only in the top-right and bottom-left corners);
-#   "significance" is the former five-class scheme. Consistent means
-#   significant in BOTH: with one significant and the same sign in the
-#   other, half of the non-significant fold changes would qualify by chance.
-#   Cutoffs are set per comparison (`padj.cutoff.x / .y`, `logfc.cutoff.x /
-#   .y`; the one-or-two-value `padj.cutoff` / `logfc.cutoff` are removed);
-#   fold change cutoffs above 0 are drawn as thin dashed grey lines.
-#   The trend line is fitted with lm() and its band drawn by hand
-#   (`trend.interval`): "confidence" (default; the band of the fitted mean,
-#   as geom_smooth(method = "lm") draws it, the usual choice in published
-#   logFC-logFC plots; very narrow with thousands of genes), "prediction"
-#   (where 95% of the features are expected; shows their spread) or "none".
+# logFC-logFC quadrant plot of two DE comparisons
 
 
 #' @title Quadrant plot of the log fold changes of two DE comparisons
@@ -481,7 +419,7 @@ plot_fc_quadrant <- function(
         theme_bioToolkit("axis", bg = bg) +
         panel_size_theme(panel.width, panel.height) +
         theme(legend.position = legend.position,
-              # The correlation: bold, black, base size (user, 2026-10-14)
+              # The correlation: bold, black, base size
               plot.subtitle = element_text(size = sz$base, face = "bold", colour = "black", hjust = 0,
                                            margin = margin(b = 4))) +
         guides(colour = guide_legend(override.aes = list(size = 2.2, alpha = 1)))

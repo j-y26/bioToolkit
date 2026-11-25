@@ -1,5 +1,5 @@
 # Website of bioToolkit, built with pkgdown by .github/workflows/pkgdown.yaml
-# when the package version changes. Design notes: dev/documentation_site.md.
+# when the package version changes.
 # Every exported function must be listed under `reference` (pkgdown fails the
 # build otherwise), so a new export cannot be left out of the site.
 
@@ -124,6 +124,7 @@ reference:
   - list_palettes
   - show_palettes
   - check_palette
+  - ramp_palette
   - mix_colors
   - sort_colors_by_hue
   - ggplot_colors
@@ -158,6 +159,7 @@ reference:
   contents:
   - summarize_group_meta
   - plot_composition_scatter
+  - plot_composition_bars
   - DensityDiffPlot_bioToolkit
   - get_meta_pivot
 

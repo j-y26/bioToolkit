@@ -1,5 +1,4 @@
-# Shared helpers of the 2026-10-14 revision: group bars, diverging scales,
-# bold legend titles
+# Group bars, diverging scales and bold legend titles
 
 test_that("group_bar_layer draws a bar outside the panel, spanning its categories", {
     df <- data.frame(x = factor(c("a", "b", "c")), y = 1:3, g = factor(c("G1", "G1", "G2")))
@@ -25,7 +24,7 @@ test_that("group_bar_colours: black by default, else group colours", {
 })
 
 test_that("diverging_limits trims each end to the data on its side", {
-    # The user's example: data -3 to 10, cutoff 5 -> -3 to 5
+    # Data -3 to 10, cutoff 5 -> -3 to 5
     expect_equal(diverging_limits(c(-3, 2, 10), -5, 5), c(-3, 5))
     expect_equal(diverging_limits(c(-3, 2, 10)), c(-3, 10))
     # The centre is always inside

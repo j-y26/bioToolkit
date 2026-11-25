@@ -1,4 +1,4 @@
-# Palettes (roadmap item F4)
+# Palettes
 
 test_that("every palette is well formed", {
     pals <- list_palettes()
@@ -13,7 +13,7 @@ test_that("every palette is well formed", {
     }
 })
 
-test_that("scanpy-20 is the user's reference list", {
+test_that("scanpy-20 matches the scanpy default colours", {
     expect_equal(bt_palette("scanpy-20")[c(1, 8, 11, 20)], c("#1F77B4", "#7F7F7F", "#AEC7E8", "#9EDAE5"))
     expect_length(bt_palette("scanpy-20"), 20)
 })
@@ -107,4 +107,13 @@ test_that("any palette name with \"_r\" is that palette reversed, without being 
     expect_error(bt_palette("nope_r"), "Unknown palette")
     skip_if_not_installed("RColorBrewer")
     expect_equal(resolve_continuous_palette("BuPu_r", FALSE), rev(RColorBrewer::brewer.pal(9, "BuPu")))
+})
+
+test_that("text_contrast and lighten_colour", {
+    expect_equal(
+        text_contrast(c("#000080", "#FFE800", "black", "white")),
+        c("white", "black", "white", "black")
+    )
+    expect_equal(lighten_colour(c(a = "#000000"), 0.5), c(a = "#808080"))
+    expect_equal(lighten_colour("red", 0), "#FF0000")
 })

@@ -438,6 +438,8 @@ calc_expr_corr <- function(
               color = element_blank()
             ) +
             theme_classic() +
+            # Black tick labels (theme_classic() draws them grey30)
+            theme(axis.text = element_text(colour = "black")) +
             annotate("text", x = max_gene, y = max_query, label = bquote("FDR =" ~ .(FDR) ~ "\n" ~
                               "Slope =" ~ .(slope) ~ "\n" ~
                               "R"^2 ~ " =" ~ .(r_squared) ~ "\n" ~
@@ -453,6 +455,8 @@ calc_expr_corr <- function(
               y = query_var
             ) +
             theme_classic() +
+            # Black tick labels (theme_classic() draws them grey30)
+            theme(axis.text = element_text(colour = "black")) +
             annotate("text", x = max_gene, y = max_query, label = bquote("FDR =" ~ .(FDR) ~ "\n" ~
                               "Slope =" ~ .(slope) ~ "\n" ~
                               "R"^2 ~ " =" ~ .(r_squared) ~ "\n" ~
@@ -473,6 +477,8 @@ calc_expr_corr <- function(
               color = element_blank()
             ) +
             theme_classic() +
+            # Black tick labels (theme_classic() draws them grey30)
+            theme(axis.text = element_text(colour = "black")) +
             annotate("text", x = max_query, y = max_gene, label = bquote("FDR =" ~ .(FDR) ~ "\n" ~
                               "Slope =" ~ .(slope) ~ "\n" ~
                               "R"^2 ~ " =" ~ .(r_squared) ~ "\n" ~
@@ -488,6 +494,8 @@ calc_expr_corr <- function(
               y = gene
             ) +
             theme_classic() +
+            # Black tick labels (theme_classic() draws them grey30)
+            theme(axis.text = element_text(colour = "black")) +
             annotate("text", x = max_query, y = max_gene, label = bquote("FDR =" ~ .(FDR) ~ "\n" ~
                               "Slope =" ~ .(slope) ~ "\n" ~
                               "R"^2 ~ " =" ~ .(r_squared) ~ "\n" ~

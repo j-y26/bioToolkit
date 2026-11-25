@@ -1,21 +1,4 @@
-# Public example data for the bioToolkit website guides
-#
-# Each loader downloads a public dataset once, processes it and caches the
-# result as an RDS file, so that the guides load small, ready objects instead of
-# repeating the processing. The cache lives in BT_DOCS_CACHE (environment
-# variable; the GitHub Actions workflow keeps it between runs) or in the user
-# cache directory. Delete the files to rebuild them; bump CACHE_VERSION when the
-# processing changes so that cached files from an older version are not used.
-#
-# Datasets
-#   Kang et al. 2018, Nat Biotechnol 36:89-94 (doi:10.1038/nbt.4042): PBMCs of
-#     8 lupus patients, control or stimulated with interferon-beta for 6 h,
-#     10x Genomics; from Bioconductor muscData::Kang18_8vs8(), with the
-#     authors' cell type labels.
-#   Alasoo et al. 2018, Nat Genet 50:424-431 (doi:10.1038/s41588-018-0046-7):
-#     iPSC-derived macrophages of 6 donors, naive, IFN-gamma, Salmonella
-#     (SL1344) or both; bulk RNA-seq, gene-level counts from Bioconductor
-#     macrophage (tximeta).
+# Public example data for the website guides (Kang et al. 2018; Alasoo et al. 2018)
 
 CACHE_VERSION <- "v4"
 

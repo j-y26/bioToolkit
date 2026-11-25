@@ -32,7 +32,7 @@ de_helper_columns <- function(data,
     if (!is.data.frame(data)) data <- as.data.frame(data)
     if (method == "auto" && !(!is.null(logfc.col) && !is.null(padj.col))) {
         # Only the two columns used here need to be present (a trimmed edgeR
-        # table with logFC and FDR is enough, as before 0.10.0)
+        # table with logFC and FDR is enough)
         found <- names(Filter(function(p) all(p[c("logfc", "padj")] %in% names(data)), DE_COLUMN_PRESETS))
         if (length(found) == 0) {
             stop("Could not detect the DE method from the columns of `data`; ",

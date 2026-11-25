@@ -1,6 +1,4 @@
-# DE table helpers (rank_de_genes, generate_de_rank_file, filter_de_genes) and
-# the deprecated-argument mapping used by them and the Seurat plot formatters
-# (renamed to dot.case in 0.10.0)
+# DE table helpers and deprecated-argument mapping
 
 de_edger <- data.frame(
     logFC = c(2.1, -1.4, 0.2, 1.5, NA), PValue = c(1e-8, 1e-4, 0.6, 0.01, NA),

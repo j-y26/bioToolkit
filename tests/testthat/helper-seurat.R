@@ -1,7 +1,4 @@
-# A small simulated Seurat object for the dot plot and assay tests: 120 cells
-# of three cell types (40 each), two conditions, five genes with known
-# expression, a normalized "RNA" assay and a second assay "ALT" (three genes,
-# doubled counts) so that assay selection can be checked.
+# A small simulated Seurat object for the tests
 sim_seurat <- function() {
     testthat::skip_if_not_installed("Seurat")
     testthat::skip_if_not_installed("SeuratObject")

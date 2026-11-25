@@ -1106,7 +1106,7 @@ resolve_colour_scale <- function(members,
     }
     # Diverging: the centre colour at `center`, each side stretched to its
     # own end, so that the extreme of the shorter side is not faded
-    # (rescale_diverging(); user decision 2026-10-14)
+    # (rescale_diverging())
     rescaler <- if (is_diverging) {
         rescale_diverging(center)
     } else {

@@ -1,26 +1,4 @@
-# Shared reader of differential expression results (roadmap item F5)
-#
-# Design
-# ------
-# Volcano, MA, DE dot and quadrant plots all start from DE results. Instead of
-# each plot guessing column names, `standardize_de()` turns the output of the
-# common tools into one table with fixed column names:
-#
-#   feature, logfc, pvalue, padj, [mean_expr], [comparison], [group], ...
-#
-# followed by the table's other columns (e.g. Seurat's pct.1 / pct.2).
-#
-# * Methods are recognised from their column names (presets in
-#   R/constants.R); any column can be given explicitly instead, e.g. a shrunken
-#   logFC column from DESeq2's lfcShrink().
-# * Several comparisons are read from a named list of tables, or from one long
-#   table with a comparison column. An optional `groups` mapping adds a second
-#   level (e.g. comparison "B cells: KO vs WT" -> group "B cells").
-# * p-values of exactly 0 (underflow) are replaced by the smallest non-zero
-#   value x 0.1, so that they sit just above the rest of the points on a
-#   -log10 axis instead of far off at 1e-300.
-# * NA p-values (DESeq2 independent filtering and outlier flagging) are kept
-#   as NA and reported; plots treat them as not significant.
+# Reader of differential expression result tables
 
 
 #' @title Standardize differential expression results

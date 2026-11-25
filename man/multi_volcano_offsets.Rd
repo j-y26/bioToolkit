@@ -18,8 +18,7 @@ multi_volcano_offsets(df, layout, half)
 Offsets in [-half, half], along the rows of `df`
 }
 \description{
-"sina" (user decision 2026-10-15, after trying a shape per side of 0
-built from all genes): the significant genes of each direction get their
+"sina": the significant genes of each direction get their
 own shape, as wide as their density, so their distribution shows however
 many non-significant genes there are; non-significant genes are spread
 uniformly over the column, a grey block centred on 0 rather than another

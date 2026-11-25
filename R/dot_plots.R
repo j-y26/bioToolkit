@@ -1,50 +1,4 @@
-# Marker dot plot for Seurat objects (roadmap item G1)
-#
-# Design
-# ------
-# `DotPlot_bioToolkit()` replaces Seurat::DotPlot() and covers the features of
-# SCpubr::do_DotPlot(): mean and scaled (z-scored) mean expression, gene
-# groups from a named list, `split.by`, clustering of genes and groups,
-# `flip`. It is drawn by the dot-grid engine (G0, R/dot_grid.R).
-# * `group.by` and `split.by` (user decision 2026-10-13, package-wide):
-#   `group.by` is the lower level, whose levels are compared (one row each,
-#   marked by its colour); `split.by` is the higher level, like a facet (one
-#   labelled block of rows each). E.g. group.by = "condition", split.by =
-#   "cell_type" gives, for each cell type, one row per condition. This is the
-#   opposite of Seurat::DotPlot()'s `split.by`, and matches the panels of
-#   DimPlot / FeaturePlot and the blocks of DoHeatmap_bioToolkit().
-#
-# * Assay: read explicitly and reported (R/seurat_data.R). Seurat and SCpubr
-#   both read the default assay; with "RNA" and "SCT" in one object the same
-#   call then gives different numbers depending on `DefaultAssay()`.
-# * Mean expression: two definitions are in use (`average`):
-#     "linear" (default, as Seurat::DotPlot): log1p(mean(expm1(x))), the log of
-#              the mean normalized count. It is the expression of the group as
-#              a whole (a pseudobulk), on the same scale as the fold changes
-#              of Seurat::FindMarkers() (avg_log2FC is computed this way).
-#     "log"    (as SCpubr::do_DotPlot): mean(x), the mean of the
-#              log-normalized values. Less driven by a few cells with very
-#              high counts; closer to the "typical" cell.
-#   Both only apply to the "data" layer (log1p values); other layers are
-#   averaged as they are.
-# * Scaling (`scale = TRUE`, default as in Seurat): each gene's means are
-#   z-scored across the plotted groups (and splits), which compares groups
-#   for each gene but hides how highly genes are expressed overall. The colour
-#   scale is diverging, symmetric around 0, and reaches its ends at
-#   +-min(max |z|, 2.5) (Seurat clips at +-2.5); source data keep the
-#   unclipped values.
-# * % expressing: the share of cells with a value above `expr.threshold`
-#   (default 0), as Seurat. Dot areas are proportional to it, from 0 to
-#   `pct.max` (default 100%), so that a dot of a given size means the same
-#   percentage in every figure (Seurat and SCpubr rescale sizes to each plot's
-#   own range).
-# * Colours: scaled means on the diverging "blue-magenta"; unscaled means on
-#   "viridis_r" (yellow = low, dark purple = high; SCpubr's viridis option
-#   runs the same way).
-# * Groups: a marker next to each group label, in the default group colours
-#   (as DimPlot_bioToolkit()) or `group.cols`, so that the dot plot can be
-#   matched with an embedding by colour: a coloured dot (default) or a
-#   colour strip (`group.marker`).
+# Marker dot plot for Seurat objects
 
 
 #' @title Marker dot plot
@@ -633,7 +587,7 @@ dot_fill_limits <- function(v,
         # Diverging around 0: each end at most 2.5 (Seurat's col.min /
         # col.max) or the cutoff given, trimmed to the data on its side, so
         # that the most extreme z-score of either side gets the full colour
-        # (diverging_limits(); user decision 2026-10-14)
+        # (diverging_limits())
         lo <- cutoff_value(min.cutoff, v, function(x) -2.5)
         hi <- cutoff_value(max.cutoff, v, function(x) 2.5)
         return(diverging_limits(v, lo, hi, center = 0))

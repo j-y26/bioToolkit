@@ -1,27 +1,4 @@
-# Fixed-size plotting engine (roadmap item F2)
-#
-# Design
-# ------
-# Every plot of the package has an exact, absolute geometry: its panels are a
-# set number of inches wide and tall, whatever the number of panels, the
-# legend or the device. Two consequences follow:
-#   * panels line up across figures and inside patchworks, and
-#   * the file a plot is saved to is computed to fit the plot (`save_plot()`),
-#     rather than the plot being stretched to fit a file size chosen by hand.
-#
-# Panel sizes come from one of two sources:
-#   * continuous axes (embeddings, volcano, MA, PCA): `panel.width` and
-#     `panel.height` in inches;
-#   * discrete axes (dot plots, heatmaps, violins): `cell.width` and
-#     `cell.height`, the size of one category. The panel is then
-#     `n * cell` inches, so that one gene row is the same height in every
-#     figure, whatever the number of genes (`grid_panel_size()`). The scale
-#     must then be expanded by exactly half a category on each side
-#     (`grid_expansion()`), so that n categories tile the panel exactly.
-#
-# Both end in `panel_size_theme()`, which only sets `panel.widths`,
-# `panel.heights` and `panel.spacing` (ggplot2 >= 4.0.0). The look of a plot
-# is set separately by `theme_bioToolkit()` (F3).
+# Fixed-size plotting engine
 
 
 #' @title Theme giving panels a fixed absolute size

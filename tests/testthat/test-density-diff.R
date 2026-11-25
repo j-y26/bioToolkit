@@ -1,4 +1,4 @@
-# Density difference plot (S4)
+# Density difference plot
 
 # Cells on a 2D embedding: condition A half at (0, 0) and half at (5, 5);
 # condition B mostly at (5, 5); samples s1-s4 (A: s1, s2; B: s3, s4)

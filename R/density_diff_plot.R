@@ -1,43 +1,4 @@
-# Where on an embedding cells of one condition are enriched relative to
-# another (roadmap item S4)
-#
-# Design
-# ------
-# `DensityDiffPlot_bioToolkit()` compares the density of cells of each
-# condition on a 2D embedding, independently of how many cells each
-# condition has:
-#   1. One Gaussian kernel density per condition on a regular grid over the
-#      axis limits (`kde_grid()`, shared with FeaturePlot_bioToolkit()'s
-#      `geom = "density"`), with one bandwidth for all conditions (Scott's
-#      rule on all plotted cells, `density_bandwidth()`), so that differences
-#      do not come from different smoothing.
-#   2. Each density is normalized to sum to 1, which removes the effect of
-#      cell numbers: a condition with twice the cells but the same
-#      distribution gives the same map.
-#   3. Replicates (`sample.by`, optional): one normalized density per sample,
-#      averaged within each condition, so that one large sample cannot drive
-#      the map (every sample weighs the same, as in plot_composition_scatter()).
-#   4. Measure: "difference", (p_compare - p_reference) / max(p_reference), so
-#      that +0.5 means extra density of half the reference's peak; or
-#      "log2ratio", log2((p_compare + e) / (p_reference + e)) with
-#      e = 1% of the reference's peak, which keeps sparse regions from
-#      producing extreme ratios.
-#   5. Regions where both conditions are sparse are masked: grid points where
-#      both densities are below the `mask.quantile` quantile of the mean
-#      density at the cells' positions (5% of cells sit in sparser places).
-#   6. Drawing: by default each cell is coloured by the value at its position
-#      (`draw = "cells"`, the look of the feature plots), masked cells in
-#      grey; or the grid itself as a raster over grey cells
-#      (`draw = "raster"`). Diverging palette (default "blue-magenta"),
-#      centred on 0 (each side to its own extreme), one scale for all panels.
-#
-# `split.by` is the condition column: one panel per compared level against
-# `reference`, as DimPlot_bioToolkit()'s panels per level.
-#
-# Embedding distances are distorted (UMAP / tSNE), so the map shows where
-# composition shifts, not how large they are in expression space; it is not
-# a test. Differential abundance testing on samples (e.g. Milo, DA-seq) is the
-# statistical counterpart.
+# Difference in cell density between conditions on an embedding
 
 
 #' @title Difference in cell density between conditions on an embedding
@@ -337,7 +298,7 @@ DensityDiffPlot_bioToolkit <- function(
     }
     drawn <- if (draw == "cells") cells_all$value else grid_all$value
     # Centred on 0, each end the cutoff or the extreme drawn on that side
-    # (diverging_limits(); user decision 2026-10-14)
+    # (diverging_limits())
     lim <- if (is.null(limits)) diverging_limits(drawn) else diverging_limits(drawn, -limits, limits)
 
     # Plot ----------------------------------------------------------------------------------------

@@ -1,45 +1,4 @@
-# GSEA running enrichment score plot (roadmap item G3, addition 2026-10-13)
-#
-# Design
-# ------
-# `plot_gsea_rank()` replaces enrichplot::gseaplot2() as used in the user's
-# own analyses. gseaplot2() returns an aplot/gglist object whose panels are
-# hard to restyle, and needs enrichplot (not a dependency here). The running
-# enrichment score is simple to compute, so it is computed here:
-#   * genes are ranked by the metric, largest first;
-#   * walking down the list, the score rises at each gene of the set by
-#     |metric|^p / (sum of |metric|^p over the set's genes) and falls at each
-#     other gene by 1 / (number of other genes);
-#   * the enrichment score (ES) is the largest deviation from 0.
-# This is the weighted Kolmogorov-Smirnov statistic of Subramanian et al.
-# (2005) PNAS 102:15545, with p = 1 as in GSEA, fgsea (`gseaParam = 1`) and
-# clusterProfiler (`exponent = 1`). The ES computed is checked against the
-# one reported, to catch a ranked list that is not the one tested.
-#
-# Three stacked panels of one width, touching (no margins between them, one
-# continuous left axis line), combined with patchwork, compact by default
-# (1.3 / 0.32 / 0.55 in):
-#   1. the running score, line coloured by the sign of the NES;
-#   2. the positions of the set's genes (ticks) above a band coloured by the
-#      ranking metric (blue - white - magenta). enrichplot::gseaplot2() draws
-#      a band there too, but its colours only number 8 stretches of the list
-#      holding equal shares of the set's genes, so they encode no value; here
-#      the band shows where the list turns from up- to down-ranked genes, as
-#      in the GSEA desktop plot;
-#   3. the ranking metric (log2FC, signed -log10 p, t...), the same for every
-#      gene set of a comparison, so drawn quietly in grey; `show.metric =
-#      FALSE` leaves it out.
-# NES and FDR (the adjusted p-value) sit in the corner the curve leaves
-# empty: top right for a positive score, bottom left for a negative one. The
-# title is the gene set's name, with its ID (when it differs) on a second
-# line; the subtitle the comparison, in bold italics; plain ggplot2 title
-# and subtitle, so no ggtext.
-# Revision of 2026-10-14 (user): NES / FDR in bold at the base size;
-# smaller gap between title and subtitle; `band = "none"` leaves the band
-# out; leading-edge genes (the first five by default, or chosen ones) are
-# named in the metric panel with a small arrow to their ticks
-# (`gsea_gene_labels()`), as in the user's own figures. Revision of
-# 2026-10-15 (user): the gene names at the small text size (9 pt).
+# GSEA running enrichment score plot
 
 
 #' @title GSEA running enrichment score plot
@@ -297,7 +256,7 @@ plot_gsea_rank <- function(
         geom_line(colour = line_col, linewidth = pt_to_linewidth(1.2)) +
         # Placed 3% of the list in from the side, so that both lines align on
         # it (a fractional hjust would shift them differently). Bold, at the
-        # base size (user, 2026-10-14)
+        # base size
         annotate(
             "text",
             x = if (positive) n * 0.97 else 1 + n * 0.03,
@@ -491,7 +450,7 @@ gsea_gene_labels <- function(genes,
                              sz) {
     # The theme's small size (9 pt), so that the names read as annotation
     # under the NES / FDR text (base size); 0.9 of it when they need more
-    # than two lines (user, 2026-10-15; they were 11 / 9 pt)
+    # than two lines
     size <- sz$small
     face <- if (italic) "bold.italic" else "bold"
     # Widths of text as drawn (inches), measured on a PDF device, plus 15%:

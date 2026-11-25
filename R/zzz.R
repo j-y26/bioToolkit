@@ -1,8 +1,4 @@
 # Package infrastructure helpers
-#
-# `@import rlang` below keeps rlang's helpers (e.g. `%||%`, which base R only
-# has from 4.4) available package-wide; it was on de_dot_plot(), removed in
-# 0.7.0. The package's own check_installed() takes precedence over rlang's.
 
 #' Base R functions used without a namespace prefix
 #'
@@ -417,7 +413,7 @@ panel_layout <- function(n,
 
 
 # Values of `arrow.panels`: which panels of an embedding grid get the
-# dimension arrows (revision of 2026-10-14)
+# dimension arrows
 ARROW_PANELS <- c("bottom.left", "all", "left", "right", "top", "bottom", "none")
 
 

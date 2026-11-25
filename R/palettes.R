@@ -1,41 +1,4 @@
-# Colour palettes (roadmap item F4)
-#
-# Design
-# ------
-# Kept deliberately simple:
-# * The palettes are a plain named list, `palette_list()`. Each entry has its
-#   colours, its type and its source.
-# * Users get colours with `bt_palette("scanpy-20")`, a plain vector of hex
-#   codes, and pick, reorder and name them with base R:
-#       cols <- bt_palette("scanpy-20")[c(1, 3, 2, 10)]
-#       names(cols) <- c("T cells", "B cells", "Monocytes", "NK cells")
-#   `show_palettes()` shows every colour with its index, for exactly this.
-# * Plot functions have good defaults and one argument, `cols`, to change
-#   them:
-#     groups      `cols = NULL` gives the default palette; a palette name or
-#                 a vector of colours (named by group, or in level order)
-#                 replaces it. Default: "scanpy-20" up to 20 groups,
-#                 "scanpy-102" beyond.
-#     continuous  `cols = NULL` gives the plot's default: "plasma_r" for
-#                 expression on embeddings, "viridis_r" for unscaled dot
-#                 plots, "seq-purple" (etc.) for significance, "blue-magenta"
-#                 for diverging values; a palette name, or colours from low
-#                 to high, e.g. c(low, high) or c(low, mid, high).
-# * Any palette name with "_r" appended is that palette reversed
-#   (find_palette()); reversed palettes are not stored separately.
-#
-# Adding a palette
-# ----------------
-# Add an entry to `palette_list()` with its source. Copy hex values from the
-# primary source, or from a package that reproduces it, never retype them from
-# memory. tests/testthat/test-palettes.R checks every entry.
-#
-# Sources
-# -------
-# Colour values are taken from published palettes and credited in each
-# entry's `source`. Hex codes are data, not code; no code is copied from the
-# packages they were checked against (ggsci, khroma, scanpy, grDevices,
-# viridisLite).
+# Colour palettes
 
 
 #' The palettes of the package
@@ -176,8 +139,8 @@ palette_list <- function() {
                               "#D7BCD8", "#BA84BB", "#964097", "#752379", "#561A5E"),
                             "diverging",
                             "bioToolkit; truer purple, but both sides look blue with red-green colour-blindness"),
-        # Dark centre, for heatmaps of z-scores (DoHeatmap_bioToolkit default;
-        # user choice 2026-10-13): Seurat's PurpleAndYellow() construction
+        # Dark centre, for heatmaps of z-scores (DoHeatmap_bioToolkit default):
+        # Seurat's PurpleAndYellow() construction
         # (an RGB ramp through black) with teal in place of magenta. Not
         # perceptually uniform: yellow is lighter than teal, so high values
         # stand out more than low ones, which suits marker heatmaps, where low
@@ -348,6 +311,131 @@ bt_palette <- function(name,
         }
     }
     if (reverse) rev(cols) else cols
+}
+
+
+#' @title Single-hue ramps in the hue of given colours
+#'
+#' @description Builds, for each colour, a ramp from light to dark in the hue
+#'              of that colour, e.g. to show a score or the expression of a
+#'              gene signature in the colour of the cluster it marks. The ramp
+#'              is built in HCL (polar CIELUV): only the hue is taken from the
+#'              colour; lightness falls linearly from `light` to `dark`, and
+#'              chroma rises from a near-grey start to a peak, then eases off
+#'              so that the darkest colours do not turn muddy. Chroma is capped
+#'              at the highest chroma sRGB can show at each hue and lightness,
+#'              so the hue stays the same along the ramp. Ramps from different
+#'              colours share the same lightness at each step, so that panels
+#'              in different hues stay comparable.
+#'
+#' @param cols A colour, a vector of colours or a list of colours (any colour
+#'             R knows). Names are kept
+#'
+#' @param n Number of colours per ramp, default is 9
+#'
+#' @param light,dark Lightness (L*, 0 to 100) of the light and dark ends,
+#'                   default 96 and 30
+#'
+#' @param chroma Chroma at the light end, at the peak and at the dark end,
+#'               default `c(8, 70, 45)`
+#'
+#' @param peak Position of the chroma peak along the ramp, from 0 (light
+#'             end) to 1 (dark end), default 0.6
+#'
+#' @param power Shape of the chroma rise up to the peak: 1 is linear, above 1
+#'              keeps the light end paler for longer. Default 1.2
+#'
+#' @param reverse Whether to return the ramps dark to light, default is FALSE
+#'
+#' @return For a single colour, a character vector of `n` hex colours. For
+#'         several colours, a list of such vectors, named by the names of
+#'         `cols` (or by the colours themselves when unnamed). A grey input
+#'         (no hue) gives a grey ramp
+#'
+#' @examples
+#' ramp_palette("#1F77B4")
+#'
+#' # One ramp per cluster colour, named by cluster
+#' cluster_cols <- bt_palette("scanpy-20")[1:3]
+#' names(cluster_cols) <- c("Fibroblast", "Endothelial", "Macrophage")
+#' ramps <- ramp_palette(cluster_cols, n = 7)
+#' ramps$Fibroblast
+#'
+#' \donttest{
+#' show_palettes(ramps)
+#' }
+#'
+#' @seealso \code{\link{bt_palette}}, \code{\link{show_palettes}}
+#'
+#' @export
+#'
+ramp_palette <- function(cols,
+                         n = 9,
+                         light = 96,
+                         dark = 30,
+                         chroma = c(8, 70, 45),
+                         peak = 0.6,
+                         power = 1.2,
+                         reverse = FALSE) {
+    check_installed("colorspace", reason = "to build ramps in HCL colour space")
+    single <- !is.list(cols) && length(cols) == 1
+
+    # A list may hold vectors; every colour gets its own ramp
+    flat <- unlist(cols)
+    if (length(flat) == 0) stop("`cols` must hold at least one colour", call. = FALSE)
+    bad <- !is_colour(flat)
+    if (any(bad)) {
+        stop("Not a colour: ", paste(flat[bad], collapse = ", "), call. = FALSE)
+    }
+    if (!(is.numeric(n) && length(n) == 1 && !is.na(n) && n >= 2)) {
+        stop("`n` must be a single number of at least 2", call. = FALSE)
+    }
+    if (!(is.numeric(chroma) && length(chroma) == 3)) {
+        stop("`chroma` must be three numbers: light end, peak and dark end",
+             call. = FALSE)
+    }
+    if (!(is.numeric(peak) && length(peak) == 1 && peak > 0 && peak < 1)) {
+        stop("`peak` must be a single number between 0 and 1 (exclusive)",
+             call. = FALSE)
+    }
+
+    # Hue and chroma of each input colour (col2rgb first, so that names such
+    # as "firebrick" are accepted)
+    rgb <- grDevices::col2rgb(flat)
+    hex <- grDevices::rgb(rgb[1, ], rgb[2, ], rgb[3, ], maxColorValue = 255)
+    hcl <- colorspace::coords(methods::as(colorspace::hex2RGB(hex), "polarLUV"))
+
+    # Position along the ramp (0 = light end, 1 = dark end) and lightness
+    t <- seq(0, 1, length.out = n)
+    lum <- light + (dark - light) * t
+
+    # Chroma: power rise from the light end to the peak, then linear to the
+    # dark end
+    chroma_t <- ifelse(t <= peak,
+                       chroma[1] + (chroma[2] - chroma[1]) * (t / peak)^power,
+                       chroma[2] + (chroma[3] - chroma[2]) * (t - peak) / (1 - peak))
+
+    ramps <- lapply(seq_along(hex), function(i) {
+        hue <- hcl[i, "H"]
+        # A grey has no hue (its H is arbitrary): keep the ramp grey
+        c_i <- if (hcl[i, "C"] < 1) rep(0, n) else chroma_t
+        # Cap chroma inside the sRGB gamut at this hue, so the hue does not
+        # shift when out-of-gamut colours are clipped
+        c_i <- pmin(c_i, colorspace::max_chroma(hue, lum))
+        out <- colorspace::hex(
+            colorspace::polarLUV(L = lum, C = c_i, H = hue),
+            fixup = TRUE
+        )
+        if (reverse) rev(out) else out
+    })
+
+    if (single) return(ramps[[1]])
+    # Unnamed colours are named by themselves
+    ramp_names <- names(flat)
+    if (is.null(ramp_names)) ramp_names <- flat
+    ramp_names[ramp_names == ""] <- flat[ramp_names == ""]
+    names(ramps) <- ramp_names
+    ramps
 }
 
 
@@ -759,18 +847,15 @@ resolve_continuous_palette <- function(cols,
 }
 
 
-# Diverging colour scales (revision of 2026-10-14)
-# ------------------------------------------------
+# Diverging colour scales
+# -----------------------
 # A diverging scale (z-scores, fold changes, NES, signed -log10 p-values) has
-# its centre colour at a meaningful value (0). Its ends used to be symmetric
-# (+-m), so that when the data reach -3 on one side and a cutoff of 5 on the
-# other, the negative values only reached the middle of the blue half and
-# looked faded. User decision (2026-10-14): each end is the cutoff, or the
+# its centre colour at a meaningful value (0). Each end is the cutoff, or the
 # data's own extreme on that side when it is closer to the centre, and each
 # side of the centre is stretched to its own end (`rescale_diverging()`), so
 # that the most extreme value on either side gets the full colour. Colour
 # depth is then comparable within a side, not across sides; the colour bar
-# shows it (its centre is no longer in the middle). Fixed limits given by the
+# shows it (its centre is not always in the middle). Fixed limits given by the
 # user (e.g. `logfc.limits`) are kept as given, for figures that must share
 # one scale.
 
@@ -827,4 +912,44 @@ rescale_diverging <- function(center = 0) {
         out[hi] <- if (from[2] > center) mid + (x[hi] - center) / (from[2] - center) * (to[2] - mid) else to[2]
         out
     }
+}
+
+
+#' Black or white text on a fill
+#'
+#' Black, unless white has the higher contrast (WCAG 2): the fill's relative
+#' luminance is below 0.179, where black and white text have the same
+#' contrast ratio.
+#'
+#' @param fill Fill colours, any colour R knows
+#'
+#' @return "black" or "white", one per fill
+#'
+#' @keywords internal
+text_contrast <- function(fill) {
+    rgb <- grDevices::col2rgb(fill) / 255
+    # Linear light of each channel (sRGB transfer function)
+    lin <- ifelse(rgb <= 0.03928, rgb / 12.92, ((rgb + 0.055) / 1.055)^2.4)
+    luminance <- 0.2126 * lin[1, ] + 0.7152 * lin[2, ] + 0.0722 * lin[3, ]
+    ifelse(luminance < 0.179, "white", "black")
+}
+
+
+#' Colours mixed with white
+#'
+#' @param cols Colours, any colour R knows; names are kept
+#'
+#' @param amount Share of white, from 0 (the colour unchanged) to 1 (white)
+#'
+#' @return Hex colours
+#'
+#' @keywords internal
+lighten_colour <- function(cols,
+                           amount) {
+    rgb <- grDevices::col2rgb(cols)
+    # Rounded: rgb() would truncate (127.5 -> 7F)
+    mixed <- round(rgb + (255 - rgb) * amount)
+    out <- grDevices::rgb(mixed[1, ], mixed[2, ], mixed[3, ], maxColorValue = 255)
+    names(out) <- names(cols)
+    out
 }

@@ -1,4 +1,4 @@
-# Marker heatmap (S2)
+# Marker heatmap
 
 test_that("heatmap cells: z-scores from all cells, then a reproducible downsample", {
     so <- sim_seurat()

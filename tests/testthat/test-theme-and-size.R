@@ -1,4 +1,4 @@
-# Shared theme (F3), fixed-size engine (F2) and source data (F6)
+# Shared theme, fixed-size engine and source data
 
 test_that("theme sizes are fixed and scale with a custom base size", {
     expect_equal(theme_sizes(), list(base = 11, small = 9, large = 12, line = 0.5, axis = 1))
@@ -30,6 +30,15 @@ test_that("theme_bioToolkit applies the theme sizes", {
     emb <- theme_bioToolkit("embedding")
     expect_equal(emb$legend.text$size, 11)
     expect_equal(emb$strip.text$size, 12)
+    # Text labels are black: strips must not inherit ggplot2's grey10
+    # (the embedding theme has no axis text)
+    black_text <- function(th, els) {
+        for (el in els) expect_equal(ggplot2::calc_element(el, th)$colour, "black")
+    }
+    labels <- c("strip.text.x.top", "strip.text.y.left", "legend.text")
+    black_text(theme_bioToolkit("axis"), c(labels, "axis.text.x"))
+    black_text(grid, c(labels, "axis.text.x"))
+    black_text(emb, labels)
     # Transparent by default, opaque on request
     expect_equal(theme_bioToolkit()$plot.background$fill, "transparent")
     expect_equal(theme_bioToolkit(bg = "white")$plot.background$fill, "white")

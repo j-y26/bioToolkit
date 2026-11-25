@@ -1,53 +1,4 @@
-# Sample-level views of bulk data: PCA scores and variance explained by
-# covariates (roadmap items B2, B4)
-#
-# Design
-# ------
-# * `plot_pca()` (B2) takes a `prcomp` result or a normalized features x
-#   samples matrix (e.g. DESeq2 vst / rlog, edgeR logCPM). From a matrix it
-#   keeps the `n.top` most variable features (500, as DESeq2::plotPCA()),
-#   since thousands of flat, noisy features dilute the structure. A matrix of
-#   raw counts is flagged: its PCA is driven by library size and the few most
-#   highly expressed genes.
-# * Samples are filled circles (or other filled shapes for `shape.by`) with a
-#   thin dark outline, as in the composition scatter, so that light colours
-#   and overlapping samples stay visible. Axis titles give each PC's share of
-#   the variance (of the features used). Square panel (F2); the two axes keep
-#   their own scales, as in most PCA plots: the % in the titles say how much
-#   each axis counts.
-# * The panel is boxed on all four sides (no grid lines): PC scores have no
-#   meaningful zero or units, so only the relative positions of samples count.
-# * Ellipses (`ellipse = TRUE`) are drawn only for groups of >= 4 samples: an
-#   ellipse fitted to 2-3 points is mostly noise. Others are named in a
-#   message.
-# * `scree = TRUE` adds a small bar panel of the % variance of the first PCs
-#   to the right, the PCs drawn in dark. (An inset scree, in the roadmap,
-#   was left out: it covers samples in a corner of the panel.)
-# * `plot_variance_explained()` (B4) has two views:
-#     "genes": the share of each feature's variance explained by each
-#              covariate, one violin (with a box) per covariate, ordered by
-#              median, Residuals last in grey; or stacked bars for a few
-#              `features`. From a variancePartition result (fractions from
-#              linear mixed models, Hoffman & Schadt 2016, BMC Bioinformatics
-#              17:483), or, from a matrix, a built-in approximation with
-#              ordinary linear models (`variance_fractions()`).
-#     "pcs":   R^2 of each top PC regressed on each covariate, as a grid of
-#              tiles under bars of each PC's % variance: shows at once which
-#              covariates drive the main axes of variation (e.g. a batch on
-#              PC1).
-# * The built-in "genes" fractions split each feature's R^2 (all covariates
-#   in one linear model) between the covariates by the LMG / Shapley method:
-#   a covariate's share is its increase in R^2 when added to the model,
-#   averaged over all orders in which the covariates can enter (Lindeman,
-#   Merenda & Gold 1980; Groemping 2006, R package relaimpo). Residuals =
-#   1 - R^2, so each feature's fractions sum to 1, as variancePartition's,
-#   whatever the order of the covariates, and variance shared by correlated
-#   covariates is split between them. (First tried: the variance explained
-#   beyond all other covariates, a semi-partial R^2; with an unbalanced
-#   design its fractions summed to more than 1 for some genes, so they could
-#   not be stacked.) Fixed effects only: with few samples a covariate with
-#   many levels (e.g. individual) overfits; variancePartition's random
-#   effects are better there.
+# Sample-level views of bulk data: PCA scores and variance explained by covariates
 
 
 #' @title PCA score plot of samples
@@ -631,9 +582,10 @@ variance_pcs_plot <- function(x,
     tiles$variance <- pc$variance[match(as.character(tiles$pc), colnames(pc$scores))] * 100
     # Default: "seq-blue" from near white, so that tiles of R^2 near 0 recede
     fill_cols <- if (is.null(cols)) c("grey97", bt_palette("seq-blue")) else resolve_continuous_palette(cols, FALSE)
-    # Values in white on dark tiles, dark on mid ones, light grey below 0.1
+    # Values in black, in white on the dark tiles (R^2 above 0.55) where
+    # black would not be legible
     tiles$label <- formatC(tiles$r2, format = "f", digits = 2)
-    tiles$text <- cut(tiles$r2, c(-Inf, 0.1, 0.55, Inf), labels = c("low", "mid", "high"))
+    tiles$text <- cut(tiles$r2, c(-Inf, 0.55, Inf), labels = c("dark", "light"))
 
     width <- grid_panel_size(n_pc, cell.width)
     text_size <- pt_to_size(sz$small * 0.85)
@@ -641,7 +593,7 @@ variance_pcs_plot <- function(x,
         geom_tile(colour = if (is.na(bg) || identical(bg, "transparent")) "white" else bg,
                   linewidth = pt_to_linewidth(1)) +
         geom_text(aes(label = .data$label, colour = .data$text), size = text_size, show.legend = FALSE) +
-        scale_colour_manual(values = c(low = "grey60", mid = "grey15", high = "white"), guide = "none") +
+        scale_colour_manual(values = c(dark = "black", light = "white"), guide = "none") +
         scale_fill_gradientn(
             colours = fill_cols, limits = c(0, 1), name = bold_title(quote(R^2)),
             guide = guide_colourbar(theme = theme(legend.key.height = unit(0.9, "in"),
@@ -664,7 +616,7 @@ variance_pcs_plot <- function(x,
     bars <- ggplot(vd, aes(x = .data$pc, y = .data$variance)) +
         geom_col(width = 0.7, fill = "grey55") +
         geom_text(aes(label = sprintf("%.0f%%", .data$variance)), vjust = -0.4, size = text_size,
-                  colour = "grey20") +
+                  colour = "black") +
         scale_x_discrete(expand = expansion(0)) +
         # The name of the bars as the one tick label of the y-axis, so that it
         # lines up with the covariate names below (an axis title would sit

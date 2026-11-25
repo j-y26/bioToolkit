@@ -1,5 +1,4 @@
-# Shared setup of the bioToolkit website guides, sourced by each guide's
-# hidden setup chunk. Files starting with "_" are not articles for pkgdown.
+# Shared setup of the website guides
 
 suppressPackageStartupMessages({
     library(bioToolkit)

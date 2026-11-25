@@ -1,38 +1,4 @@
-# Summaries of differential expression across comparisons (roadmap items
-# G2 and G4)
-#
-# Design
-# ------
-# Both plots read many comparisons at once through `standardize_de()` (F5):
-# a named list of DE tables, or one long table with a comparison column
-# (e.g. FindAllMarkers() output with `comparison.col = "cluster"`), with an
-# optional second level of `groups` (e.g. cell type above contrasts).
-#
-# * `plot_de_dots()` (G2) shows *selected* genes: a grid of genes x
-#   comparisons on the dot-grid engine (G0), colour = log2 fold change
-#   (diverging, centred on 0, each side to its own extreme), size = -log10
-#   adjusted p-value. Comparisons are marked by a coloured dot, as the groups
-#   of DotPlot_bioToolkit(); `groups` and gene groups by bars (R/group_bars.R). Significance
-#   needs both cutoffs (padj and |log2FC|), so it is not readable from the
-#   dot size alone: significant results are drawn opaque with a dark ring,
-#   the others faded (default, "fade"), keeping their fold-change colour so
-#   that no information is lost. One titled legend ("Significance") spells
-#   out both cutoffs. "grey" and "hide" remain available. Replaces
-#   `de_dot_plot()`.
-# * `plot_multi_volcano()` (G4) shows *all* DE genes: one column of genes per
-#   comparison, log2 fold change on the y-axis. No capping of extreme values
-#   (decided 2026-10-13). Revision of 2026-10-14 (user): the coloured band at
-#   0 spanning +-`logfc.cutoff` is gone (huge with a high cutoff, invisible at
-#   0); each comparison is marked by a strip of fixed thickness above its
-#   column (R/group_bars.R) with its name beyond, the cutoffs are dashed
-#   lines, non-significant genes are drawn in grey by default (`show.ns`),
-#   `groups` get bars like split.by, and `flip = TRUE` lists comparisons as
-#   rows (names on the left, down-regulated genes left, up right).
-#   Revision of 2026-10-15 (user): with "sina", non-significant genes are
-#   spread uniformly (a grey block, no longer a third shape between the
-#   cutoffs) while up and down genes keep their own shapes; "pvalue" scales
-#   each side of 0 as a whole; the grey is lighter ("grey88") than in
-#   plot_volcano() (multi_volcano_offsets()).
+# Summaries of differential expression across comparisons
 
 
 #' @title Dot plot of differential expression across comparisons
@@ -727,7 +693,7 @@ plot_multi_volcano <- function(
     # Point colours
     # Non-significant genes in a light grey, so that they recede behind the
     # significant ones (lighter than plot_volcano()'s, as they are many more
-    # here; user, 2026-10-15)
+    # here)
     up_down <- volcano_colours(if (color.by == "direction") cols else NULL, ns = "grey88")
     colourbar <- guide_colourbar(theme = theme(
         legend.key.height = unit(1.2, "in"),
@@ -742,7 +708,7 @@ plot_multi_volcano <- function(
         # otherwise leave every other gene pale. Positions are not capped.
         # Each end is trimmed to the most extreme gene of its direction, so
         # that the side with fewer or weaker genes is not faded
-        # (diverging_limits(); 2026-10-14)
+        # (diverging_limits())
         v <- df$colour_value[df$direction != "ns"]
         m <- max(if (length(v)) stats::quantile(abs(v), 0.95, names = FALSE) else 0, -log10(padj.cutoff) * 2)
         lim <- diverging_limits(v, -m, m)
@@ -1012,8 +978,7 @@ plot_multi_volcano <- function(
 
 #' Horizontal offsets of points within their column
 #'
-#' "sina" (user decision 2026-10-15, after trying a shape per side of 0
-#' built from all genes): the significant genes of each direction get their
+#' "sina": the significant genes of each direction get their
 #' own shape, as wide as their density, so their distribution shows however
 #' many non-significant genes there are; non-significant genes are spread
 #' uniformly over the column, a grey block centred on 0 rather than another

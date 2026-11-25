@@ -1,7 +1,7 @@
-# Define global constants used in the package
+# Global constants used in the package
 
-# Columns of DE result tables per method, read by standardize_de() (roadmap
-# item F5). `mean_scale` says how the mean expression column is expressed:
+# Columns of DE result tables per method, read by standardize_de().
+# `mean_scale` says how the mean expression column is expressed:
 # "log2" values are plotted as they are, "linear" ones (DESeq2 baseMean) on a
 # log10 axis. Seurat's FindMarkers() reports no mean expression.
 DE_COLUMN_PRESETS <- list(

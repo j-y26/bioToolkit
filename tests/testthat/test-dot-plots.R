@@ -1,4 +1,4 @@
-# Dot-grid engine (G0), DotPlot_bioToolkit() (G1) and assay handling
+# Dot-grid engine, DotPlot_bioToolkit() and assay handling
 
 grid_fixture <- function() {
     data.frame(
@@ -110,7 +110,7 @@ test_that("scale_columns z-scores and zeroes constant genes", {
 })
 
 test_that("dot_fill_limits: z-scores centred on 0, each end at most 2.5 or its data", {
-    # Each end trimmed to the data on its side (2026-10-14)
+    # Each end trimmed to the data on its side
     expect_equal(dot_fill_limits(c(-1, 0.5), TRUE, NA, NA), c(-1, 0.5))
     expect_equal(dot_fill_limits(c(-4, 3), TRUE, NA, NA), c(-2.5, 2.5))
     expect_equal(dot_fill_limits(c(-0.3, 4), TRUE, -2, 2), c(-0.3, 2))

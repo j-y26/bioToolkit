@@ -1,5 +1,4 @@
-# Bulk plots (roadmap items B1 MA plot, B2 PCA, B4 variance explained,
-# B5 quadrant plot)
+# Bulk plots: MA plot, PCA, variance explained, quadrant plot
 
 # DE tables with known classes ------------------------------------------------
 
@@ -239,7 +238,7 @@ test_that("plot_fc_quadrant() direction and significance schemes", {
     # Counts only in the same-sign corners
     txt <- Filter(function(l) inherits(l$geom, "GeomText"), p$layers)[[1]]
     expect_equal(txt$aes_params$label, c("1", "1"))
-    # The former five classes
+    # Five significance classes
     p2 <- quiet(plot_fc_quadrant(f$x, f$y, name.x = "A", name.y = "B", color.by = "significance", label = "none"))
     cls <- setNames(as.character(attr(p2, "source_data")$category), attr(p2, "source_data")$feature)
     expect_equal(unname(cls[c("CC1", "CC2", "DC1", "XO", "YO", "NS")]),

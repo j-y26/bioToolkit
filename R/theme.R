@@ -1,26 +1,4 @@
-# Shared theme and text helpers (roadmap item F3)
-#
-# Design
-# ------
-# * One theme, `theme_bioToolkit()`, for every plot in the package, so that
-#   text sizes, line widths and fonts are consistent across figures.
-# * One fixed set of sizes, `theme_sizes()`, used everywhere. (Journal and
-#   slide presets existed briefly and were removed on 2026-10-13 to keep the
-#   package simple.) Each plot function still accepts its own `*.size`
-#   arguments, whose NULL default means "from `theme_sizes()`".
-# * The sizes, all in points (1/72 inch):
-#     base  - axis titles, legend titles and, in embeddings, the legend text
-#             (cluster names are the content of an embedding legend, so they
-#             are not demoted to "small" text)
-#     small - tick labels and legend text of axis / grid plots
-#     large - plot titles and facet strips
-#     line  - thin lines: reference lines (e.g. cutoffs), label leader
-#             segments and grid lines
-#     axis  - axis lines and ticks of "axis" and "grid" plots, firmer than the lines
-#             drawn inside the panel (user decision 2026-10-13)
-# * ggplot2 measures `linewidth` in its own units, so line widths given in
-#   points are converted with `pt_to_linewidth()`; `geom_text()` sizes are in
-#   mm and converted with `pt_to_size()`.
+# Shared theme and text helpers
 
 
 #' Text sizes and line widths of `theme_bioToolkit()`
@@ -170,8 +148,7 @@ theme_bioToolkit <- function(type = c("axis", "grid", "embedding"),
                 common +
                 theme(
                     legend.text = element_text(size = sz$base),
-                    # Legend titles are bold in every plot (user decision
-                    # 2026-10-14)
+                    # Legend titles are bold in every plot
                     legend.title = element_text(size = sz$base, face = "bold"),
                     strip.text = element_text(size = sz$large, face = "bold",
                                               margin = margin(b = 0.15, unit = "cm")),
@@ -194,20 +171,21 @@ theme_bioToolkit <- function(type = c("axis", "grid", "embedding"),
             # Ticks scale with the text, so they stay in proportion with a
             # custom base size
             axis.ticks.length = unit(sz$small / 3, "pt"),
-            # Legend titles are bold in every plot (user decision
-            # 2026-10-14); plotmath titles need bold_title()
+            # Legend titles are bold in every plot; plotmath titles need bold_title()
             legend.title = element_text(size = sz$base, face = "bold"),
             legend.text = element_text(size = sz$small),
-            strip.text = element_text(size = sz$base, face = "bold",
+            # Colour set explicitly: theme_classic() keeps ggplot2's grey10
+            # strip text otherwise. Every strip label (split.by blocks,
+            # feature groups, facets) inherits this black
+            strip.text = element_text(size = sz$base, face = "bold", colour = "black",
                                       margin = margin(b = 0.1, t = 0.1, unit = "cm")),
             plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm")
         )
 
     if (type == "grid") {
-        # Rows and columns are categories: the 1 pt axes of "axis" plots
-        # (user decision 2026-10-13; they were dropped before), light grid
-        # lines to follow a row or column, no axis titles (the labels name
-        # the categories) and rotated x labels
+        # Rows and columns are categories: the 1 pt axes of "axis" plots,
+        # light grid lines to follow a row or column, no axis titles (the
+        # labels name the categories) and rotated x labels
         th <- th + theme(
             axis.title = element_blank(),
             axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
