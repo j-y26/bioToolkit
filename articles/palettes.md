@@ -14,6 +14,7 @@ by their index.
 | see palettes, or your own colours, in R | [`show_palettes()`](https://j-y26.github.io/bioToolkit/reference/show_palettes.md) |
 | list names, types and sources | [`list_palettes()`](https://j-y26.github.io/bioToolkit/reference/list_palettes.md) |
 | check colours for colour blindness | [`check_palette()`](https://j-y26.github.io/bioToolkit/reference/check_palette.md) |
+| a light-to-dark ramp in the hue of a colour | `ramp_palette("#1F77B4")` |
 
 Hover a swatch to see its index and hex code. Qualitative palettes are
 for groups (cell types, conditions); sequential palettes for values from
@@ -357,6 +358,27 @@ type keeps its colour in every figure; `check_palette(cell_cols)` flags
 pairs that become hard to tell apart with colour blindness (see [Colour
 vision
 deficiency](https://j-y26.github.io/bioToolkit/articles/figures.html#colour-vision-deficiency)).
+
+### Ramps in the hue of your colours
+
+[`ramp_palette()`](https://j-y26.github.io/bioToolkit/reference/ramp_palette.md)
+turns each colour into a light-to-dark ramp of the same hue, e.g. to
+colour a signature score or a marker’s expression in the colour of the
+cell type it marks. Only the hue is taken from the colour; lightness and
+chroma follow the same course for every hue, so ramps of different cell
+types match in lightness step by step. A single colour gives a vector,
+several colours a list named after them:
+
+``` r
+
+cell_ramps <- ramp_palette(cell_cols)
+show_palettes(cell_ramps)
+```
+
+![](palettes_files/figure-html/ramps-2.png)
+
+Pass one ramp as `cols` of a continuous scale, e.g.
+`FeaturePlot_bioToolkit(obj, "CD14", cols = cell_ramps[["CD14 Mono"]])`.
 
 ## Adding a palette
 

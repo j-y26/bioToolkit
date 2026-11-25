@@ -42,8 +42,10 @@ plot_composition_scatter(
 
 - object:
 
-  A Seurat object, or a data frame with one row per cell (e.g. its
-  metadata)
+  A Seurat object, or a table with one row per cell (e.g. its metadata):
+  anything
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)
+  converts
 
 - group.by:
 

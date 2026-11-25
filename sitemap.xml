@@ -35,6 +35,7 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/as_enrichment.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/as_feature_matrix.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/as_group_factor.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/as_plot_table.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/bioToolkit-imports.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/block_label_theme.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/bold_title.html</loc></url>
@@ -42,6 +43,7 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/calc_expr_corr.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/check_arrow_scale.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/check_bar_width.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/check_categorical.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/check_colours.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/check_covariates.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/check_de_cutoffs.html</loc></url>
@@ -52,6 +54,8 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/cloud_outline.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/cluster_order.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/combine_feature_plots.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/composition_bands.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/composition_segments.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/composition_wide.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/condition_density.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/covariate_column.html</loc></url>
@@ -161,6 +165,7 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/legend_gtable.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/legend_size.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/legend_title_label.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/lighten_colour.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/list_palettes.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/ma_x_title.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/magma_r_trimmed.html</loc></url>
@@ -185,6 +190,7 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/pca_metadata.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/pct_label.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/plot_cells.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/plot_composition_bars.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/plot_composition_scatter.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/plot_de_dots.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/plot_enrichment_bars.html</loc></url>
@@ -207,6 +213,7 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/quadrant_counts.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/quadrant_label_flags.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/quadrant_trend.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/ramp_palette.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/rank_de_genes.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/rank_highlight_colours.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/rank_input.html</loc></url>
@@ -254,6 +261,7 @@
 <url><loc>https://j-y26.github.io/bioToolkit/reference/strip_face.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/summarize_group_expression.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/summarize_group_meta.html</loc></url>
+<url><loc>https://j-y26.github.io/bioToolkit/reference/text_contrast.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/theme_bg.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/theme_bioToolkit.html</loc></url>
 <url><loc>https://j-y26.github.io/bioToolkit/reference/theme_sizes.html</loc></url>

@@ -7,13 +7,13 @@
 <title>Single-cell: comparing conditions • bioToolkit</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet">
-<link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.5.0/font.css" rel="stylesheet">
+<link href="../deps/JetBrains_Mono-0.5.0/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Single-cell: comparing conditions">
-<meta name="description" content="Does a condition change which cells are present, or where they sit on the embedding? summarize_group_meta(), get_meta_pivot(), plot_composition_scatter() and DensityDiffPlot_bioToolkit().">
-<meta property="og:description" content="Does a condition change which cells are present, or where they sit on the embedding? summarize_group_meta(), get_meta_pivot(), plot_composition_scatter() and DensityDiffPlot_bioToolkit().">
+<meta name="description" content="Does a condition change which cells are present, or where they sit on the embedding? summarize_group_meta(), get_meta_pivot(), plot_composition_scatter(), plot_composition_bars() and DensityDiffPlot_bioToolkit().">
+<meta property="og:description" content="Does a condition change which cells are present, or where they sit on the embedding? summarize_group_meta(), get_meta_pivot(), plot_composition_scatter(), plot_composition_bars() and DensityDiffPlot_bioToolkit().">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,6 +120,11 @@ lost?</p>
 <td>proportion of each group in one condition against another</td>
 </tr>
 <tr class="even">
+<td><code><a href="../reference/plot_composition_bars.html">plot_composition_bars()</a></code></td>
+<td>stacked bars of the composition of each condition or sample, from
+any table</td>
+</tr>
+<tr class="odd">
 <td><code><a href="../reference/DensityDiffPlot_bioToolkit.html">DensityDiffPlot_bioToolkit()</a></code></td>
 <td>where on an embedding a condition has more or fewer cells</td>
 </tr>
@@ -306,6 +311,186 @@ within each, e.g. within lymphoid and myeloid cells:</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="composition-bars">Composition bars<a class="anchor" aria-label="anchor" href="#composition-bars"></a>
+</h2>
+<p>Stacked bars: one bar per level of <code>split.by</code>, one
+coloured segment per level of <code>group.by</code>, and one panel per
+level of <code>facet.by</code>. The segments of a bar are shares of that
+bar’s cells, so every bar adds up to 100%. One bar per donor, in a panel
+per condition, shows how much samples vary:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_composition_bars.html">plot_composition_bars</a></span><span class="op">(</span></span>
+<span>    <span class="va">pbmc</span>,</span>
+<span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    split.by <span class="op">=</span> <span class="st">"donor"</span>,</span>
+<span>    facet.by <span class="op">=</span> <span class="st">"condition"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="sc-conditions_files/figure-html/bars-7.png" class="r-plt" alt="" width="778" style="display: block; margin: auto;"></p>
+<p>Swapping <code>group.by</code> and <code>split.by</code> answers
+another question: which samples make up each cell type (e.g. whether a
+cluster comes from one sample only).</p>
+<p>Bars have a fixed width (<code>bar.width</code>), gap
+(<code>bar.gap</code>) and length (<code>bar.length</code>) in inches,
+and panels a fixed gap (<code>panel.spacing</code>), so the figure keeps
+its proportions whatever the number of bars. Bars and segments have
+black borders (<code>border.width</code>, in points), and the value axis
+shows its ticks and labels without a line
+(<code>value.axis.line = TRUE</code> draws it).</p>
+<div class="section level3 tabset tabset-pills">
+<h3 class="tabset tabset-pills" id="variants-1">Variants<a class="anchor" aria-label="anchor" href="#variants-1"></a>
+</h3>
+
+
+
+
+
+
+<ul class="nav nav-pills" id="variants-1" role="tablist">
+<li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#connect" id="connect-tab" type="button" role="tab" aria-controls="connect" aria-selected="true" class="active nav-link"><code>connect</code></button></li>
+<li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#flip-and-label" id="flip-and-label-tab" type="button" role="tab" aria-controls="flip-and-label" aria-selected="false" class="nav-link"><code>flip</code> and <code>label</code></button></li>
+<li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#value-and-show-n" id="value-and-show-n-tab" type="button" role="tab" aria-controls="value-and-show-n" aria-selected="false" class="nav-link"><code>value</code> and <code>show.n</code></button></li>
+<li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#order-by" id="order-by-tab" type="button" role="tab" aria-controls="order-by" aria-selected="false" class="nav-link"><code>order.by</code></button></li>
+<li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#legend" id="legend-tab" type="button" role="tab" aria-controls="legend" aria-selected="false" class="nav-link">Legend</button></li>
+<li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#any-table" id="any-table-tab" type="button" role="tab" aria-controls="any-table" aria-selected="false" class="nav-link">Any table</button></li>
+</ul>
+<div class="tab-content">
+<div class="active  tab-pane" id="connect" role="tabpanel" aria-labelledby="connect-tab">
+
+<p>Bands joining each group’s segments in neighbouring bars of a panel,
+in a light tone of its colour: <code>"curve"</code> (as in alluvial
+plots) or <code>"straight"</code>. Off by default (<code>"none"</code>).
+<code>connect.lighten</code> sets how light the bands are, as the share
+of white mixed into the colour (default 0.8; 0 is the group’s own
+colour).</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_composition_bars.html">plot_composition_bars</a></span><span class="op">(</span></span>
+<span>    <span class="va">pbmc</span>,</span>
+<span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    split.by <span class="op">=</span> <span class="st">"donor"</span>,</span>
+<span>    facet.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
+<span>    connect <span class="op">=</span> <span class="st">"curve"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="sc-conditions_files/figure-html/bars-connect-8.png" class="r-plt" alt="" width="778" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_composition_bars.html">plot_composition_bars</a></span><span class="op">(</span></span>
+<span>    <span class="va">pbmc</span>,</span>
+<span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    split.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
+<span>    connect <span class="op">=</span> <span class="st">"straight"</span>,</span>
+<span>    bar.width <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>    bar.gap <span class="op">=</span> <span class="fl">0.5</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="sc-conditions_files/figure-html/bars-straight-9.png" class="r-plt" alt="" width="375" style="display: block; margin: auto;"></p>
+</div>
+<div class="tab-pane" id="flip-and-label" role="tabpanel" aria-labelledby="flip-and-label-tab">
+
+<p>Horizontal bars, first bar on top. <code>label = TRUE</code> writes
+each segment’s share inside it (white on dark segments), for segments of
+at least <code>label.min</code> (5%) whose text fits:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_composition_bars.html">plot_composition_bars</a></span><span class="op">(</span></span>
+<span>    <span class="va">pbmc</span>,</span>
+<span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    split.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
+<span>    flip <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    bar.width <span class="op">=</span> <span class="fl">0.4</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="sc-conditions_files/figure-html/bars-flip-10.png" class="r-plt" alt="" width="448" style="display: block; margin: auto;"></p>
+</div>
+<div class="tab-pane" id="value-and-show-n" role="tabpanel" aria-labelledby="value-and-show-n-tab">
+
+<p><code>"fraction"</code> (0 to 1) or <code>"count"</code> (numbers of
+cells, bars of different lengths) instead of percentages;
+<code>show.n = TRUE</code> writes each bar’s number of cells beyond its
+end:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_composition_bars.html">plot_composition_bars</a></span><span class="op">(</span></span>
+<span>    <span class="va">pbmc</span>,</span>
+<span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    split.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
+<span>    value <span class="op">=</span> <span class="st">"fraction"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="sc-conditions_files/figure-html/bars-fraction-11.png" class="r-plt" alt="" width="248" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_composition_bars.html">plot_composition_bars</a></span><span class="op">(</span></span>
+<span>    <span class="va">pbmc</span>,</span>
+<span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    split.by <span class="op">=</span> <span class="st">"donor"</span>,</span>
+<span>    facet.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
+<span>    value <span class="op">=</span> <span class="st">"count"</span>,</span>
+<span>    show.n <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="sc-conditions_files/figure-html/bars-count-12.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
+</div>
+<div class="tab-pane" id="order-by" role="tabpanel" aria-labelledby="order-by-tab">
+
+<p>Bars of each panel sorted by decreasing share of one group:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_composition_bars.html">plot_composition_bars</a></span><span class="op">(</span></span>
+<span>    <span class="va">pbmc</span>,</span>
+<span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    split.by <span class="op">=</span> <span class="st">"donor"</span>,</span>
+<span>    facet.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
+<span>    order.by <span class="op">=</span> <span class="st">"CD14 Mono"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="sc-conditions_files/figure-html/bars-order-13.png" class="r-plt" alt="" width="778" style="display: block; margin: auto;"></p>
+</div>
+<div class="tab-pane" id="legend" role="tabpanel" aria-labelledby="legend-tab">
+
+<p><code>legend.title</code>, <code>legend.position</code> and
+<code>legend.ncol</code>, as in <code><a href="../reference/DimPlot_bioToolkit.html">DimPlot_bioToolkit()</a></code>:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_composition_bars.html">plot_composition_bars</a></span><span class="op">(</span></span>
+<span>    <span class="va">pbmc</span>,</span>
+<span>    group.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    split.by <span class="op">=</span> <span class="st">"donor"</span>,</span>
+<span>    facet.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
+<span>    legend.title <span class="op">=</span> <span class="st">"Cell type"</span>,</span>
+<span>    legend.position <span class="op">=</span> <span class="st">"bottom"</span>,</span>
+<span>    legend.ncol <span class="op">=</span> <span class="fl">4</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="sc-conditions_files/figure-html/bars-legend-14.png" class="r-plt" alt="" width="664" style="display: block; margin: auto;"></p>
+</div>
+<div class="tab-pane" id="any-table" role="tabpanel" aria-labelledby="any-table-tab">
+
+<p>The rows need not be cells: any table with categorical columns works
+(a gene or peak annotation, DE results), and <code>unit</code> names
+what a row is. Here, the direction of each gene in the pseudobulk DE of
+IFN-β against control, per cell type:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">de</span> <span class="op">&lt;-</span> <span class="fu">docs_kang_de</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">direction_of</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">res</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">sig</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">FDR</span> <span class="op">&lt;</span> <span class="fl">0.05</span></span>
+<span>    <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">logFC</span> <span class="op">&gt;</span> <span class="fl">0</span>, <span class="st">"Up"</span>, <span class="st">"Down"</span><span class="op">)</span></span>
+<span>    <span class="va">out</span><span class="op">[</span><span class="op">!</span><span class="va">sig</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"Not significant"</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">out</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Up"</span>, <span class="st">"Down"</span>, <span class="st">"Not significant"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">de_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">de</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">ct</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>        cell_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">ct</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">de</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>        direction <span class="op">=</span> <span class="fu">direction_of</span><span class="op">(</span><span class="va">de</span><span class="op">[[</span><span class="va">ct</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">direction_cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Up"</span> <span class="op">=</span> <span class="st">"#D62728"</span>,</span>
+<span>    <span class="st">"Down"</span> <span class="op">=</span> <span class="st">"#1F77B4"</span>,</span>
+<span>    <span class="st">"Not significant"</span> <span class="op">=</span> <span class="st">"#D9D9D9"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_composition_bars.html">plot_composition_bars</a></span><span class="op">(</span></span>
+<span>    <span class="va">de_genes</span>,</span>
+<span>    group.by <span class="op">=</span> <span class="st">"direction"</span>,</span>
+<span>    split.by <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    unit <span class="op">=</span> <span class="st">"genes"</span>,</span>
+<span>    cols <span class="op">=</span> <span class="va">direction_cols</span>,</span>
+<span>    show.n <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="sc-conditions_files/figure-html/bars-genes-15.png" class="r-plt" alt="" width="392" style="display: block; margin: auto;"></p>
+</div>
+</div>
+</div>
+</div>
+<div class="section level2">
 <h2 id="density-difference-on-the-embedding">Density difference on the embedding<a class="anchor" aria-label="anchor" href="#density-difference-on-the-embedding"></a>
 </h2>
 <p><code><a href="../reference/DensityDiffPlot_bioToolkit.html">DensityDiffPlot_bioToolkit()</a></code> estimates the density of
@@ -320,7 +505,7 @@ sample cannot drive the map.</p>
 <strong>integrated</strong> UMAP (Harmony over condition), cells of both
 conditions are aligned by cell type, so the map shows shifts within cell
 types:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DensityDiffPlot_bioToolkit.html">DensityDiffPlot_bioToolkit</a></span><span class="op">(</span></span>
 <span>    <span class="va">pbmc</span>,</span>
 <span>    split.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
@@ -329,11 +514,11 @@ types:</p>
 <span>    label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    label.by <span class="op">=</span> <span class="st">"cell_type"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/density-7.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/density-16.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
 <p>On the UMAP <strong>before integration</strong>, IFN-β-stimulated
 cells of every type sit apart from their controls, and the map shows
 that response as a separation:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DensityDiffPlot_bioToolkit.html">DensityDiffPlot_bioToolkit</a></span><span class="op">(</span></span>
 <span>    <span class="va">pbmc</span>,</span>
 <span>    split.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
@@ -343,14 +528,14 @@ that response as a separation:</p>
 <span>    label <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    label.by <span class="op">=</span> <span class="st">"cell_type"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/density-raw-8.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/density-raw-17.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
 <div class="section level3 tabset tabset-pills">
-<h3 class="tabset tabset-pills" id="variants-1">Variants<a class="anchor" aria-label="anchor" href="#variants-1"></a>
+<h3 class="tabset tabset-pills" id="variants-2">Variants<a class="anchor" aria-label="anchor" href="#variants-2"></a>
 </h3>
 
 
 
-<ul class="nav nav-pills" id="variants-1" role="tablist">
+<ul class="nav nav-pills" id="variants-2" role="tablist">
 <li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#measure-log2ratio" id="measure-log2ratio-tab" type="button" role="tab" aria-controls="measure-log2ratio" aria-selected="true" class="active nav-link"><code>measure = "log2ratio"</code></button></li>
 <li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#draw-raster-and-contour" id="draw-raster-and-contour-tab" type="button" role="tab" aria-controls="draw-raster-and-contour" aria-selected="false" class="nav-link"><code>draw = "raster"</code> and <code>contour</code></button></li>
 <li role="presentation" class="nav-item"><button data-bs-toggle="tab" data-bs-target="#density-adjust" id="density-adjust-tab" type="button" role="tab" aria-controls="density-adjust" aria-selected="false" class="nav-link"><code>density.adjust</code></button></li>
@@ -360,7 +545,7 @@ that response as a separation:</p>
 
 <p>The log2 ratio of the two densities instead of their difference: fold
 changes, which also show sparse regions.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DensityDiffPlot_bioToolkit.html">DensityDiffPlot_bioToolkit</a></span><span class="op">(</span></span>
 <span>    <span class="va">pbmc</span>,</span>
 <span>    split.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
@@ -368,13 +553,13 @@ changes, which also show sparse regions.</p>
 <span>    sample.by <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    measure <span class="op">=</span> <span class="st">"log2ratio"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/density-ratio-9.png" class="r-plt" alt="" width="548" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/density-ratio-18.png" class="r-plt" alt="" width="548" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="draw-raster-and-contour" role="tabpanel" aria-labelledby="draw-raster-and-contour-tab">
 
 <p>The density difference drawn as a continuous surface, with contours
 of the density of all cells:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DensityDiffPlot_bioToolkit.html">DensityDiffPlot_bioToolkit</a></span><span class="op">(</span></span>
 <span>    <span class="va">pbmc</span>,</span>
 <span>    split.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
@@ -383,13 +568,13 @@ of the density of all cells:</p>
 <span>    draw <span class="op">=</span> <span class="st">"raster"</span>,</span>
 <span>    contour <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/density-raster-10.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/density-raster-19.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
 </div>
 <div class="tab-pane" id="density-adjust" role="tabpanel" aria-labelledby="density-adjust-tab">
 
 <p>The bandwidth multiplier: below 1 resolves smaller regions, above 1
 smooths more.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DensityDiffPlot_bioToolkit.html">DensityDiffPlot_bioToolkit</a></span><span class="op">(</span></span>
 <span>    <span class="va">pbmc</span>,</span>
 <span>    split.by <span class="op">=</span> <span class="st">"condition"</span>,</span>
@@ -397,7 +582,7 @@ smooths more.</p>
 <span>    sample.by <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>    density.adjust <span class="op">=</span> <span class="fl">0.5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="sc-conditions_files/figure-html/density-adjust-11.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
+<p><img src="sc-conditions_files/figure-html/density-adjust-20.png" class="r-plt" alt="" width="554" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>

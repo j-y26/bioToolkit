@@ -36,7 +36,8 @@
 
   Does a condition change which cells are present, or where they sit on
   the embedding? summarize_group_meta(), get_meta_pivot(),
-  plot_composition_scatter() and DensityDiffPlot_bioToolkit().
+  plot_composition_scatter(), plot_composition_bars() and
+  DensityDiffPlot_bioToolkit().
 
 ### Bulk and differential expression
 

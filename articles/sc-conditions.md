@@ -8,6 +8,7 @@ change, and where on the embedding are cells gained or lost?
 | [`summarize_group_meta()`](https://j-y26.github.io/bioToolkit/reference/summarize_group_meta.md) | counts and proportions per group, condition (and sample) |
 | [`get_meta_pivot()`](https://j-y26.github.io/bioToolkit/reference/get_meta_pivot.md) | a quick two-way table of two metadata columns |
 | [`plot_composition_scatter()`](https://j-y26.github.io/bioToolkit/reference/plot_composition_scatter.md) | proportion of each group in one condition against another |
+| [`plot_composition_bars()`](https://j-y26.github.io/bioToolkit/reference/plot_composition_bars.md) | stacked bars of the composition of each condition or sample, from any table |
 | [`DensityDiffPlot_bioToolkit()`](https://j-y26.github.io/bioToolkit/reference/DensityDiffPlot_bioToolkit.md) | where on an embedding a condition has more or fewer cells |
 
 These plots describe differences; they do not test them. Cells from one
@@ -211,6 +212,197 @@ plot_composition_scatter(
 
 ![](sc-conditions_files/figure-html/comp-facet-6.png)
 
+## Composition bars
+
+Stacked bars: one bar per level of `split.by`, one coloured segment per
+level of `group.by`, and one panel per level of `facet.by`. The segments
+of a bar are shares of that bar’s cells, so every bar adds up to 100%.
+One bar per donor, in a panel per condition, shows how much samples
+vary:
+
+``` r
+
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "donor",
+    facet.by = "condition"
+)
+```
+
+![](sc-conditions_files/figure-html/bars-7.png)
+
+Swapping `group.by` and `split.by` answers another question: which
+samples make up each cell type (e.g. whether a cluster comes from one
+sample only).
+
+Bars have a fixed width (`bar.width`), gap (`bar.gap`) and length
+(`bar.length`) in inches, and panels a fixed gap (`panel.spacing`), so
+the figure keeps its proportions whatever the number of bars. Bars and
+segments have black borders (`border.width`, in points), and the value
+axis shows its ticks and labels without a line (`value.axis.line = TRUE`
+draws it).
+
+### Variants
+
+- `connect`
+- `flip` and `label`
+- `value` and `show.n`
+- `order.by`
+- Legend
+- Any table
+
+Bands joining each group’s segments in neighbouring bars of a panel, in
+a light tone of its colour: `"curve"` (as in alluvial plots) or
+`"straight"`. Off by default (`"none"`). `connect.lighten` sets how
+light the bands are, as the share of white mixed into the colour
+(default 0.8; 0 is the group’s own colour).
+
+``` r
+
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "donor",
+    facet.by = "condition",
+    connect = "curve"
+)
+```
+
+![](sc-conditions_files/figure-html/bars-connect-8.png)
+
+``` r
+
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "condition",
+    connect = "straight",
+    bar.width = 0.5,
+    bar.gap = 0.5
+)
+```
+
+![](sc-conditions_files/figure-html/bars-straight-9.png)
+
+Horizontal bars, first bar on top. `label = TRUE` writes each segment’s
+share inside it (white on dark segments), for segments of at least
+`label.min` (5%) whose text fits:
+
+``` r
+
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "condition",
+    flip = TRUE,
+    label = TRUE,
+    bar.width = 0.4
+)
+```
+
+![](sc-conditions_files/figure-html/bars-flip-10.png)
+
+`"fraction"` (0 to 1) or `"count"` (numbers of cells, bars of different
+lengths) instead of percentages; `show.n = TRUE` writes each bar’s
+number of cells beyond its end:
+
+``` r
+
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "condition",
+    value = "fraction"
+)
+```
+
+![](sc-conditions_files/figure-html/bars-fraction-11.png)
+
+``` r
+
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "donor",
+    facet.by = "condition",
+    value = "count",
+    show.n = TRUE
+)
+```
+
+![](sc-conditions_files/figure-html/bars-count-12.png)
+
+Bars of each panel sorted by decreasing share of one group:
+
+``` r
+
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "donor",
+    facet.by = "condition",
+    order.by = "CD14 Mono"
+)
+```
+
+![](sc-conditions_files/figure-html/bars-order-13.png)
+
+`legend.title`, `legend.position` and `legend.ncol`, as in
+[`DimPlot_bioToolkit()`](https://j-y26.github.io/bioToolkit/reference/DimPlot_bioToolkit.md):
+
+``` r
+
+plot_composition_bars(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "donor",
+    facet.by = "condition",
+    legend.title = "Cell type",
+    legend.position = "bottom",
+    legend.ncol = 4
+)
+```
+
+![](sc-conditions_files/figure-html/bars-legend-14.png)
+
+The rows need not be cells: any table with categorical columns works (a
+gene or peak annotation, DE results), and `unit` names what a row is.
+Here, the direction of each gene in the pseudobulk DE of IFN-β against
+control, per cell type:
+
+``` r
+
+de <- docs_kang_de()
+direction_of <- function(res) {
+    sig <- res$FDR < 0.05
+    out <- ifelse(res$logFC > 0, "Up", "Down")
+    out[!sig] <- "Not significant"
+    factor(out, levels = c("Up", "Down", "Not significant"))
+}
+de_genes <- do.call(rbind, lapply(names(de), function(ct) {
+    data.frame(
+        cell_type = factor(ct, levels = names(de)),
+        direction = direction_of(de[[ct]])
+    )
+}))
+direction_cols <- c(
+    "Up" = "#D62728",
+    "Down" = "#1F77B4",
+    "Not significant" = "#D9D9D9"
+)
+plot_composition_bars(
+    de_genes,
+    group.by = "direction",
+    split.by = "cell_type",
+    unit = "genes",
+    cols = direction_cols,
+    show.n = TRUE
+)
+```
+
+![](sc-conditions_files/figure-html/bars-genes-15.png)
+
 ## Density difference on the embedding
 
 [`DensityDiffPlot_bioToolkit()`](https://j-y26.github.io/bioToolkit/reference/DensityDiffPlot_bioToolkit.md)
@@ -238,7 +430,7 @@ DensityDiffPlot_bioToolkit(
 )
 ```
 
-![](sc-conditions_files/figure-html/density-7.png)
+![](sc-conditions_files/figure-html/density-16.png)
 
 On the UMAP **before integration**, IFN-β-stimulated cells of every type
 sit apart from their controls, and the map shows that response as a
@@ -257,7 +449,7 @@ DensityDiffPlot_bioToolkit(
 )
 ```
 
-![](sc-conditions_files/figure-html/density-raw-8.png)
+![](sc-conditions_files/figure-html/density-raw-17.png)
 
 ### Variants
 
@@ -279,7 +471,7 @@ DensityDiffPlot_bioToolkit(
 )
 ```
 
-![](sc-conditions_files/figure-html/density-ratio-9.png)
+![](sc-conditions_files/figure-html/density-ratio-18.png)
 
 The density difference drawn as a continuous surface, with contours of
 the density of all cells:
@@ -296,7 +488,7 @@ DensityDiffPlot_bioToolkit(
 )
 ```
 
-![](sc-conditions_files/figure-html/density-raster-10.png)
+![](sc-conditions_files/figure-html/density-raster-19.png)
 
 The bandwidth multiplier: below 1 resolves smaller regions, above 1
 smooths more.
@@ -312,4 +504,4 @@ DensityDiffPlot_bioToolkit(
 )
 ```
 
-![](sc-conditions_files/figure-html/density-adjust-11.png)
+![](sc-conditions_files/figure-html/density-adjust-20.png)

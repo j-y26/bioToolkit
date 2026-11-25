@@ -1,9 +1,8 @@
 # Horizontal offsets of points within their column
 
-"sina" (user decision 2026-10-15, after trying a shape per side of 0
-built from all genes): the significant genes of each direction get their
-own shape, as wide as their density, so their distribution shows however
-many non-significant genes there are; non-significant genes are spread
+"sina": the significant genes of each direction get their own shape, as
+wide as their density, so their distribution shows however many
+non-significant genes there are; non-significant genes are spread
 uniformly over the column, a grey block centred on 0 rather than another
 shape (built from all genes, a shape is dominated by the thousands of
 non-significant genes and the significant ones become a thin line).

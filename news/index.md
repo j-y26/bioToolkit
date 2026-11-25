@@ -1,5 +1,52 @@
 # Changelog
 
+## bioToolkit 1.4.0
+
+### Colour ramps
+
+- New
+  [`ramp_palette()`](https://j-y26.github.io/bioToolkit/reference/ramp_palette.md):
+  a light-to-dark single-hue ramp in the hue of each given colour (one
+  colour, a vector or a list), e.g. to colour a signature score in the
+  colour of its cluster. Built in HCL with chroma capped inside the sRGB
+  gamut, so the hue holds along the ramp; ramps of different hues share
+  the same lightness at each step. Needs colorspace (Suggests).
+
+### Composition bars
+
+- New
+  [`plot_composition_bars()`](https://j-y26.github.io/bioToolkit/reference/plot_composition_bars.md):
+  stacked bars of how the cells (or genes, peaks…) of each bar are split
+  among groups. One bar per level of `split.by` (condition or sample),
+  one coloured segment per level of `group.by`, one panel per level of
+  `facet.by` (panel names in group bars).
+  - `value`: `"percent"` (default), `"fraction"` or `"count"`; `show.n`
+    writes each bar’s number of cells beyond its end.
+  - `flip = TRUE` for horizontal bars; `order.by` sorts the bars of each
+    panel by the share of one group.
+  - Bars of a fixed size in inches: `bar.width`, `bar.gap`,
+    `bar.length`, `panel.spacing`. Black borders around bars and between
+    segments (`border.width`, 1 pt). The value axis shows ticks and
+    labels without its line (`value.axis.line = TRUE` to draw it).
+  - `connect`: optional bands joining each group’s segments in
+    neighbouring bars, `"curve"` (alluvial-like) or `"straight"`; off by
+    default. `connect.lighten` (default 0.8) sets how light they are.
+  - `label = TRUE` writes each segment’s share inside it (black, or
+    white on dark segments) where the text fits.
+  - `legend.title`, `legend.position`, `legend.ncol` as in
+    [`DimPlot_bioToolkit()`](https://j-y26.github.io/bioToolkit/reference/DimPlot_bioToolkit.md).
+  - A panel of few bars under a long `facet.by` name is widened to the
+    name (the bars keep their width).
+- [`summarize_group_meta()`](https://j-y26.github.io/bioToolkit/reference/summarize_group_meta.md)
+  takes any table that
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)
+  converts (tibbles, data.tables, Bioconductor `DataFrame`s, `GRanges`),
+  so gene or peak annotations can be counted too; `split.by` is optional
+  (all rows as one condition) and `unit` names what a row is. Columns
+  must be categorical (whole numbers are allowed, e.g. cluster numbers).
+  [`plot_composition_scatter()`](https://j-y26.github.io/bioToolkit/reference/plot_composition_scatter.md)
+  takes tables in the same way.
+
 ## bioToolkit 1.3.1
 
 ### Enrichment plots
@@ -375,9 +422,7 @@ names. The old names are still accepted, with a deprecation warning
 
 ## bioToolkit 0.9.0
 
-Phase E of the visualization overhaul: bulk plots (B1, B2, B4, B5). The
-planned sample-to-sample heatmap (B3) was dropped; use corrplot or
-ComplexHeatmap.
+Bulk RNA-seq plots.
 
 ### New
 
@@ -430,14 +475,14 @@ ComplexHeatmap.
 
 ## bioToolkit 0.8.0
 
-Phase D of the visualization overhaul: single-cell plots (S1-S4).
+Single-cell plots.
 
 ### Breaking changes
 
-- `group.by` / `split.by` now mean the same in every plot (user decision
-  2026-10-13): `group.by` is the lower-level grouping whose levels are
-  compared, marked by their colours; `split.by` is the higher-level
-  grouping, drawn like facets (labelled blocks or panels).
+- `group.by` / `split.by` now mean the same in every plot: `group.by` is
+  the lower-level grouping whose levels are compared, marked by their
+  colours; `split.by` is the higher-level grouping, drawn like facets
+  (labelled blocks or panels).
   [`DotPlot_bioToolkit()`](https://j-y26.github.io/bioToolkit/reference/DotPlot_bioToolkit.md)
   follows it: with `split.by`, rows are blocks of `split.by` (named on
   the left), each with one row per `group.by` level marked by its
@@ -525,8 +570,7 @@ Phase D of the visualization overhaul: single-cell plots (S1-S4).
 
 ## bioToolkit 0.7.0
 
-Phase C of the visualization overhaul: the dot-grid family and DE
-summaries.
+The dot-grid family and DE summaries.
 
 ### New
 
@@ -649,7 +693,7 @@ summaries.
 
 ## bioToolkit 0.6.0
 
-Phase B of the visualization overhaul: fixes and removals.
+Fixes and removals.
 
 ### New
 
@@ -757,8 +801,7 @@ Phase B of the visualization overhaul: fixes and removals.
 
 ## bioToolkit 0.5.0
 
-Phase A of the visualization overhaul: the foundations every plot builds
-on.
+The foundations every plot builds on.
 
 ### New
 

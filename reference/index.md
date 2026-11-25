@@ -37,6 +37,8 @@ colours](https://j-y26.github.io/bioToolkit/articles/figures.html#colours).
   : Show palettes with the index of each colour
 - [`check_palette()`](https://j-y26.github.io/bioToolkit/reference/check_palette.md)
   : Check that colours stay distinct with colour vision deficiency
+- [`ramp_palette()`](https://j-y26.github.io/bioToolkit/reference/ramp_palette.md)
+  : Single-hue ramps in the hue of given colours
 - [`mix_colors()`](https://j-y26.github.io/bioToolkit/reference/mix_colors.md)
   : Mix colors based on weights of each color
 - [`sort_colors_by_hue()`](https://j-y26.github.io/bioToolkit/reference/sort_colors_by_hue.md)
@@ -92,6 +94,8 @@ conditions](https://j-y26.github.io/bioToolkit/articles/sc-conditions.md).
   : Count and proportion of cells per group and condition
 - [`plot_composition_scatter()`](https://j-y26.github.io/bioToolkit/reference/plot_composition_scatter.md)
   : Composition scatter: group proportions in two conditions
+- [`plot_composition_bars()`](https://j-y26.github.io/bioToolkit/reference/plot_composition_bars.md)
+  : Stacked composition bars
 - [`DensityDiffPlot_bioToolkit()`](https://j-y26.github.io/bioToolkit/reference/DensityDiffPlot_bioToolkit.md)
   : Difference in cell density between conditions on an embedding
 - [`get_meta_pivot()`](https://j-y26.github.io/bioToolkit/reference/get_meta_pivot.md)

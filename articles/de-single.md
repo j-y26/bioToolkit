@@ -65,7 +65,7 @@ column names and returns standard columns (`feature`, `logfc`, `pvalue`,
 head(standardize_de(de_edger), 3)
 #> Detected edgeR results (logFC, PValue, FDR)
 #>     feature     logfc       pvalue         padj mean_expr         F
-#> 1 LINC01645 -6.445168 6.906463e-11 8.637223e-07 0.6412643  385.2972
+#> 1 LINC01645 -6.445168 6.906462e-11 8.637222e-07 0.6412643  385.2972
 #> 2     TAGAP  3.291148 2.793358e-10 1.119023e-06 7.3802895 1844.1143
 #> 3      NOD2  3.386661 2.828302e-10 1.119023e-06 5.6846857 1838.0587
 head(standardize_de(de_deseq, logfc.col = "log2FoldChange_shrunk"), 3)
@@ -73,11 +73,11 @@ head(standardize_de(de_deseq, logfc.col = "log2FoldChange_shrunk"), 3)
 #> 4 p-values of 0 replaced by 2.55999999769412e-315 (a tenth of the smallest non-zero value)
 #> 4 adjusted p-values of 0 replaced by 6.41000000000069e-312 (a tenth of the smallest non-zero value)
 #>   feature      logfc       pvalue         padj mean_expr log2FoldChange
-#> 1    SPP1 -0.6664638 1.908492e-03 4.255992e-03  556815.1     -0.6902862
+#> 1    SPP1 -0.6664640 1.908393e-03 4.255770e-03  556815.1     -0.6902862
 #> 2    ACTB  0.6581395 1.336112e-12 1.175064e-11  574651.6      0.6628589
 #> 3     FTL  0.1154071 3.866035e-01 4.721085e-01  404628.0      0.1122727
 #>        lfcSE       stat
-#> 1 0.22237777 -3.1041149
+#> 1 0.22237667 -3.1041303
 #> 2 0.09348526  7.0905178
 #> 3 0.12967607  0.8657933
 ```

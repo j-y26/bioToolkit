@@ -7,8 +7,8 @@
 <title>Colour palettes • bioToolkit</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet">
-<link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.5.0/font.css" rel="stylesheet">
+<link href="../deps/JetBrains_Mono-0.5.0/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Colour palettes">
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bioToolkit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -141,6 +141,10 @@ give their first <code>n</code>)</td>
 <tr class="odd">
 <td>check colours for colour blindness</td>
 <td><code><a href="../reference/check_palette.html">check_palette()</a></code></td>
+</tr>
+<tr class="even">
+<td>a light-to-dark ramp in the hue of a colour</td>
+<td><code>ramp_palette("#1F77B4")</code></td>
 </tr>
 </tbody>
 </table>
@@ -749,6 +753,23 @@ each cell type keeps its colour in every figure;
 <code>check_palette(cell_cols)</code> flags pairs that become hard to
 tell apart with colour blindness (see <a href="figures.html#colour-vision-deficiency">Colour vision
 deficiency</a>).</p>
+<div class="section level3">
+<h3 id="ramps-in-the-hue-of-your-colours">Ramps in the hue of your colours<a class="anchor" aria-label="anchor" href="#ramps-in-the-hue-of-your-colours"></a>
+</h3>
+<p><code><a href="../reference/ramp_palette.html">ramp_palette()</a></code> turns each colour into a light-to-dark
+ramp of the same hue, e.g. to colour a signature score or a marker’s
+expression in the colour of the cell type it marks. Only the hue is
+taken from the colour; lightness and chroma follow the same course for
+every hue, so ramps of different cell types match in lightness step by
+step. A single colour gives a vector, several colours a list named after
+them:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cell_ramps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ramp_palette.html">ramp_palette</a></span><span class="op">(</span><span class="va">cell_cols</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/show_palettes.html">show_palettes</a></span><span class="op">(</span><span class="va">cell_ramps</span><span class="op">)</span></span></code></pre></div>
+<p><img src="palettes_files/figure-html/ramps-2.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p>Pass one ramp as <code>cols</code> of a continuous scale, e.g.
+<code>FeaturePlot_bioToolkit(obj, "CD14", cols = cell_ramps[["CD14 Mono"]])</code>.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="adding-a-palette">Adding a palette<a class="anchor" aria-label="anchor" href="#adding-a-palette"></a>

@@ -2,8 +2,7 @@
 
 ## Naming conventions
 
-One naming scheme across the package. Every new function follows it;
-existing functions are renamed when their roadmap item is worked on.
+One naming scheme across the package. Every new function follows it.
 
 ### Function names
 
@@ -73,7 +72,7 @@ standardize_de <- function(data,
 This applies to all package-level functions, exported or internal. Short
 anonymous functions inside code (`function(x) ...`) are exempt.
 
-Code should be easy to read line by line (user decision, 2026-10-14):
+Code should be easy to read line by line:
 
 - **ggplot / patchwork:** one layer per line; never several `+` (or `|`,
   `/`) on one line.
@@ -98,12 +97,11 @@ Code should be easy to read line by line (user decision, 2026-10-14):
 - Comments go on their own line above the code, not after it.
 
 This applies to the website guides (`vignettes/articles/`) and to all
-new or changed package code. The package code written before 2026-10-14
-has not yet been reformatted to it; that is a separate, planned pass.
+new or changed package code.
 
 ## Every plot
 
-Before a plotting item is marked done in `dev/visualization_roadmap.md`:
+Every plotting function:
 
 - Follows the names above.
 - Fixed geometry:
@@ -155,9 +153,8 @@ Before a plotting item is marked done in `dev/visualization_roadmap.md`:
 - `NEWS.md` entry, including anything removed or renamed.
 - On the website: listed in a `reference` section of `_pkgdown.yml` (the
   pkgdown build fails otherwise) and shown, with each mode of its
-  arguments, in the matching guide in `vignettes/articles/` (see
-  `dev/documentation_site.md`). The site is published when the version
-  in DESCRIPTION changes.
+  arguments, in the matching guide in `vignettes/articles/`. The site is
+  published when the version in DESCRIPTION changes.
 
 ## Adding a colour palette
 
