@@ -14,6 +14,7 @@ NULL
 # so that R CMD check does not report them as undefined globals
 utils::globalVariables(c(
     "Freq", "GeneName", "coef", "colour", "corr_FDR", "corr_p_value", "group",
+    "label",
     "p_value", "percent", "piValue", "ring", "tile", "value", "x", "y"
 ))
 
@@ -825,6 +826,65 @@ group_label_layer <- function(df,
         bg.r = 0.15,
         seed = seed,
         min.segment.length = Inf
+    )
+}
+
+
+
+#' Number of cells written in a corner of each panel
+#'
+#' @param df Plotted cells, with a `panel` column when `by_panel`
+#'
+#' @param by_panel Whether to count cells within each panel
+#'
+#' @param xlim,ylim Axis limits of the panels (data units)
+#'
+#' @param position Corner of the panel: "bottom.right", "bottom.left",
+#'                 "top.right" or "top.left"
+#'
+#' @param size Text size in ggplot2 size units (mm)
+#'
+#' @param inset Distance from the panel edges, as a fraction of the axis
+#'              ranges
+#'
+#' @return A text layer with one label per panel
+#'
+#' @keywords internal
+cell_count_layer <- function(df,
+                             by_panel,
+                             xlim,
+                             ylim,
+                             position = "bottom.right",
+                             size,
+                             inset = 0.02) {
+    # One row per panel: facet_wrap() places each row in the panel named by
+    # its `panel` value. Empty panels are not drawn, so they get no count
+    counts <- if (by_panel) {
+        as.data.frame(table(panel = df$panel), responseName = "n")
+    } else {
+        data.frame(n = nrow(df))
+    }
+    counts <- counts[counts$n > 0, , drop = FALSE]
+    counts$label <- paste0("n = ", scales::label_comma()(counts$n))
+
+    # Corner in data units, pulled in from the panel edge by `inset`; the
+    # limits are fixed, so the same inset gives the same gap in every panel
+    right <- grepl("right", position, fixed = TRUE)
+    top <- grepl("top", position, fixed = TRUE)
+    dx <- inset * diff(xlim)
+    dy <- inset * diff(ylim)
+    counts$x <- if (right) xlim[2] - dx else xlim[1] + dx
+    counts$y <- if (top) ylim[2] - dy else ylim[1] + dy
+
+    # The text grows away from the corner, into the panel
+    geom_text(
+        aes(x = x, y = y, label = label),
+        data = counts,
+        hjust = if (right) 1 else 0,
+        vjust = if (top) 1 else 0,
+        size = size,
+        colour = "black",
+        inherit.aes = FALSE
     )
 }
 

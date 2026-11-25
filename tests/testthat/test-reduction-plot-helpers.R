@@ -187,6 +187,33 @@ test_that("mark_paths works in data units and per panel", {
     expect_equal(length(unique(paths$ring)), 4)
 })
 
+test_that("cell_count_layer counts cells per panel and places them in a corner", {
+    df <- data.frame(
+        x = 1:10,
+        y = 1:10,
+        panel = factor(rep(c("p1", "p2", "p3"), c(7, 3, 0)), levels = c("p1", "p2", "p3"))
+    )
+
+    one <- cell_count_layer(df, by_panel = FALSE, xlim = c(0, 10), ylim = c(0, 20), size = 3)
+    expect_equal(one$data$label, "n = 10")
+    # Bottom right by default, pulled in by 2% of each range
+    expect_equal(c(one$data$x, one$data$y), c(9.8, 0.4))
+    expect_equal(c(one$aes_params$hjust, one$aes_params$vjust), c(1, 0))
+    expect_equal(one$aes_params$colour, "black")
+
+    # One label per non-empty panel, with a thousands separator
+    split <- cell_count_layer(df, by_panel = TRUE, xlim = c(0, 10), ylim = c(0, 20), size = 3)
+    expect_equal(as.character(split$data$panel), c("p1", "p2"))
+    expect_equal(split$data$label, c("n = 7", "n = 3"))
+    big <- data.frame(x = 1:12345, y = 1)
+    expect_equal(cell_count_layer(big, FALSE, c(0, 1), c(0, 1), size = 3)$data$label, "n = 12,345")
+
+    top_left <- cell_count_layer(df, FALSE, xlim = c(0, 10), ylim = c(0, 20),
+                                 position = "top.left", size = 3)
+    expect_equal(c(top_left$data$x, top_left$data$y), c(0.2, 19.6))
+    expect_equal(c(top_left$aes_params$hjust, top_left$aes_params$vjust), c(0, 1))
+})
+
 test_that("group_colours names colours by group, keeping all levels", {
     g <- factor(c("b", "a"), levels = c("a", "b", "c"))
     out <- group_colours(NULL, g)

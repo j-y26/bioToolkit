@@ -56,6 +56,22 @@ DimPlot_bioToolkit(
 )
 ```
 
+#### `show.n`
+
+The number of plotted cells in a corner of each panel, bottom right by
+default (`n.position` for the other corners). With `split.by`, each panel
+shows its own count.
+
+```{r dim-show-n}
+DimPlot_bioToolkit(
+    pbmc,
+    group.by = "cell_type",
+    split.by = "condition",
+    show.n = TRUE,
+    panel.width = 3
+)
+```
+
 #### `cells.highlight`
 
 Colour some cells and draw the rest in grey, e.g. one cell type:

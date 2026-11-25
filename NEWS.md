@@ -1,3 +1,12 @@
+# bioToolkit 1.4.1
+
+## Embeddings
+
+* `DimPlot_bioToolkit()` gains `show.n`: writes the number of plotted cells
+  ("n = 1,234") in a corner of each panel, one count per panel with
+  `split.by`. `n.position` picks the corner (`"bottom.right"` by default) and
+  `n.size` the font size.
+
 # bioToolkit 1.4.0
 
 ## Colour ramps

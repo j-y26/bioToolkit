@@ -77,6 +77,19 @@
 #'
 #' @param label.size Size of the group labels in mm, default is 3.5
 #'
+#' @param show.n Whether to write the number of plotted cells ("n = 1,234")
+#'               in a corner of each panel, default is FALSE. All plotted
+#'               cells are counted (after `cells`), including those not in
+#'               `cells.highlight`; with `split.by`, each panel shows its own
+#'               count
+#'
+#' @param n.position Corner for the count: "bottom.right" (default),
+#'                   "bottom.left", "top.right" or "top.left". The dimension
+#'                   arrows are drawn in the bottom left corner
+#'
+#' @param n.size Font size of the count in points. If NULL (default), the
+#'               base text size of \code{\link{theme_bioToolkit}} (11)
+#'
 #' @param mark Whether to draw a dashed line around the cell cloud of each
 #'             group of `mark.by`, kept a fixed distance away from the cells,
 #'             default is FALSE. Typically, cells are coloured by a fine
@@ -195,6 +208,9 @@ DimPlot_bioToolkit <- function(
     outline.darken = 0.4,
     label = FALSE,
     label.size = 3.5,
+    show.n = FALSE,
+    n.position = c("bottom.right", "bottom.left", "top.right", "top.left"),
+    n.size = NULL,
     mark = FALSE,
     mark.by = NULL,
     mark.cols = NULL,
@@ -227,6 +243,7 @@ DimPlot_bioToolkit <- function(
     check_fixed_panel_support()
     legend.position <- match.arg(legend.position)
     arrow.panels <- match.arg(arrow.panels)
+    n.position <- match.arg(n.position)
     arrow_args <- list(...)
     raster <- resolve_raster_arg(raster, arrow_args)
     arrow_args$rasterize <- NULL
@@ -236,6 +253,7 @@ DimPlot_bioToolkit <- function(
     sizes <- theme_sizes()
     if (is.null(legend.text.size)) legend.text.size <- sizes$base
     if (is.null(strip.text.size)) strip.text.size <- sizes$large
+    if (is.null(n.size)) n.size <- sizes$base
     if (mark) {
         if (!(is.numeric(mark.expand) && length(mark.expand) == 1 && mark.expand >= 0)) {
             stop("`mark.expand` must be a single non-negative number", call. = FALSE)
@@ -358,6 +376,19 @@ DimPlot_bioToolkit <- function(
         p <- p + group_label_layer(
             df[df$highlight, ], by_panel = rd$split_plot, label.size = label.size,
             label.color = "black", halo.color = halo.color, seed = seed
+        )
+    }
+
+    # Number of plotted cells in a corner of each panel, drawn last so that it
+    # stays above the cells, outlines and labels
+    if (show.n) {
+        p <- p + cell_count_layer(
+            df,
+            by_panel = rd$split_plot,
+            xlim = rd$xlim,
+            ylim = rd$ylim,
+            position = n.position,
+            size = pt_to_size(n.size)
         )
     }
 

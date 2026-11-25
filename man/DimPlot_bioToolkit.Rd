@@ -24,6 +24,9 @@ DimPlot_bioToolkit(
   outline.darken = 0.4,
   label = FALSE,
   label.size = 3.5,
+  show.n = FALSE,
+  n.position = c("bottom.right", "bottom.left", "top.right", "top.left"),
+  n.size = NULL,
   mark = FALSE,
   mark.by = NULL,
   mark.cols = NULL,
@@ -115,6 +118,19 @@ is 0.4}
 FALSE. When split, groups are labelled within each panel}
 
 \item{label.size}{Size of the group labels in mm, default is 3.5}
+
+\item{show.n}{Whether to write the number of plotted cells ("n = 1,234")
+in a corner of each panel, default is FALSE. All plotted
+cells are counted (after `cells`), including those not in
+`cells.highlight`; with `split.by`, each panel shows its own
+count}
+
+\item{n.position}{Corner for the count: "bottom.right" (default),
+"bottom.left", "top.right" or "top.left". The dimension
+arrows are drawn in the bottom left corner}
+
+\item{n.size}{Font size of the count in points. If NULL (default), the
+base text size of \code{\link{theme_bioToolkit}} (11)}
 
 \item{mark}{Whether to draw a dashed line around the cell cloud of each
 group of `mark.by`, kept a fixed distance away from the cells,
